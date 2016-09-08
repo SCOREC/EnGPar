@@ -39,3 +39,8 @@ echo $stamp $count >> core.contributors
 curl $repourl/pulls?state=closed -H "$auth" > $stamp.pulls
 count=$($jq -r ".[].id" $stamp.pulls | wc -l)
 echo $stamp $count >> core.pulls
+
+#closed issues
+curl $repourl/issues?state=closed -H "$auth" > $stamp.issues
+count=$($jq -r ".[].title" $stamp.issues | wc -l)
+echo $stamp $count >> core.issues
