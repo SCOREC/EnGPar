@@ -4,8 +4,9 @@ include_directories(
   )
 
 set(ALL_LIBS
-  ${AGI_LIBS}
-  ${INTERFACE_LIBS}
+  agi
+  interfaces
+  SCOREC::core
   )
 
 add_executable(buildMeshGraph buildMeshGraph.cpp)

@@ -3,50 +3,44 @@
 #define APF_MESH
 
 #include "agi.h"
-#include <apfMesh.h>
+#include <apfMesh2.h>
 #include <map>
 namespace agi {
 
-class APFGraph : public Ngraph {
+class apfGraph : public Ngraph {
  private:
   apf::Mesh* m;
  public:
-  APFGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
-    ~APFGraph();
-
-    //Part Information
+   apfGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
+   ~apfGraph() {};
     
-    int numVtx() const;
-    int numEdges() const;
+   //Vertex Operations
+   double weight(GraphVertex*) const {};
 
+   int owner(GraphVertex*) const {};
+
+   const std::vector<double>& coordinates(GraphVertex*) const {};
+
+   int degree(GraphVertex*,etype) const {};
     
-    //Vertex Operations
-    virtual double weight(GraphVertex*) const;
+   int* edges(GraphVertex*,etype) const {};
 
-    virtual int owner(GraphVertex*) const;
+   //Edge Operations
+   double weight(GraphEdge*) const {};
 
-    virtual const std::vector<double>& coordinates(GraphVertex*) const;
+   GraphVertex* u(GraphEdge*) const {};
+   GraphVertex* v(GraphEdge*) const {};
 
-    virtual int degree(GraphVertex*,etype) const;
-    
-    virtual int* edges(GraphVertex*,etype) const;
+   GraphVertex* other(GraphEdge*,GraphVertex*) const {};
 
-    //Edge Operations
-    virtual double weight(GraphEdge*) const;
+   //Traversal
+   VertexIterator* begin() {};
+   VertexIterator* iterate(VertexIterator*) {};
+   void destroy(VertexIterator*) {};
 
-    virtual GraphVertex* u(GraphEdge*) const;
-    virtual GraphVertex* v(GraphEdge*) const;
-
-    virtual GraphVertex* other(GraphEdge*,GraphVertex*) const;
-
-    //Traversal
-    virtual VertexIterator* begin();
-    virtual VertexIterator* iterate(VertexIterator*);
-    virtual void destroy(VertexIterator*);
-
-    //Utility
-    virtual bool isEqual(GraphVertex*,GraphVertex*);
-    virtual void migrate(std::map<GraphVertex*,int>&);
+   //Utility
+   bool isEqual(GraphVertex*,GraphVertex*) {};
+   void migrate(std::map<GraphVertex*,int>&) {};
 };
  
 }//agi namespace

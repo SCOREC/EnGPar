@@ -10,10 +10,10 @@ set(CMAKE_MODULE_PATH
 #Settings options for testing
 #enable_testing()
 #include(CTest)
-#TODO: Locate scorec directory. Module? FindSCOREC.cmake? or whatever
-find_package(SCOREC MODULE REQUIRED)
+set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
+find_package(SCOREC 2.1.0 REQUIRED CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
 
-include_directories(${SCOREC_INCLUDE_DIRS})
+include_directories(${SCOREC_PREFIX}/include)
 
 add_subdirectory(agi)
 

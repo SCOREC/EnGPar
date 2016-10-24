@@ -20,3 +20,4 @@ include_directories(${INTERFACE_INCLUDE_DIRS} ${SCOREC_INCLUDE_DIRS})
 
 add_library(interfaces ${INTERFACE_SOURCES})
 target_link_libraries(interfaces ${DEP_LIBS})
+target_link_libraries(interfaces SCOREC::core)

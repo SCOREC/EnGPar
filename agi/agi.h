@@ -56,7 +56,7 @@ public:
   
   //Part Information
   
-  int numVtx() const {return num_verts;}
+  int numVtxs() const {return num_verts;}
   int numEdges() {return num_edges;}
     
   //Vertex Operations
