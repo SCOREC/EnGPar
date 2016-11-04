@@ -7,6 +7,12 @@
 #include <apf.h>
 #include <cstdlib>
 #include <iostream>
+#include <stdint.h>
+
+void testSizes(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n);
+void testVertices(apf::Mesh* m,agi::apfGraph& g);
+void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary, int* seconds,int n);
+
 int main(int argc, char* argv[]) {
 
   MPI_Init(&argc,&argv);
@@ -45,28 +51,30 @@ int main(int argc, char* argv[]) {
     assert(e==2);
     printf("Error caught successfully\n");
   }
+
   
   int primary = atoi(argv[3]);
   int second = atoi(argv[4]);
+  printf("Constructing Graph with Vertices: %d, and edges: %d\n",primary,second);
   agi::apfGraph g(m,primary,second);
+  int secondaries1[1] = {second};
+  testSizes(m,g,primary,secondaries1,1);
+  testVertices(m,g);
+  testEdges(m,g,primary,secondaries1,1);
+  
 
-  int num_verts = countOwned(m,primary);
-  assert(g.numVtxs()==num_verts);
+  
 
-  apf::MeshEntity* ent;
-  apf::MeshIterator* itr = m->begin(primary);
-
-  int num_edges=0;
-  while ((ent = m->iterate(itr))) {
-    apf::Downward down;
-    int nd = m->getDownward(ent,second,down);
-    for (int i=0;i<nd;i++) {
-      apf::Adjacent adj;
-      m->getAdjacent(down[i],primary,adj);
-      num_edges+=adj.size()-1;
-    }
-  }
-  assert(num_edges==g.numEdges());
+  //Test of multiple edge types, vertices=0,faces=1
+  
+  int secondaries[2] = {0,2};
+  printf("Constructing Graph with Vertices: %d, and edges: %d,%d\n",primary,secondaries[0],secondaries[1]);
+  fflush(stdout);
+  agi::apfGraph g2(m,primary,secondaries,2);
+  
+  testSizes(m,g2,primary,secondaries,2);
+  testVertices(m,g2);
+  testEdges(m,g2,primary,secondaries,2);
   
   m->destroyNative();
   apf::destroyMesh(m);
@@ -76,4 +84,70 @@ int main(int argc, char* argv[]) {
 
   printf("All tests passed\n");
   return 0;
+}
+
+size_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
+  apf::MeshEntity* ent;
+  apf::MeshIterator* itr = m->begin(primary);
+  size_t num_edges=0;
+  while ((ent = m->iterate(itr))) {
+    apf::Downward down;
+    int nd = m->getDownward(ent,second,down);
+    for (int i=0;i<nd;i++) {
+      apf::Adjacent adj;
+      m->getAdjacent(down[i],primary,adj);
+      num_edges+=adj.size()-1;
+    }
+  }
+  return num_edges;
+}
+
+void testSizes(apf::Mesh* m,agi::apfGraph& g,int primary, int* seconds,int n) {
+  printf("Checking Sizes\n");
+  size_t num_verts = countOwned(m,primary);
+  assert(g.numVtxs()==num_verts);
+  for (int i=0;i<n;i++)
+    assert(getNumNaiveEdges(m,primary,seconds[i])>=g.numEdges(i));
+}
+
+void testVertices(apf::Mesh* m,agi::apfGraph& g) {
+  printf("Iterating over vertices\n");
+  //Test iterating through vertices
+  agi::GraphIterator* gitr = g.begin();
+  agi::GraphVertex* vtx=NULL;
+  size_t i=0;
+  while (g.iterate(gitr,vtx)) {
+    i++;
+    assert(g.weight(vtx)==1.0);
+    assert(g.degree(vtx,0)>0);
+    assert(i<=g.numVtxs());
+  }
+  assert(i==g.numVtxs());
+
+}
+
+void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n) {
+  printf("Iterating over edges\n");
+  //Test iterating through edges on vertices
+  agi::GraphIterator* gitr = g.begin();
+  agi::GraphVertex* vtx=NULL;
+  for (int i=0;i<n;i++) {
+    int num_edges = getNumNaiveEdges(m,primary,seconds[i]);
+    double tot_edges=0;
+    gitr=g.begin();
+    while (g.iterate(gitr,vtx)) {
+      int deg = g.degree(vtx,i);
+      agi::GraphEdge* edge;
+      agi::GraphIterator* eitr = g.edges(vtx,i);
+      for (int j=0;j<deg;j++) {
+        g.iterate(eitr,edge);
+        tot_edges+=g.weight(edge);
+        assert(g.isEqual(vtx,g.u(edge)));
+        assert(g.isEqual(g.v(edge),g.other(edge,vtx)));
+      }
+    }
+    //NOTE: with current edge weight implementation the sum of naive edges = sum of edge weights
+    assert(tot_edges==num_edges);
+  }
+
 }
