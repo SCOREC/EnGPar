@@ -113,10 +113,10 @@ void testSizes(apf::Mesh* m,agi::apfGraph& g,int primary, int* seconds,int n) {
 void testVertices(apf::Mesh* m,agi::apfGraph& g) {
   printf("Iterating over vertices\n");
   //Test iterating through vertices
-  agi::GraphIterator* gitr = g.begin();
+  agi::VertexIterator* gitr = g.begin();
   agi::GraphVertex* vtx=NULL;
   size_t i=0;
-  while (g.iterate(gitr,vtx)) {
+  while (vtx = g.iterate(gitr)) {
     i++;
     assert(g.weight(vtx)==1.0);
     assert(g.degree(vtx,0)>0);
@@ -127,24 +127,33 @@ void testVertices(apf::Mesh* m,agi::apfGraph& g) {
 }
 
 void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n) {
-  printf("Iterating over edges\n");
-  //Test iterating through edges on vertices
-  agi::GraphIterator* gitr = g.begin();
+  printf("Iterating over edges & pins\n");
+  //Test iterating through edges & pins on vertices
+  agi::VertexIterator* gitr = g.begin();
   agi::GraphVertex* vtx=NULL;
   for (int i=0;i<n;i++) {
     int num_edges = getNumNaiveEdges(m,primary,seconds[i]);
     double tot_edges=0;
+    int other_count=0;
     gitr=g.begin();
-    while (g.iterate(gitr,vtx)) {
+    while (vtx = g.iterate(gitr)) {
       int deg = g.degree(vtx,i);
       agi::GraphEdge* edge;
-      agi::GraphIterator* eitr = g.edges(vtx,i);
+      agi::EdgeIterator* eitr = g.edges(vtx,i);
       for (int j=0;j<deg;j++) {
-        g.iterate(eitr,edge);
-        tot_edges+=g.weight(edge);
-        assert(g.isEqual(vtx,g.u(edge)));
-        assert(g.isEqual(g.v(edge),g.other(edge,vtx)));
+        edge = g.iterate(eitr);
+        int np = g.degree(edge);
+        agi::GraphVertex* out;
+        agi::PinIterator* pitr = g.pins(edge);
+        other_count+=np-1;
+        for (int k=0;k<np;k++) {
+          out = g.iterate(pitr);
+          if (g.isEqual(out,vtx))
+              continue;
+          tot_edges++;
+        }
       }
+      g.destroy(eitr);
     }
     //NOTE: with current edge weight implementation the sum of naive edges = sum of edge weights
     assert(tot_edges==num_edges);

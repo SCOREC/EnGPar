@@ -2,7 +2,7 @@
 #ifndef APF_MESH
 #define APF_MESH
 
-#include "agi.h"
+#include "ngraph.h"
 #include <apfMesh2.h>
 #include <map>
 namespace agi {
@@ -11,18 +11,22 @@ class apfGraph : public Ngraph {
  private:
   apf::Mesh* m;
   apf::GlobalNumbering* global_nums;
+  apf::GlobalNumbering* edge_nums[MAX_TYPES];
  public:
    apfGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
    apfGraph(apf::Mesh*, int primary_dimension, int* secondary_dimensions,int n);
-   ~apfGraph() {};
+   ~apfGraph();
     
    //Utility
    void migrate(std::map<GraphVertex*,int>&) {};
 
  private:
    void checkDims(int dim,int primary,int second);
-   void setupAndNumbering(int primary);
-   void createEdges(int primary,int second);
+   void setupPrimary(int primary);
+   etype setupSecondary(int second);
+   void connectToEdges(int primary,int second, etype type);
+   void connectToPins(int primary,int second, etype type);
+   //   void createGhostLayer(int primary, int second);
 };
  
 }//agi namespace
