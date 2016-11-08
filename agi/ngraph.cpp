@@ -5,22 +5,37 @@
 namespace agi {
 
 Ngraph::Ngraph() {
+  num_global_verts=0;
   num_local_verts=0;
+  num_ghost_verts=0;
+  
   num_types=0;
   local_weights=NULL;
+
   for (int i=0;i<MAX_TYPES;i++) {
+    es[i] = NULL;
+    num_global_edges[i]=0;
     num_local_edges[i]=0;
     degree_list[i]=NULL;
     edge_list[i]=NULL;
+    num_global_pins[i]=0;
+    num_local_pins[i]=0;
     pin_degree_list[i]=NULL;
     pin_list[i]=NULL;
   }
+
+  local_unmap = NULL;
+  ghost_unmap=NULL;
+  owners = NULL;
 }
 
 Ngraph::~Ngraph() {
   if (local_weights)
     delete [] local_weights;
+  
   for (int i=0;i<MAX_TYPES;i++) {
+    if (es[i])
+      delete [] es[i];
     if (degree_list[i])
       delete [] degree_list[i];
     if (edge_list[i])
@@ -30,6 +45,12 @@ Ngraph::~Ngraph() {
     if (pin_list[i])
       delete [] pin_list[i];
   }
+  if (local_unmap)
+    delete [] local_unmap;
+  if (ghost_unmap)
+    delete [] ghost_unmap;
+  if (owners)
+    delete [] owners;
 }
 
 double Ngraph::weight(GraphVertex* vtx) const {

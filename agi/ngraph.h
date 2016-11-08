@@ -20,6 +20,7 @@ class Ngraph {
   //TODO: Make ghost layer?
 
 protected:
+  
   //Global number of vertices and edges
   gid_t num_global_verts;
   gid_t num_global_edges[MAX_TYPES];
@@ -29,7 +30,7 @@ protected:
   lid_t num_local_verts;
   lid_t num_ghost_verts;
   int num_types;
-  gid_t num_local_edges[MAX_TYPES];
+  lid_t num_local_edges[MAX_TYPES];
   lid_t num_local_pins[MAX_TYPES];
   
   // vertex weights
@@ -52,8 +53,9 @@ protected:
   lid_t* pin_list[MAX_TYPES];
 
   //TODO: discuss using C++11 to get unordered map
-  std::map<gid_t,lid_t> vtx_mapping;
-  std::map<gid_t,lid_t> edge_mapping[MAX_TYPES];
+  typedef std::map<gid_t,lid_t> map_t;
+  map_t vtx_mapping;
+  map_t edge_mapping[MAX_TYPES];
   gid_t* local_unmap;
   gid_t* ghost_unmap;
   part_t* owners;

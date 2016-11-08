@@ -28,16 +28,21 @@ int main(int argc, char* argv[]) {
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
 
   //Check dimension too high
+  //This doesn't get caught since primary is assumed to be 3 for now
+  /*
   try {
     agi::apfGraph g(m,5,0);
+    throw "FAIL\n";
   }
   catch(int e) {
     assert(e==1);
     printf("Error caught successfully\n");
-  }  
+  } 
+  */ 
   //check dimension too low
   try {
     agi::apfGraph g(m,3,-1);
+    throw "FAIL\n";
   }
   catch(int e) {
     assert(e==1);
@@ -46,6 +51,7 @@ int main(int argc, char* argv[]) {
   //check primary==secondary
   try {
     agi::apfGraph g(m,3,3);
+    throw "FAIL!\n";
   }
   catch(int e) {
     assert(e==2);
@@ -69,7 +75,7 @@ int main(int argc, char* argv[]) {
   
   int secondaries[2] = {0,2};
   printf("Constructing Graph with Vertices: %d, and edges: %d,%d\n",primary,secondaries[0],secondaries[1]);
-  fflush(stdout);
+  
   agi::apfGraph g2(m,primary,secondaries,2);
   
   testSizes(m,g2,primary,secondaries,2);

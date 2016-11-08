@@ -12,6 +12,9 @@ class apfGraph : public Ngraph {
   apf::Mesh* m;
   apf::GlobalNumbering* global_nums;
   apf::GlobalNumbering* edge_nums[MAX_TYPES];
+  std::vector<gid_t> ghosts;
+  std::vector<part_t> owns;
+
  public:
    apfGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
    apfGraph(apf::Mesh*, int primary_dimension, int* secondary_dimensions,int n);
@@ -26,7 +29,7 @@ class apfGraph : public Ngraph {
    etype setupSecondary(int second);
    void connectToEdges(int primary,int second, etype type);
    void connectToPins(int primary,int second, etype type);
-   //   void createGhostLayer(int primary, int second);
+   void constructGhostVerts();
 };
  
 }//agi namespace

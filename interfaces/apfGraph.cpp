@@ -21,8 +21,8 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   etype t = setupSecondary(secondary_dimension);
   connectToEdges(primary_dimension,secondary_dimension,t);
   connectToPins(primary_dimension,secondary_dimension,t);
-
-  //createGhostLayer(primary_dimension,secondary_dimension);
+  
+  constructGhostVerts();
   
 }
 
@@ -41,7 +41,7 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
     connectToEdges(primary_dimension,secondary_dimensions[i],t);
     connectToPins(primary_dimension,secondary_dimensions[i],t);
   }
-  
+  constructGhostVerts();
 }
 
 apfGraph::~apfGraph() {
@@ -171,94 +171,104 @@ void apfGraph::connectToEdges(int primary_dimension,
 void apfGraph::connectToPins(int primary_dimension,
                               int secondary_dimension,
                               etype type) {
-
-  pin_degree_list[type] = new lid_t[num_local_edges[type]+1];
-  pin_degree_list[type][0]=0;
-  std::vector<lid_t> edgs;
+  lid_t* pdl = pin_degree_list[type] = new lid_t[num_local_edges[type]+1];
+  lid_t nle = num_local_edges[type];
+  pdl[0]=0;
+  PCU_Comm_Begin();
   apf::MeshEntity* ent;
   apf::MeshIterator* itr= m->begin(secondary_dimension);
   while ((ent = m->iterate(itr))) {
-    if (!m->isOwned(ent))
-      continue;
-    gid_t gid = apf::getNumber(edge_nums[type],ent,0);
-    lid_t lid = edge_mapping[type][gid];
+    gid_t vals[2];
+    vals[0]= apf::getNumber(edge_nums[type],ent,0);
+    lid_t lid = edge_mapping[type][vals[0]];
+    apf::Adjacent adj;
+    m->getAdjacent(ent,primary_dimension,adj);
+    //TODO: only count owned adjacencies when primary!=3
+    pdl[lid+1] = vals[1] = adj.getSize();
+    if (m->isShared(ent)) {
+      apf::Parts res;
+      m->getResidence(ent,res);
+      apf::Parts::iterator itr;
+      for (itr=res.begin();itr!=res.end();itr++)
+        if (*itr!=PCU_Comm_Self())
+          PCU_Comm_Pack(*itr,vals,2);
+    }
+  }
+  m->end(itr);
+  PCU_Comm_Send();
+  while (PCU_Comm_Receive()) {
+    gid_t vals[2];
+    PCU_Comm_Unpack(vals,2);
+    lid_t lid = edge_mapping[type][vals[0]];
+    pdl[lid+1]+= vals[1];
+  }
+  
+  for (lid_t i=2;i<=nle;i++) {
+    pdl[i]+=pdl[i-1];
+  }
+  lid_t* temp_counts = new lid_t[nle];
+  std::copy(pdl,
+            pdl+nle,
+            temp_counts);
+  lid_t nlp = num_local_pins[type] = pdl[nle];
+  lid_t* pl = pin_list[type] = new lid_t[nlp];
+  PCU_Comm_Begin();
+
+  itr= m->begin(secondary_dimension);
+  while ((ent = m->iterate(itr))) {
+    apf::Parts res;
+    m->getResidence(ent,res);
+
+    gid_t vals[2];
+    vals[0] = apf::getNumber(edge_nums[type],ent,0);
+    lid_t lid = edge_mapping[type][vals[0]];
     apf::Adjacent adj;
     m->getAdjacent(ent,primary_dimension,adj);
     int nents = adj.getSize();
     for (int i=0;i<nents;i++) {
       apf::MeshEntity* vtx = adj[i];
-      gid_t gvid = apf::getNumber(global_nums,vtx,0);
-      lid_t lvid = vtx_mapping[gvid];
-      edgs.push_back(lvid);
+      if (!m->isOwned(vtx))
+        continue;
+      vals[1]= apf::getNumber(global_nums,vtx,0);
+      lid_t lvid = vtx_mapping[vals[1]];
+      pl[temp_counts[lid]++] = lvid;
+      apf::Parts::iterator itr;
+      for (itr=res.begin();itr!=res.end();itr++)
+        if (*itr!=PCU_Comm_Self())
+          PCU_Comm_Pack(*itr,vals,2);
     }
-    if (lid<num_local_edges[type])
-      pin_degree_list[type][lid+1]=edgs.size();
   }
-  
-
-  pin_list[type] = new lid_t[edgs.size()];
-  std::copy(edgs.begin(),edgs.end(),pin_list[type]);
+  PCU_Comm_Send();
+  while (PCU_Comm_Receive()) {
+    gid_t vals[2];
+    PCU_Comm_Unpack(vals,2);
+    lid_t lid = edge_mapping[type][vals[0]];
+    map_t::iterator itr = vtx_mapping.find(vals[1]);
+    lid_t lvid;
+    if (itr==vtx_mapping.end()) {
+      lvid = num_local_verts+(num_ghost_verts++);
+      vtx_mapping[vals[1]]=lvid;
+      ghosts.push_back(vals[1]);
+      owns.push_back(PCU_Comm_Sender());
+    }
+    else
+      lvid = itr->second;
+    pl[temp_counts[lid]++]+= lvid;
+  }
+  for (int i=0;i<nle;i++) {
+    assert(temp_counts[i]==pdl[i+1]);
+  }
+  delete [] temp_counts;
 }
 
-// void apfGraph::createGhostLayer(int primary, int secondary) {
-  
-//   PCU_Comm_Begin();
-//   apf::MeshEntity* ent;
-//   apf::MeshIterator* itr= m->begin(secondary_dimension);
-//   int dim = m->getDimension();
-//   while ((ent = m->iterate(itr))) {
-//     if (m->isShared(ent)) {
-//       apf::Copies remotes;
-//       m->getRemotes(down[i],remotes);
-    
-//       gid_t vals[2];
-//       if (dim==primary) {
-//         apf::Adjacent adj;
-//         m->getAdjacent(ent,primary,adj);
-//         for (int i=0;i<adj.size();i++) {
-//           vals[0] = apf::getNumber(global_nums,adj[i],0);
-//           apf::Copies::iterator itr;
-//           for (itr = remotes.begin();itr!=remotes.end();itr++) {
-//             vals[1] = (uintptr_t)itr->second;
-//             PCU_Comm_Pack(itr->first,vals,2);
-//           }
-          
-//         }
-//       } 
-//       else {
-//         //TODO: ghosting when primary!=mesh dim
-//       }
-//     }
-//     else if (secondary==dim) {
-//       //TODO: ghosting when secondary=mesh_dim
-//     }
-//   }
-//   PCU_Comm_Send();
-
-//   //TODO: unordered?
-//   typedef std::map<apf::MeshEntity*,int> EdgeW;
-//   EdgeW* unique_edges = new EdgeW[num_local_verts];
-//   std::vector<part_t> ghost_owners;
-//   while (PCU_Comm_Receive()) {
-//     gid_t vals[2];
-//     PCU_Comm_Unpack(vals,2);
-//     std::map<gid_t,lid_t>::iterator itr = global_local_mapping.find(vals[0]);
-//     if (itr=global_local_mapping.end()) {
-//       itr = global_local_mapping.insert(std::make_pair(vals[0],
-//                                                        num_local_verts+
-//                                                        (num_ghost_verts++)));
-//       ghost_owners.push_back(PCU_Comm_Sender());
-//     }
-//     lid_t ghost_lid = itr->second;
-//     MeshEntity* second = (MeshEntity*)vals[1];
-//     gid_t gid = apf::getNumber(global_nums,second,0);
-//     unique_edges[global_local_mapping[gid]][ghost_lid]++;
-//   }
-//   delete [] unique_edges;
-
-//   //TODO: get ghost weights?
-  
-// }
+void apfGraph::constructGhostVerts() {
+  if (num_ghost_verts>0) {
+    ghost_unmap = new gid_t[num_ghost_verts];
+    std::copy(ghosts.begin(),ghosts.end(),ghost_unmap);
+    owners = new part_t[num_ghost_verts];
+    std::copy(owns.begin(),owns.end(),owners);
+  }
+}
   
 
 }
