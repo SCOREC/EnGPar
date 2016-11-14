@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <iostream>
+#include <PCU.h>
 namespace agi {
 
 Ngraph::Ngraph() {
@@ -55,7 +56,17 @@ Ngraph::~Ngraph() {
 
 double Ngraph::weight(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
+  if (index>=num_local_verts)
+    return 0;
   return local_weights[index];
+}
+
+int Ngraph::owner(GraphVertex* vtx) const {
+  uintptr_t index = (uintptr_t)(vtx)-1;
+  if (index<num_local_verts)
+    return PCU_Comm_Self();
+  index-=num_local_verts;
+  return owners[index];
 }
 
 double Ngraph::weight(GraphEdge* edge) const {

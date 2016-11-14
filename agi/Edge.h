@@ -5,9 +5,11 @@
 namespace agi {
 
 class Ngraph;
+class apfGraph;
   
 class Edge {
   friend class Ngraph;
+  friend class apfGraph;
  private:
   lid_t lid;
   gid_t gid;
@@ -16,7 +18,6 @@ class Edge {
   Edge() {}
   Edge(lid_t l,gid_t g,wgt_t w,etype t) : lid(l), gid(g), weight(w), type(t) {};
 };
-typedef struct Edge Pin;
 
 }
 

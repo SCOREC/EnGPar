@@ -55,12 +55,14 @@ void apfGraph::checkDims(int dim, int primary, int second) {
       primary<0 ||
       second>dim ||
       second<0) {
-    fprintf(stderr,"[ERROR] primary or secondary dimensions are invalid\n");
+    if (!PCU_Comm_Self())
+      printf("[ERROR] primary or secondary dimensions are invalid\n");
     throw 1;
   }
   
   if (primary==second) {
-    fprintf(stderr,"[ERROR] primary and secondary dimensions cannot be equal\n");
+    if (!PCU_Comm_Self())
+      printf("[ERROR] primary and secondary dimensions cannot be equal\n");
     throw 2;
   }
 
@@ -104,6 +106,7 @@ void apfGraph::setupPrimary(int primary_dimension) {
   }
 }
 
+  //TODO: discuss removing trivial edges (edges that only connect to one vertex)
 etype apfGraph::setupSecondary(int secondary_dimension) {
   etype type = addEdgeType();
   num_local_edges[type] = m->count(secondary_dimension);
@@ -177,6 +180,7 @@ void apfGraph::connectToPins(int primary_dimension,
   PCU_Comm_Begin();
   apf::MeshEntity* ent;
   apf::MeshIterator* itr= m->begin(secondary_dimension);
+
   while ((ent = m->iterate(itr))) {
     gid_t vals[2];
     vals[0]= apf::getNumber(edge_nums[type],ent,0);
@@ -190,19 +194,21 @@ void apfGraph::connectToPins(int primary_dimension,
       m->getResidence(ent,res);
       apf::Parts::iterator itr;
       for (itr=res.begin();itr!=res.end();itr++)
-        if (*itr!=PCU_Comm_Self())
-          PCU_Comm_Pack(*itr,vals,2);
+        if (*itr!=PCU_Comm_Self()) {
+          PCU_Comm_Pack(*itr,vals,2*sizeof(gid_t));
+        }
     }
   }
   m->end(itr);
   PCU_Comm_Send();
+
   while (PCU_Comm_Receive()) {
     gid_t vals[2];
-    PCU_Comm_Unpack(vals,2);
+    PCU_Comm_Unpack(vals,2*sizeof(gid_t));
+    //TODO:Fix away this hack (only works when edge_dim=2)
     lid_t lid = edge_mapping[type][vals[0]];
     pdl[lid+1]+= vals[1];
   }
-  
   for (lid_t i=2;i<=nle;i++) {
     pdl[i]+=pdl[i-1];
   }
@@ -234,14 +240,16 @@ void apfGraph::connectToPins(int primary_dimension,
       pl[temp_counts[lid]++] = lvid;
       apf::Parts::iterator itr;
       for (itr=res.begin();itr!=res.end();itr++)
-        if (*itr!=PCU_Comm_Self())
-          PCU_Comm_Pack(*itr,vals,2);
+        if (*itr!=PCU_Comm_Self()) {
+          PCU_Comm_Pack(*itr,vals,2*sizeof(gid_t));
+        }
     }
   }
   PCU_Comm_Send();
+
   while (PCU_Comm_Receive()) {
     gid_t vals[2];
-    PCU_Comm_Unpack(vals,2);
+    PCU_Comm_Unpack(vals,2*sizeof(gid_t));
     lid_t lid = edge_mapping[type][vals[0]];
     map_t::iterator itr = vtx_mapping.find(vals[1]);
     lid_t lvid;
@@ -254,7 +262,9 @@ void apfGraph::connectToPins(int primary_dimension,
     else
       lvid = itr->second;
     pl[temp_counts[lid]++]+= lvid;
+
   }
+  
   for (int i=0;i<nle;i++) {
     assert(temp_counts[i]==pdl[i+1]);
   }

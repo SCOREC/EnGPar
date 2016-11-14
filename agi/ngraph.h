@@ -15,10 +15,7 @@ class GraphEdge;
 class VertexIterator;
 class PinIterator;
 class Ngraph {
-  //TODO: change to hyperedge approach
-  //TODO: Make distributed version
-  //TODO: Make ghost layer?
-
+  //TODO: Try to compress global id
 protected:
   
   //Global number of vertices and edges
@@ -39,6 +36,8 @@ protected:
 
   //edge weights
   // size=num_edges
+  //TODO: think of a way to use struct of arrays instead
+  //TODO: allow disable hypergraph for simple graphs to minimize memory
   Edge* es[MAX_TYPES];
   
   //TODO: do we want ghost weights?
@@ -56,6 +55,7 @@ protected:
   typedef std::map<gid_t,lid_t> map_t;
   map_t vtx_mapping;
   map_t edge_mapping[MAX_TYPES];
+  //TODO: Tack ghost unmap on top of local_unmap
   gid_t* local_unmap;
   gid_t* ghost_unmap;
   part_t* owners;
@@ -63,16 +63,21 @@ protected:
 public:
   Ngraph();
   virtual ~Ngraph();
+
+  //Global Part Information
+  gid_t numGlobalVtxs() const {return num_global_verts;}
+  gid_t numGlobalEdges(etype i=0) const {return num_global_edges[i];}
+  gid_t numGlobalPins(etype i=0) const {return num_global_pins[i];}
   
-  //Part Information
-  lid_t numVtxs() const {return num_local_verts;}
+  //Local Part Information
+  lid_t numLocalVtxs() const {return num_local_verts;}
   int numEdgeTypes() const {return num_types;}
-  lid_t numEdges(etype i=0) const {return num_local_edges[i];}
-  lid_t numPins(etype i=0) const {return num_local_pins[i];}
+  lid_t numLocalEdges(etype i=0) const {return num_local_edges[i];}
+  lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
   
   //Vertex Operations
   double weight(GraphVertex*) const;
-  int owner(GraphVertex*) const {return 0;}
+  int owner(GraphVertex*) const;
   const std::vector<double>& coordinates(GraphVertex*) const {};
 
   //Edge Operations
@@ -87,6 +92,8 @@ public:
   
   //Iterator Traversal
   VertexIterator* begin() const;
+  //TODO: make edge iterator begin for searching through a certain type
+  EdgeIterator* begin(etype) const {return NULL;}
   //Iterate through vertices
   GraphVertex* iterate(VertexIterator*&) const;
   //Iterate through Edges
