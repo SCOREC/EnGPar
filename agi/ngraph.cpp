@@ -53,7 +53,7 @@ Ngraph::~Ngraph() {
   if (owners)
     delete [] owners;
 }
-
+ 
 double Ngraph::weight(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
   if (index>=num_local_verts)
@@ -121,7 +121,8 @@ GraphEdge* Ngraph::iterate(EdgeIterator* itr) const {
 }
 GraphVertex* Ngraph::iterate(PinIterator*& itr) const {
   lid_t* e = reinterpret_cast<lid_t*>(itr);
-  GraphVertex* vtx = reinterpret_cast<GraphVertex*>((char*)((*e)+1));
+  uintptr_t id = *e+1;
+  GraphVertex* vtx = reinterpret_cast<GraphVertex*>((char*)id);
   itr = reinterpret_cast<PinIterator*>(++e);
   return vtx;
 }

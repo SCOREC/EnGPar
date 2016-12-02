@@ -6,14 +6,16 @@ set(INTERFACE_INCLUDE_DIRS
   ../agi
   )
 
-set(DEP_LIBS ${SCOREC_LIBRARIES})
+set(DEP_LIBS agi)
 
 set(INTERFACE_SOURCES
   apfGraph.cpp
+  binGraph.cpp
   )
 
 set(INTERFACE_HEADERS
   apfGraph.h
+  binGraph.h
   )
 
 include_directories(${INTERFACE_INCLUDE_DIRS} ${SCOREC_INCLUDE_DIRS})

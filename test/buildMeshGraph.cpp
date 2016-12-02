@@ -174,7 +174,7 @@ void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n) {
 
   for (int i=0;i<n;i++) {
     int num_pins = getNumNaiveEdges(m,primary,seconds[i]);
-    double tot_pins=0;
+    int tot_pins=0;
     int ghost_pins=0;
     int other_count=0;
     gitr=g.begin();

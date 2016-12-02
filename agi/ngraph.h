@@ -62,7 +62,7 @@ protected:
   
 public:
   Ngraph();
-  virtual ~Ngraph();
+  ~Ngraph();
 
   //Global Part Information
   gid_t numGlobalVtxs() const {return num_global_verts;}
