@@ -2,6 +2,7 @@
 #define NGRAPH_H__
 #include <cstdlib>
 #include <vector>
+#include <unordered_map>
 #include <map>
 #include <cassert>
 #include "Edge.h"
@@ -17,7 +18,8 @@ class PinIterator;
 class Ngraph {
   //TODO: Try to compress global id
 protected:
-  
+
+  bool isHyperGraph;
   //Global number of vertices and edges
   gid_t num_global_verts;
   gid_t num_global_edges[MAX_TYPES];
@@ -52,7 +54,7 @@ protected:
   lid_t* pin_list[MAX_TYPES];
 
   //TODO: discuss using C++11 to get unordered map
-  typedef std::map<gid_t,lid_t> map_t;
+  typedef std::unordered_map<gid_t,lid_t> map_t;
   map_t vtx_mapping;
   map_t edge_mapping[MAX_TYPES];
   //TODO: Tack ghost unmap on top of local_unmap
@@ -71,6 +73,7 @@ public:
   
   //Local Part Information
   lid_t numLocalVtxs() const {return num_local_verts;}
+  lid_t numGhostVtxs() const {return num_ghost_verts;}
   int numEdgeTypes() const {return num_types;}
   lid_t numLocalEdges(etype i=0) const {return num_local_edges[i];}
   lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
@@ -82,6 +85,7 @@ public:
 
   //Edge Operations
   double weight(GraphEdge*) const;
+  GraphVertex* v(GraphEdge*) const;
   
   //Adjacency Operations
   lid_t degree(GraphVertex*,etype) const;

@@ -6,6 +6,7 @@
 namespace agi {
 
 Ngraph::Ngraph() {
+  isHyperGraph=false;
   num_global_verts=0;
   num_local_verts=0;
   num_ghost_verts=0;
@@ -59,6 +60,10 @@ double Ngraph::weight(GraphVertex* vtx) const {
   if (index>=num_local_verts)
     return 0;
   return local_weights[index];
+}
+
+GraphVertex* Ngraph::v(GraphEdge* edge) const {
+  return reinterpret_cast<GraphVertex*>(edge);
 }
 
 int Ngraph::owner(GraphVertex* vtx) const {
@@ -117,7 +122,10 @@ GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
   return vtx;
 }
 GraphEdge* Ngraph::iterate(EdgeIterator* itr) const {
-  return reinterpret_cast<GraphEdge*>(es[itr->type]+*(itr->loc++));
+  if (isHyperGraph)
+    return reinterpret_cast<GraphEdge*>(es[itr->type]+*(itr->loc++));
+  else
+    return reinterpret_cast<GraphEdge*>(*(itr->loc++)+1);
 }
 GraphVertex* Ngraph::iterate(PinIterator*& itr) const {
   lid_t* e = reinterpret_cast<lid_t*>(itr);

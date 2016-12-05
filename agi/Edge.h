@@ -5,11 +5,9 @@
 namespace agi {
 
 class Ngraph;
-class apfGraph;
   
 class Edge {
   friend class Ngraph;
-  friend class apfGraph;
  private:
   lid_t lid;
   gid_t gid;

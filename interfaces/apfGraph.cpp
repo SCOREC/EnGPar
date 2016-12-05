@@ -12,6 +12,7 @@ namespace agi {
 
 apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
                    int secondary_dimension) : Ngraph() {
+  isHyperGraph=true;
   primary_dimension = mesh->getDimension();
   checkDims(mesh->getDimension(),primary_dimension,secondary_dimension);
 
@@ -28,6 +29,7 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
 
 apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
                    int* secondary_dimensions, int n) : Ngraph(){
+  isHyperGraph=true;
   primary_dimension = mesh->getDimension();
   for (int i=0;i<n;i++) {
     checkDims(mesh->getDimension(),primary_dimension,secondary_dimensions[i]);

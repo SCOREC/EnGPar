@@ -11,6 +11,11 @@
 #include <PCU.h>
 #include <iostream>
 namespace agi {
+void phi() {
+  if (!PCU_Comm_Self())
+    printf("hi\n");
+}
+
   //TODO: replace mallocs with new
   //TODO: replace mpi calls iwth PCU
 binGraph::binGraph(char* graph_file) : Ngraph() {
@@ -171,8 +176,10 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
   local_unmap = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
   
   uint64_t cur_label = 0;
-  for (uint64_t i = 0; i < num_local_edges[t]*2; i+=2) {
+  for (uint64_t i = 0; i < num_local_edges[t]*2; i++) {
     uint64_t out = edge_list[t][i];
+    if (ranks[out] != PCU_Comm_Self())
+      continue;
     if (vtx_mapping.count(out) == 0) {
       vtx_mapping[out] = cur_label;
       local_unmap[cur_label] = out;
@@ -181,6 +188,8 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
     else        
       edge_list[t][i] = vtx_mapping[out];
   }
+  //assert(cur_label==num_local_verts);
+
   uint64_t* tmp_edges = (uint64_t*)malloc(num_local_edges[t]*sizeof(uint64_t));
   uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
   degree_list[t] = (uint64_t*)malloc((num_local_verts+1)*sizeof(uint64_t));
@@ -189,13 +198,11 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
     degree_list[t][i] = 0;
   for (uint64_t i = 0; i < num_local_verts; ++i)
     temp_counts[i] = 0;
-
   for (uint64_t i = 0; i < num_local_edges[t]*2; i+=2)
     ++temp_counts[edge_list[t][i]];
   for (uint64_t i = 0; i < num_local_verts; ++i)
     degree_list[t][i+1] = degree_list[t][i] + temp_counts[i];
   memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
-
   for (uint64_t i = 0; i < num_local_edges[t]*2; i+=2)
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
   free(edge_list[t]);
@@ -205,7 +212,7 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
   std::vector<uint64_t> nonlocal_vids;
   for (uint64_t i = 0; i < num_local_edges[t]; ++i) {
     uint64_t out = edge_list[t][i];
-    if (vtx_mapping.count(out) == 0) {
+    if (vtx_mapping.find(out) ==vtx_mapping.end()) {
       vtx_mapping[out] = cur_label;
       edge_list[t][i] = cur_label++;
       nonlocal_vids.push_back(out);
@@ -214,12 +221,13 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
       edge_list[t][i] = vtx_mapping[out];
   }
   num_ghost_verts = cur_label - num_local_verts;
-
-  ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
-  owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
-  for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
-    ghost_unmap[i] = nonlocal_vids[i];
-    owners[i] = ranks[nonlocal_vids[i]];
+  if (num_ghost_verts>0) {
+    ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
+    owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
+    for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
+      ghost_unmap[i] = nonlocal_vids[i];
+      owners[i] = ranks[nonlocal_vids[i]];
+    }
   }
 
   return 0;
