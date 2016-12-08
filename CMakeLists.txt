@@ -17,6 +17,8 @@ include_directories(${SCOREC_PREFIX}/include)
 
 add_subdirectory(agi)
 
+add_subdirectory(zoltan)
+
 add_subdirectory(interfaces)
 
 add_subdirectory(test)

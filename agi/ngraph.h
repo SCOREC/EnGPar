@@ -79,32 +79,34 @@ public:
   lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
   
   //Vertex Operations
-  double weight(GraphVertex*) const;
-  int owner(GraphVertex*) const;
+  wgt_t weight(GraphVertex*) const;
+  part_t owner(GraphVertex*) const;
   const std::vector<double>& coordinates(GraphVertex*) const {};
+  lid_t localID(GraphVertex*) const;
+  gid_t globalID(GraphVertex*) const;
 
   //Edge Operations
   double weight(GraphEdge*) const;
   GraphVertex* v(GraphEdge*) const;
   
   //Adjacency Operations
-  lid_t degree(GraphVertex*,etype) const;
-  EdgeIterator* edges(GraphVertex*,etype) const;
-  void destroy(EdgeIterator*) const;
+  lid_t degree(GraphVertex*,etype t=0) const;
+  EdgeIterator* edges(GraphVertex*,etype t=0) const;
   lid_t degree(GraphEdge*) const;
   PinIterator* pins(GraphEdge*) const;
   
   //Iterator Traversal
   VertexIterator* begin() const;
   //TODO: make edge iterator begin for searching through a certain type
-  EdgeIterator* begin(etype) const {return NULL;}
+  EdgeIterator* begin(etype t) const;
   //Iterate through vertices
   GraphVertex* iterate(VertexIterator*&) const;
   //Iterate through Edges
   GraphEdge* iterate(EdgeIterator*) const;
   //Iterate through Pins
   GraphVertex* iterate(PinIterator*&) const;
-
+  //Destroys iterator
+  void destroy(EdgeIterator*) const;
   //Utility
   bool isEqual(GraphVertex*,GraphVertex*) const;
   virtual void migrate(std::map<GraphVertex*,int>&) = 0;

@@ -62,9 +62,6 @@ double Ngraph::weight(GraphVertex* vtx) const {
   return local_weights[index];
 }
 
-GraphVertex* Ngraph::v(GraphEdge* edge) const {
-  return reinterpret_cast<GraphVertex*>(edge);
-}
 
 int Ngraph::owner(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
@@ -74,10 +71,24 @@ int Ngraph::owner(GraphVertex* vtx) const {
   return owners[index];
 }
 
+lid_t Ngraph::localID(GraphVertex* vtx) const {
+  return  (uintptr_t)(vtx)-1;
+
+}
+gid_t Ngraph::globalID(GraphVertex* vtx) const {
+  return  local_unmap[(uintptr_t)(vtx)-1];
+}
+
+
 double Ngraph::weight(GraphEdge* edge) const {
   Edge* e = reinterpret_cast<Edge*>(edge);
   return e->weight;
 }
+
+GraphVertex* Ngraph::v(GraphEdge* edge) const {
+  return reinterpret_cast<GraphVertex*>(edge);
+}
+
 
 lid_t  Ngraph::degree(GraphVertex* vtx,etype type) const {
   uintptr_t index =(uintptr_t)(vtx)-1;
@@ -109,6 +120,10 @@ PinIterator* Ngraph::pins(GraphEdge* edge) const {
 
 VertexIterator* Ngraph::begin() const {
   return reinterpret_cast<VertexIterator*>((char*)1);
+}
+
+EdgeIterator* Ngraph::begin(etype t) const {
+  return new EdgeIterator(t,edge_list[t]);
 }
   
 GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
