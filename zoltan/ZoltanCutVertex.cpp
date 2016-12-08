@@ -1,5 +1,5 @@
 #include "ZoltanCutVertex.h"
-
+#include <iostream>
 namespace zagi {
 
   ZoltanCutVertex::ZoltanCutVertex(agi::Ngraph* graph,int num_parts) {
@@ -10,7 +10,7 @@ namespace zagi {
       fprintf(stderr, "ERROR: Zoltan initialization failed\n");
       exit(1);
     }
-    ztn =Zoltan_Create(MPI_COMM_WORLD);
+    ztn =Zoltan_Create(MPI_COMM_SELF);
     import_gids = NULL;
     import_lids = NULL;
     import_procs = NULL;
@@ -37,6 +37,8 @@ namespace zagi {
     sprintf(paramStr,"%d",num_parts);
     Zoltan_Set_Param(ztn, "NUM_GLOBAL_PARTS", paramStr);
     Zoltan_Set_Param(ztn, "NUM_LOCAL_PARTS", paramStr);
+    sprintf(paramStr,"PARTS");
+    Zoltan_Set_Param(ztn, "RETURN_LISTS", paramStr);
     Zoltan_Set_Fn(ztn,ZOLTAN_NUM_OBJ_FN_TYPE,(void (*)())num_obj,(void*)(g));
     Zoltan_Set_Fn(ztn,ZOLTAN_OBJ_LIST_FN_TYPE,(void (*)())obj_list,(void*)(g));
     Zoltan_Set_Fn(ztn,ZOLTAN_HG_SIZE_CS_FN_TYPE,(void (*)())hg_size,(void*)(g));
@@ -54,10 +56,17 @@ namespace zagi {
 				  &import_gids,&import_lids, &import_procs,
 				  &import_to_part,&num_exported,&export_gids,
 				  &export_lids,&export_procs,&export_to_part);
-
+    
     if( ZOLTAN_OK != ret ) {
       fprintf(stderr, "ERROR Zoltan partitioning failed\n");
       exit(EXIT_FAILURE);
+    }
+
+  }
+  void ZoltanCutVertex::createPtn(agi::EdgePartitionMap& ptn) {
+
+    for (int i=0;i<num_exported;i++) {
+      ptn[export_lids[i]] =  export_to_part[i];
     }
   }
 }

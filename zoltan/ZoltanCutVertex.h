@@ -1,6 +1,7 @@
 #ifndef __ZOLTAN_CUT_VERTEX__
 #define __ZOLTAN_CUT_VERTEX__
 
+#include <unordered_map>
 #include "ZoltanCallbacks.h"
 #include <ngraph.h>
 #include <zoltan.h>
@@ -12,6 +13,7 @@ class ZoltanCutVertex {
   ~ZoltanCutVertex();
 
   void run();
+  void createPtn(agi::EdgePartitionMap&);
  private:
   agi::Ngraph* g;
   Zoltan_Struct* ztn;

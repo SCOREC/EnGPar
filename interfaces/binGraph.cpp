@@ -11,11 +11,6 @@
 #include <PCU.h>
 #include <iostream>
 namespace agi {
-void phi() {
-  if (!PCU_Comm_Self())
-    printf("hi\n");
-}
-
   //TODO: replace mallocs with new
   //TODO: replace mpi calls iwth PCU
 binGraph::binGraph(char* graph_file) : Ngraph() {
@@ -41,6 +36,63 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
 binGraph::~binGraph() {
   //cleanup any additional memory
 }
+
+void binGraph::migrate(agi::EdgePartitionMap& map) {
+  EdgePartitionMap::iterator itr;
+  PCU_Comm_Begin();
+  for (itr = map.begin();itr!=map.end();itr++) {
+    lid_t lid = itr->first;
+    gid_t v1 = local_unmap[u(lid)];
+    gid_t v2 = local_unmap[edge_list[0][lid]];
+    PCU_COMM_PACK(itr->second,v1);
+    PCU_COMM_PACK(itr->second,v2);
+  }
+  PCU_Comm_Send();
+  std::vector<gid_t> recv_edges;
+  while (PCU_Comm_Receive()) {
+    gid_t v1;
+    PCU_COMM_UNPACK(v1);
+    recv_edges.push_back(v1);
+  }
+  num_global_verts = PCU_Add_Long(num_global_verts);
+  if (numEdgeTypes()==0)
+    addEdgeType();
+
+  num_local_edges[0] = recv_edges.size()/2;
+  num_global_edges[0] = PCU_Add_Long(num_local_edges[0]);
+  
+  if (edge_list[0])
+    delete edge_list[0];
+  edge_list[0] = new gid_t[num_local_edges[0]*2];
+  std::copy(recv_edges.begin(),recv_edges.end(),edge_list[0]);
+  vtx_mapping.clear();
+  int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
+  for (int i=0;i<num_global_verts;i++)
+    ranks[i] = -1;
+  for (lid_t i=0;i<num_local_edges[0]*2;i++) {
+    ranks[edge_list[0][i]] = PCU_Comm_Self();
+  }
+
+  create_dist_csr(ranks,0,false);
+  delete [] ranks;
+
+  PCU_Comm_Begin();
+  for (int i=0;i<num_local_verts;i++) {
+    PCU_COMM_PACK((PCU_Comm_Self()+1)%2,local_unmap[i]);
+  }
+  PCU_Comm_Send();
+  std::vector<gid_t> dups;
+  while (PCU_Comm_Receive()) {
+    gid_t gid;
+    PCU_COMM_UNPACK(gid);
+    if (vtx_mapping.find(gid)!=vtx_mapping.end()) {
+      dups.push_back(gid);
+    }
+  }
+  num_ghost_verts = dups.size();
+  num_local_edges[SPLIT_TYPE] = dups.size();
+}
+
   //TODO: optimize these operations using PCU
 //Private Functions
 etype binGraph::load_edges(char *filename, uint64_t*& read_edges,
@@ -77,7 +129,7 @@ etype binGraph::load_edges(char *filename, uint64_t*& read_edges,
       num_global_verts = read_edges[i];
     }
 
-  MPI_Allreduce(MPI_IN_PLACE, &num_global_verts, 1, MPI_UINT64_T, MPI_MAX, MPI_COMM_WORLD);
+  MPI_Allreduce(MPI_IN_PLACE, &num_global_verts, 1, MPI_UINT64_T, MPI_MAX, PCU_Get_Comm());
  
   num_global_verts += 1;
 
@@ -135,7 +187,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   }
 
   MPI_Alltoall(scounts, 1, MPI_INT32_T,
-               rcounts, 1, MPI_INT32_T, MPI_COMM_WORLD);
+               rcounts, 1, MPI_INT32_T, PCU_Get_Comm());
 
   for (uint64_t i = 1; i < PCU_Comm_Peers(); ++i) {
     sdispls[i] = sdispls[i-1] + scounts[i-1];
@@ -160,24 +212,28 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   }
 
   MPI_Alltoallv(sendbuf, scounts, sdispls, MPI_UINT64_T,
-                edge_list[t], rcounts, rdispls, MPI_UINT64_T, MPI_COMM_WORLD);
+                edge_list[t], rcounts, rdispls, MPI_UINT64_T, PCU_Get_Comm());
   free(sendbuf);
 
   return 0;
 }
 
 
-int binGraph::create_dist_csr(int32_t* ranks,etype t)
+  int binGraph::create_dist_csr(int32_t* ranks,etype t,bool createGhost)
 {
   num_local_verts = 0;
+
   for (uint64_t i = 0; i < num_global_verts; ++i)
     if (ranks[i] == PCU_Comm_Self())
       ++num_local_verts;
+
   local_unmap = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-  
   uint64_t cur_label = 0;
   for (uint64_t i = 0; i < num_local_edges[t]*2; i++) {
     uint64_t out = edge_list[t][i];
+
+
+    
     if (ranks[out] != PCU_Comm_Self())
       continue;
     if (vtx_mapping.count(out) == 0) {
@@ -188,12 +244,9 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
     else        
       edge_list[t][i] = vtx_mapping[out];
   }
-  //assert(cur_label==num_local_verts);
-
   uint64_t* tmp_edges = (uint64_t*)malloc(num_local_edges[t]*sizeof(uint64_t));
   uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
   degree_list[t] = (uint64_t*)malloc((num_local_verts+1)*sizeof(uint64_t));
-
   for (uint64_t i = 0; i < num_local_verts+1; ++i)
     degree_list[t][i] = 0;
   for (uint64_t i = 0; i < num_local_verts; ++i)
@@ -207,26 +260,27 @@ int binGraph::create_dist_csr(int32_t* ranks,etype t)
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
   free(edge_list[t]);
   edge_list[t] = tmp_edges;
-
-  cur_label = num_local_verts;
-  std::vector<uint64_t> nonlocal_vids;
-  for (uint64_t i = 0; i < num_local_edges[t]; ++i) {
-    uint64_t out = edge_list[t][i];
-    if (vtx_mapping.find(out) ==vtx_mapping.end()) {
-      vtx_mapping[out] = cur_label;
-      edge_list[t][i] = cur_label++;
-      nonlocal_vids.push_back(out);
+  if (createGhost) {
+    cur_label = num_local_verts;
+    std::vector<uint64_t> nonlocal_vids;
+    for (uint64_t i = 0; i < num_local_edges[t]; ++i) {
+      uint64_t out = edge_list[t][i];
+      if (vtx_mapping.find(out) ==vtx_mapping.end()) {
+	vtx_mapping[out] = cur_label;
+	edge_list[t][i] = cur_label++;
+	nonlocal_vids.push_back(out);
+      }
+      else        
+	edge_list[t][i] = vtx_mapping[out];
     }
-    else        
-      edge_list[t][i] = vtx_mapping[out];
-  }
-  num_ghost_verts = cur_label - num_local_verts;
-  if (num_ghost_verts>0) {
-    ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
-    owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
-    for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
-      ghost_unmap[i] = nonlocal_vids[i];
-      owners[i] = ranks[nonlocal_vids[i]];
+    num_ghost_verts = cur_label - num_local_verts;
+    if (num_ghost_verts>0) {
+      ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
+      owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
+      for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
+	ghost_unmap[i] = nonlocal_vids[i];
+	owners[i] = ranks[nonlocal_vids[i]];
+      }
     }
   }
 

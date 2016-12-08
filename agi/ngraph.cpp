@@ -85,6 +85,24 @@ double Ngraph::weight(GraphEdge* edge) const {
   return e->weight;
 }
 
+lid_t Ngraph::u(lid_t e) const {
+  bool found = false;
+  lid_t index = 0;
+  lid_t bound_low=0;
+  lid_t bound_high = numLocalVtxs();
+  while (!found) {
+    index = (bound_high+bound_low)/2;
+    if (degree_list[0][index]<= e&& degree_list[0][index+1]>e) 
+      found=true;
+    else if (degree_list[0][index]<=e)
+      bound_low=index;
+    else
+      bound_high=index;
+
+  }
+  return index;
+}
+
 GraphVertex* Ngraph::v(GraphEdge* edge) const {
   return reinterpret_cast<GraphVertex*>(edge);
 }

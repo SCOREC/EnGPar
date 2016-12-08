@@ -74,6 +74,7 @@ public:
   //Local Part Information
   lid_t numLocalVtxs() const {return num_local_verts;}
   lid_t numGhostVtxs() const {return num_ghost_verts;}
+  lid_t numTotalVtxs() const {return num_local_verts+num_ghost_verts;}
   int numEdgeTypes() const {return num_types;}
   lid_t numLocalEdges(etype i=0) const {return num_local_edges[i];}
   lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
@@ -87,6 +88,7 @@ public:
 
   //Edge Operations
   double weight(GraphEdge*) const;
+  lid_t u(lid_t) const;
   GraphVertex* v(GraphEdge*) const;
   
   //Adjacency Operations

@@ -12,11 +12,15 @@ typedef uint64_t gid_t;
 typedef uint64_t lid_t;
 typedef double wgt_t;
 typedef int32_t part_t;
- 
+
+typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
+typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
 //Definitions for edge types
-#define MAX_TYPES 10 //static size of edge types
+//static size of edge types
+#define MAX_TYPES 10 
 typedef int etype; 
-#define SPLIT_TYPE 9 //predefined edge type for split vtx
+//predefined edge type for split vtx
+#define SPLIT_TYPE 9 
 
 }
 #endif

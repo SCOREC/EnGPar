@@ -11,6 +11,8 @@ namespace agi {
   
 class binGraph : public Ngraph {
  public:
+  //Construct an empty binary graph
+  binGraph() : Ngraph() {}
   //Construction for a serial example
   //  In parallel a vertex block partitioning occurs
   binGraph(char* graph_file);
@@ -20,7 +22,8 @@ class binGraph : public Ngraph {
   ~binGraph();
 
   
-  void migrate(std::map<GraphVertex*,int>&) {};
+  void migrate(std::map<GraphVertex*,part_t>&) {};
+  void migrate(agi::EdgePartitionMap&);
 
  private:
   //Loads edges from binary file
@@ -33,7 +36,7 @@ class binGraph : public Ngraph {
   int exchange_edges(uint64_t m_read, uint64_t* read_edges,
                      int32_t* ranks,etype t);
   //Creates the distributed csr
-  int create_dist_csr(int32_t* ranks,etype t);
+  int create_dist_csr(int32_t* ranks,etype t,bool createGhost = true);
 
   
 };
