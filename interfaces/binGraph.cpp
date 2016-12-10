@@ -76,9 +76,11 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   create_dist_csr(ranks,0,false);
   delete [] ranks;
 
+  //TODO: Make much more efficient
   PCU_Comm_Begin();
   for (int i=0;i<num_local_verts;i++) {
-    PCU_COMM_PACK((PCU_Comm_Self()+1)%2,local_unmap[i]);
+    for (int j=1;j<PCU_Comm_Peers();j++)
+      PCU_COMM_PACK((PCU_Comm_Self()+j)%PCU_Comm_Peers(),local_unmap[i]);
   }
   PCU_Comm_Send();
   std::vector<gid_t> dups;

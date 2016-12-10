@@ -55,11 +55,12 @@ int main(int argc, char* argv[]) {
   agi::binGraph* g;
   zagi::ZoltanCutVertex* ptn;
   int self = PCU_Comm_Self();
+  int num_parts = PCU_Comm_Peers();
   PCU_Switch_Comm(MPI_COMM_SELF);
   if (!self) {
 
     g = new agi::binGraph(argv[1]);
-    ptn = new zagi::ZoltanCutVertex(g,2);
+    ptn = new zagi::ZoltanCutVertex(g,num_parts);
     ptn->run();
   }
   else
