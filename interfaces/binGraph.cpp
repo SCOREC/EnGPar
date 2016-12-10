@@ -33,6 +33,11 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
 
 }
 
+  void phi() {
+    if (!PCU_Comm_Self()) {
+      printf("hi\n");
+    }
+  }
 binGraph::~binGraph() {
   //cleanup any additional memory
 }
@@ -83,16 +88,44 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
       PCU_COMM_PACK((PCU_Comm_Self()+j)%PCU_Comm_Peers(),local_unmap[i]);
   }
   PCU_Comm_Send();
+  std::vector<part_t> owns;
   std::vector<gid_t> dups;
+  degree_list[SPLIT_TYPE] = new lid_t[num_local_verts+1];
+  for (int i=0;i<num_local_verts+1;++i)
+    degree_list[SPLIT_TYPE][i]=0;
+
   while (PCU_Comm_Receive()) {
     gid_t gid;
     PCU_COMM_UNPACK(gid);
-    if (vtx_mapping.find(gid)!=vtx_mapping.end()) {
+    map_t::iterator itr = vtx_mapping.find(gid);
+    if (itr!=vtx_mapping.end()) {
       dups.push_back(gid);
+      owns.push_back(PCU_Comm_Sender());
+      degree_list[SPLIT_TYPE][itr->second+1]++;
     }
   }
+
+  for (int i=1;i<num_local_verts+1;++i)
+    degree_list[SPLIT_TYPE][i]+=degree_list[SPLIT_TYPE][i-1];
+
+  assert(degree_list[SPLIT_TYPE][num_local_verts] ==dups.size());
   num_ghost_verts = dups.size();
   num_local_edges[SPLIT_TYPE] = dups.size();
+
+  ghost_unmap = new gid_t[dups.size()];
+  owners = new part_t[dups.size()];
+  uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
+  memcpy(temp_counts, degree_list[SPLIT_TYPE], num_local_verts*sizeof(uint64_t));
+
+  edge_list[SPLIT_TYPE] = new lid_t[dups.size()];
+  
+  for (unsigned int i=0;i<dups.size();i++) {
+    lid_t lid = vtx_mapping[dups[i]];
+    edge_list[SPLIT_TYPE][temp_counts[lid]++] = num_local_verts+i;
+    ghost_unmap[i]=dups[i];
+    owners[i] = owns[i];
+  }
+  num_global_edges[SPLIT_TYPE] = PCU_Add_Long(num_local_edges[SPLIT_TYPE]);
 }
 
   //TODO: optimize these operations using PCU
