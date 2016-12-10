@@ -54,4 +54,24 @@ namespace zagi {
     *ierr = 0;
   }
 
+  void hg_ew_size(void* data, int* num_edges, int* ierr) {
+    agi::Ngraph*  g = static_cast<agi::Ngraph*>(data);
+    *num_edges = g->numLocalVtxs();
+    *ierr = 0;
+  }
+
+  void hg_ew(void* data,int num_gid_entries,int num_lid_entries,int num_edges, int edge_weight_dim,
+	     ZOLTAN_ID_PTR edge_GID,ZOLTAN_ID_PTR edge_LID,float* edge_weights,int* ierr) {
+    agi::Ngraph*  g = static_cast<agi::Ngraph*>(data);
+    agi::VertexIterator* itr = g->begin();
+    agi::GraphVertex* vtx;
+    int i=0;
+    while ((vtx = g->iterate(itr))) {
+      edge_GID[i] = g->globalID(vtx);
+      edge_LID[i] = i;
+      edge_weights[i] = 1.0/g->degree(vtx);
+    }
+    *ierr=0;
+  }
+
 }

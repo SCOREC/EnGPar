@@ -39,10 +39,14 @@ namespace zagi {
     Zoltan_Set_Param(ztn, "NUM_LOCAL_PARTS", paramStr);
     sprintf(paramStr,"PARTS");
     Zoltan_Set_Param(ztn, "RETURN_LISTS", paramStr);
+    sprintf(paramStr,"%d",1);
+    Zoltan_Set_Param(ztn,"EDGE_WEIGHT_DIM",paramStr);
     Zoltan_Set_Fn(ztn,ZOLTAN_NUM_OBJ_FN_TYPE,(void (*)())num_obj,(void*)(g));
     Zoltan_Set_Fn(ztn,ZOLTAN_OBJ_LIST_FN_TYPE,(void (*)())obj_list,(void*)(g));
     Zoltan_Set_Fn(ztn,ZOLTAN_HG_SIZE_CS_FN_TYPE,(void (*)())hg_size,(void*)(g));
     Zoltan_Set_Fn(ztn,ZOLTAN_HG_CS_FN_TYPE,(void (*)())hg_data,(void*)(g));
+    Zoltan_Set_Fn(ztn,ZOLTAN_HG_SIZE_EDGE_WTS_FN_TYPE,(void (*)())hg_ew_size,(void*)(g));
+    Zoltan_Set_Fn(ztn,ZOLTAN_HG_EDGE_WTS_FN_TYPE,(void (*)())hg_ew,(void*)(g));
   }
 
   ZoltanCutVertex::~ZoltanCutVertex() {

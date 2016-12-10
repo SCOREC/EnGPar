@@ -14,6 +14,11 @@ namespace zagi {
 
   void hg_data(void* data,int num_gid_entries, int num_vtx_edge,int num_pins,int format, 
 	       ZOLTAN_ID_PTR vtxedge_GID, int* vtxedge_ptr,ZOLTAN_ID_PTR pin_GID,int* ierr);
+
+  void hg_ew_size(void* data, int* num_edges, int* ierr);
+
+  void hg_ew(void* data,int num_gid_entries,int num_lid_entries,int num_edges, int edge_weight_dim,
+	     ZOLTAN_ID_PTR edge_GID,ZOLTAN_ID_PTR edge_LID,float* edge_weights,int* ierr);
 }
 
 #endif
