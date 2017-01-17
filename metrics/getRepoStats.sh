@@ -1,7 +1,6 @@
 #!/bin/bash -e
 jq=/path/to/jq/binary
 auth='Authorization: token <your OAuth token>'
-media='Accept:   application/vnd.github.spiderman-preview'
 repourl=https://api.github.com/repos/SCOREC/EnGPar
 
 stamp=`date +%d%m%Y`
