@@ -43,3 +43,5 @@ echo $stamp $count >> core.pulls
 curl $repourl/issues?state=closed -H "$auth" > $stamp.issues
 count=$($jq -r ".[].title" $stamp.issues | wc -l)
 echo $stamp $count >> core.issues
+
+rm $stamp.*
