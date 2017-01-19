@@ -12,7 +12,7 @@
 #include <iostream>
 namespace agi {
   //TODO: replace mallocs with new
-  //TODO: replace mpi calls iwth PCU
+  //TODO: replace mpi calls with PCU
 binGraph::binGraph(char* graph_file) : Ngraph() {
   uint64_t* read_edges;
   uint64_t m_read;
