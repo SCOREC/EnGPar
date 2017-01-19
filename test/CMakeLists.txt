@@ -50,3 +50,8 @@ if (ENABLE_ZOLTAN)
     )
 
 endif()
+
+#Ctest file
+if(IS_TESTING)
+  include(testing.cmake)
+endif()
