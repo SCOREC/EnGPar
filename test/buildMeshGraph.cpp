@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   int primary = atoi(argv[3]);
   int second = atoi(argv[4]);
   if (!PCU_Comm_Self())
-    printf("\nConstructing Graph with Vertices: %d, and edges: %d\n",
+    printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dim: %d\n",
            primary,second);
   agi::apfGraph g(m,primary,second);
   int secondaries1[1] = {second};
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
   //Test of multiple edge types, vertices=0,faces=1
   int secondaries[2] = {0,2};
   if (!PCU_Comm_Self())
-    printf("\nConstructing Graph with Vertices: %d, and edges: %d,%d\n",
+    printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dims: %d,%d\n",
            primary,secondaries[0],secondaries[1]);
 
   agi::apfGraph g2(m,primary,secondaries,2);
@@ -85,7 +85,7 @@ int main(int argc, char* argv[]) {
   testSizes(m,g2,primary,secondaries,2);
   testVertices(m,g2);
   testEdges(m,g2,primary,secondaries,2);
-  
+
   m->destroyNative();
   apf::destroyMesh(m);
 
@@ -164,14 +164,12 @@ void testVertices(apf::Mesh* m,agi::apfGraph& g) {
   assert(i==g.numLocalVtxs());
 
 }
-
 void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n) {
   if (!PCU_Comm_Self())
     printf("Iterating over edges & pins\n");
   //Test iterating through edges & pins on vertices
   agi::VertexIterator* gitr = g.begin();
   agi::GraphVertex* vtx=NULL;
-
   for (int i=0;i<n;i++) {
     int num_pins = getNumNaiveEdges(m,primary,seconds[i]);
     int tot_pins=0;
@@ -191,8 +189,9 @@ void testEdges(apf::Mesh* m,agi::apfGraph& g,int primary,int* seconds,int n) {
         other_count+=np-1;
         for (int k=0;k<np;k++) {
           out = g.iterate(pitr);
-          if (g.owner(out)!=PCU_Comm_Self())
+          if (g.owner(out)!=PCU_Comm_Self()) {
             ghost_pins++;
+	  }
           if (g.isEqual(out,vtx))
               continue;
           tot_pins++;

@@ -40,7 +40,10 @@ protected:
   // size=num_edges
   //TODO: think of a way to use struct of arrays instead
   //TODO: allow disable hypergraph for simple graphs to minimize memory
-  Edge* es[MAX_TYPES];
+  gid_t* edge_ids[MAX_TYPES];
+  wgt_t* edge_weights[MAX_TYPES];
+  
+  //Edge* es[MAX_TYPES];
   
   //TODO: do we want ghost weights?
   //wgt_t* ghost_weights
@@ -85,6 +88,7 @@ public:
   const std::vector<double>& coordinates(GraphVertex*) const {};
   lid_t localID(GraphVertex*) const;
   gid_t globalID(GraphVertex*) const;
+  GraphVertex* find(GraphVertex* vtx) const;
 
   //Edge Operations
   double weight(GraphEdge*) const;
@@ -99,12 +103,12 @@ public:
   
   //Iterator Traversal
   VertexIterator* begin() const;
-  //TODO: make edge iterator begin for searching through a certain type
+  GraphVertex* findGID(gid_t gid) const;
   EdgeIterator* begin(etype t) const;
   //Iterate through vertices
   GraphVertex* iterate(VertexIterator*&) const;
   //Iterate through Edges
-  GraphEdge* iterate(EdgeIterator*) const;
+  GraphEdge* iterate(EdgeIterator*&) const;
   //Iterate through Pins
   GraphVertex* iterate(PinIterator*&) const;
   //Destroys iterator

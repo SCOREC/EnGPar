@@ -9,9 +9,8 @@ class Ngraph;
 class EdgeIterator {
   friend class Ngraph;
  private:
-  etype type;
-  lid_t* loc;
-  EdgeIterator(etype t, lid_t* l) : type(t), loc(l) {}
+  gid_t* loc;
+  EdgeIterator(etype t, int nt, lid_t* l) : loc((gid_t*)(1+t+nt*(uintptr_t)l)) {}
 };
   
 }

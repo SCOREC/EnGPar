@@ -37,4 +37,16 @@ if (ENABLE_ZOLTAN)
     ${ZOLTAN_LIBRARIES}
     ${PARMETIS_LIBRARIES}
     )
+  add_executable(pagerank pagerank.cpp)
+  target_link_libraries(pagerank PUBLIC ${ALL_LIBS})
+
+  target_include_directories(pagerank PRIVATE
+    ${ZOLTAN_INCLUDE_DIRS}
+    ${PARMETIS_INCLUDE_DIRS}
+    )
+  target_link_libraries(pagerank PUBLIC
+    ${ZOLTAN_LIBRARIES}
+    ${PARMETIS_LIBRARIES}
+    )
+
 endif()

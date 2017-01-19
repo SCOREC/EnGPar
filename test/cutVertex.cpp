@@ -9,7 +9,7 @@
 
 typedef agi::lid_t lid_t;
 void partitionInfo(agi::binGraph* g) {
-  lid_t total_verts = g->numTotalVtxs();
+  lid_t total_verts = g->numLocalVtxs();
   lid_t global_verts = g->numGlobalVtxs();
   lid_t edges = g->numLocalEdges()+g->numLocalEdges(SPLIT_TYPE);
   lid_t min = PCU_Min_Int(total_verts);
@@ -58,7 +58,6 @@ int main(int argc, char* argv[]) {
   int num_parts = PCU_Comm_Peers();
   PCU_Switch_Comm(MPI_COMM_SELF);
   if (!self) {
-
     g = new agi::binGraph(argv[1]);
     ptn = new zagi::ZoltanCutVertex(g,num_parts);
     ptn->run();

@@ -263,7 +263,7 @@ void apfGraph::connectToPins(int primary_dimension,
     }
     else
       lvid = itr->second;
-    pl[temp_counts[lid]++]+= lvid;
+    pl[temp_counts[lid]++]= lvid;
 
   }
   
