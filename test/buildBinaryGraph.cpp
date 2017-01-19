@@ -67,6 +67,8 @@ void testVertices(agi::binGraph* g) {
 }
 
 void testEdges(agi::binGraph* g) {
+  if (!PCU_Comm_Self())
+    printf("Iterating over edges\n");
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
   int num_edges =0;
@@ -77,14 +79,16 @@ void testEdges(agi::binGraph* g) {
     agi::GraphVertex* other;
     agi::EdgeIterator* eitr = g->edges(vtx,0);
     for (int j=0;j<deg;j++) {
+      agi::GraphEdge* edge = g->iterate(eitr);
+
       other = g->v(g->iterate(eitr));
       if (g->owner(other)!=PCU_Comm_Self())
         ghosts.insert(other);
-      
       //assert(g->weight(edge)>0);
       num_edges++;
     }
   }
+
   assert(ghosts.size()==g->numGhostVtxs());
   assert(num_edges==g->numLocalEdges());
 }

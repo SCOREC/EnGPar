@@ -71,7 +71,8 @@ double Ngraph::weight(GraphVertex* vtx) const {
 int Ngraph::owner(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
   if (index>=num_local_verts+num_ghost_verts) {
-    printf("[ERROR] invalid vertex given to owner(vtx)\n");
+    fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
+    fprintf(stderr,"  Error vertex number: %d, Total vertices: %d\n",index,num_local_verts+num_ghost_verts);
     return -1;
   }
   if (index<num_local_verts)
@@ -126,7 +127,7 @@ GraphVertex* Ngraph::v(GraphEdge* edge) const {
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
-  return reinterpret_cast<GraphVertex*>(edge_list[type][id]);
+  return reinterpret_cast<GraphVertex*>(edge_list[type][id]+1);
 }
 
 
