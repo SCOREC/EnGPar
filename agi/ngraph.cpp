@@ -138,7 +138,7 @@ lid_t  Ngraph::degree(GraphVertex* vtx,etype type) const {
   
 EdgeIterator* Ngraph::edges(GraphVertex* vtx,etype type) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
-  EdgeIterator* eitr = new EdgeIterator(type,num_types,(lid_t*)degree_list[type][index]);
+  EdgeIterator* eitr = new EdgeIterator(type,num_types,(lid_t*)degree_list[type][index],degree(vtx,type));
   return eitr;
 }
 
@@ -168,7 +168,7 @@ GraphVertex* Ngraph::findGID(gid_t gid) const {
 }
 
 EdgeIterator* Ngraph::begin(etype t) const {
-  return new EdgeIterator(t,num_types,edge_list[t]);
+  return new EdgeIterator(t,num_types,edge_list[t],num_local_edges[t]);
 }
   
 GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
@@ -182,6 +182,8 @@ GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
   return vtx;
 }
 GraphEdge* Ngraph::iterate(EdgeIterator*& itr) const {
+  if (itr->loc>=itr->end)
+    return NULL;
   uintptr_t index = (uintptr_t)itr->loc;
   itr->loc = (gid_t*)(index+num_types);
   return (GraphEdge*)(index);

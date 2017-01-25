@@ -5,7 +5,6 @@
 #include <unordered_map>
 #include <map>
 #include <cassert>
-#include "Edge.h"
 #include "agi.h"
 #include "EdgeIterator.h"
 
@@ -43,7 +42,7 @@ protected:
   gid_t* edge_ids[MAX_TYPES];
   wgt_t* edge_weights[MAX_TYPES];
   
-  //Edge* es[MAX_TYPES];
+
   
   //TODO: do we want ghost weights?
   //wgt_t* ghost_weights

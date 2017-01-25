@@ -85,9 +85,18 @@ void testEdges(agi::binGraph* g) {
       //assert(g->weight(edge)>0);
       num_edges++;
     }
+
+    int temp_count =0;
+    eitr = g->edges(vtx,0);
+    agi::GraphEdge* edge;
+    while (edge = g->iterate(eitr)) {
+      other = g->v(edge);
+      temp_count++;
+    }
+    assert(temp_count==deg);
   }
-  printf("Ghosts: %d Should be: %d\n",ghosts.size(),g->numGhostVtxs());
   assert(ghosts.size()==g->numGhostVtxs());
   assert(num_edges==g->numLocalEdges());
 
 }
+
