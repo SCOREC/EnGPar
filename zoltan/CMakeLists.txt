@@ -14,13 +14,10 @@ include_directories(
   )
 
 if (ENABLE_ZOLTAN)
-  message(hi)
   set(ZOLTAN_SOURCE
     ZoltanCallbacks.cpp
     ZoltanCutVertex.cpp
     )
-else()
-  message(fail)
 endif()
 
 add_library(agi_zoltan ${ZOLTAN_SOURCE})

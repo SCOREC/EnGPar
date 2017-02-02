@@ -158,6 +158,7 @@ void testVertices(apf::Mesh* m,agi::apfGraph& g) {
   while (vtx = g.iterate(gitr)) {
     i++;
     assert(g.weight(vtx)==1.0);
+    g.coord(vtx);
     assert(g.degree(vtx,0)>0);
     assert(i<=g.numLocalVtxs());
   }

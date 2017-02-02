@@ -81,10 +81,13 @@ void apfGraph::setupPrimary(int primary_dimension) {
     throw 3;
   }
   //Create vtx weight array
-  local_weights = new double[num_local_verts];
+  local_weights = new wgt_t[num_local_verts];
   for (int i=0;i<num_local_verts;i++) {
     local_weights[i]=0;
   }
+
+  //Create vtx coordinate array
+  local_coords = new coord_t[num_local_verts];
 
   //Create a global numbering on the mesh over primary_dimension
   apf::Numbering* numbers = apf::numberOwnedDimension(m,"primary_ids",
@@ -103,6 +106,7 @@ void apfGraph::setupPrimary(int primary_dimension) {
       continue;
     gid_t gid = apf::getNumber(global_nums,ent,0);
     local_weights[lid]=1;
+    local_coords[lid] = getLinearCentroid(m,ent);
     vtx_mapping[gid]=lid;
     local_unmap[lid++] = gid;
   }

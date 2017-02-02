@@ -13,7 +13,7 @@ Ngraph::Ngraph() {
   
   num_types=0;
   local_weights=NULL;
-
+  local_coords=NULL;
   for (int i=0;i<MAX_TYPES;i++) {
     edge_ids[i] = NULL;
     edge_weights[i] = NULL;
@@ -35,7 +35,8 @@ Ngraph::Ngraph() {
 Ngraph::~Ngraph() {
   if (local_weights)
     delete [] local_weights;
-  
+  if (local_coords)
+    delete [] local_coords;
   for (int i=0;i<MAX_TYPES;i++) {
     if (edge_ids[i])
       delete [] edge_ids[i];
@@ -58,13 +59,29 @@ Ngraph::~Ngraph() {
     delete [] owners;
 }
  
-double Ngraph::weight(GraphVertex* vtx) const {
+const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
-  if (index>=num_local_verts) {
+  if (index>=numTotalVtxs()){
+    printf("[ERROR] invalid vertex given to weight(vtx)\n");
+    throw 1;
+  }    
+  else if (index>=num_local_verts) {
     printf("[ERROR] weights unknown for ghost vertices\n");
-    return 0;
+    throw 2;
   }
   return local_weights[index];
+}
+const coord_t& Ngraph::coord(GraphVertex* vtx) const {
+  uintptr_t index = (uintptr_t)(vtx)-1;
+  if (index>=numTotalVtxs()){
+    printf("[ERROR] invalid vertex given to coord(vtx)\n");
+    throw 1;
+  }    
+  else if (index>=num_local_verts) {
+    printf("[ERROR] coordinates unknown for ghost vertices\n");
+    throw 2;
+  }
+  return local_coords[index];
 }
 
 
@@ -72,7 +89,6 @@ int Ngraph::owner(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
   if (index>=num_local_verts+num_ghost_verts) {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
-    fprintf(stderr,"  Error vertex number: %d, Total vertices: %d\n",index,num_local_verts+num_ghost_verts);
     return -1;
   }
   if (index<num_local_verts)

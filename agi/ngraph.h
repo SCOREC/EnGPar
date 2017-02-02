@@ -34,21 +34,15 @@ protected:
   // vertex weights
   // size = num_local_verts
   wgt_t* local_weights;
-
+  // vertex coordinates
+  // size = num_local_verts
+  coord_t* local_coords;
+  
   //edge weights
   // size=num_edges
-  //TODO: think of a way to use struct of arrays instead
-  //TODO: allow disable hypergraph for simple graphs to minimize memory
   gid_t* edge_ids[MAX_TYPES];
   wgt_t* edge_weights[MAX_TYPES];
   
-
-  
-  //TODO: do we want ghost weights?
-  //wgt_t* ghost_weights
-
-  //TODO: add coordinate container
-  //coord_t* local_coords;
   
   lid_t* degree_list[MAX_TYPES];
   lid_t* edge_list[MAX_TYPES];
@@ -82,7 +76,8 @@ public:
   lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
   
   //Vertex Operations
-  wgt_t weight(GraphVertex*) const;
+  const wgt_t& weight(GraphVertex*) const;
+  const coord_t& coord(GraphVertex*) const;
   part_t owner(GraphVertex*) const;
   const std::vector<double>& coordinates(GraphVertex*) const {};
   lid_t localID(GraphVertex*) const;
@@ -96,13 +91,17 @@ public:
   
   //Adjacency Operations
   lid_t degree(GraphVertex*,etype t=0) const;
+  //Creates an iterator over the edges of the given vertex
   EdgeIterator* edges(GraphVertex*,etype t=0) const;
   lid_t degree(GraphEdge*) const;
+  //Creates an iterator over the pins of the given edge
   PinIterator* pins(GraphEdge*) const;
   
   //Iterator Traversal
+  //Creates an iterator over all vertices
   VertexIterator* begin() const;
   GraphVertex* findGID(gid_t gid) const;
+  //Creates an iterator over all edges
   EdgeIterator* begin(etype t) const;
   //Iterate through vertices
   GraphVertex* iterate(VertexIterator*&) const;
@@ -112,6 +111,8 @@ public:
   GraphVertex* iterate(PinIterator*&) const;
   //Destroys iterator
   void destroy(EdgeIterator*) const;
+
+  
   //Utility
   bool isEqual(GraphVertex*,GraphVertex*) const;
   virtual void migrate(std::map<GraphVertex*,int>&) = 0;
