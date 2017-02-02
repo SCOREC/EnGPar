@@ -48,7 +48,14 @@ if (ENABLE_ZOLTAN)
     ${ZOLTAN_LIBRARIES}
     ${PARMETIS_LIBRARIES}
     )
+endif()
 
+if (ENABLE_KOKKOS)
+  find_package(Kokkos MODULE REQUIRED)
+  add_executable(kokkosHelloWorld kokkosHelloWorld.cpp)
+  target_link_libraries(kokkosHelloWorld PUBLIC ${ALL_LIBS})
+  target_include_directories(kokkosHelloWorld PRIVATE ${KOKKOS_INCLUDE_DIRS})
+  target_link_libraries(kokkosHelloWorld PUBLIC ${KOKKOS_LIBRARIES})
 endif()
 
 #Ctest file
