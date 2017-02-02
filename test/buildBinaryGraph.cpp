@@ -6,9 +6,9 @@
 #include <iostream>
 #include <stdint.h>
 #include <set>
-void testSizes(agi::binGraph* g);
-void testVertices(agi::binGraph* g);
-void testEdges(agi::binGraph* g);
+void testSizes(agi::Ngraph* g);
+void testVertices(agi::Ngraph* g);
+void testEdges(agi::Ngraph* g);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -20,15 +20,22 @@ int main(int argc, char* argv[]) {
     MPI_Finalize();
     assert(false);
   }
-  agi::binGraph* g;
+
+  //Construct Graph from binary file
+  agi::Ngraph* g;
   if (argc==2)
-    g = new agi::binGraph(argv[1]);
+    g = agi::createBinGraph(argv[1]);
   else
-    g = new agi::binGraph(argv[1],argv[2]);
+    g = agi::createBinGraph(argv[1],argv[2]);
+
+  //Test different members of graph
   testSizes(g);
   testVertices(g);
   testEdges(g);
-  delete g;
+  
+  //Destroy the graph
+  destroyGraph(g);
+  
   PCU_Barrier();
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
@@ -39,7 +46,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-void testSizes(agi::binGraph* g) {
+void testSizes(agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Checking Sizes\n");
 
@@ -50,7 +57,7 @@ void testSizes(agi::binGraph* g) {
   assert(temp_size==g->numGlobalEdges());
 
 }
-void testVertices(agi::binGraph* g) {
+void testVertices(agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Iterating over vertices\n");
   agi::VertexIterator* gitr = g->begin();
@@ -66,7 +73,7 @@ void testVertices(agi::binGraph* g) {
 
 }
 
-void testEdges(agi::binGraph* g) {
+void testEdges(agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Iterating over edges\n");
   agi::VertexIterator* gitr = g->begin();

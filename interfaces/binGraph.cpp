@@ -11,23 +11,22 @@
 #include <PCU.h>
 #include <iostream>
 namespace agi {
+
+Ngraph* createBinGraph(char* graph_file,char* part_file) {
+  return new binGraph(graph_file,part_file);
+}
+
   //TODO: replace mallocs with new
   //TODO: replace mpi calls with PCU
-binGraph::binGraph(char* graph_file) : Ngraph() {
-  uint64_t* read_edges;
-  uint64_t m_read;
-  etype t = load_edges(graph_file,read_edges,m_read);
-  int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
-  vert_block_ranks(ranks);
-  exchange_edges(m_read,read_edges,ranks,t);
-  create_dist_csr(ranks,t);
-}
 binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   uint64_t* read_edges;
   uint64_t m_read;
   etype t = load_edges(graph_file,read_edges,m_read);
   int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
-  read_ranks(part_file,ranks);
+  if (part_file=="")
+    vert_block_ranks(ranks);
+  else
+    read_ranks(part_file,ranks);
   exchange_edges(m_read,read_edges,ranks,t);
   create_dist_csr(ranks,t);
 

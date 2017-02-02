@@ -9,16 +9,17 @@
  */
 namespace agi {
   
+Ngraph* createBinGraph(char* graph_file,char* part_file =NULL);
+
+
 class binGraph : public Ngraph {
  public:
   //Construct an empty binary graph
   binGraph() : Ngraph() {}
-  //Construction for a serial example
-  //  In parallel a vertex block partitioning occurs
-  binGraph(char* graph_file);
   //Construction for a partitioned example
   // Part file contains partitioning
-  binGraph(char* graph_file,char* part_file);
+  // If no file is given applies a vertex block partitioning
+  binGraph(char* graph_file,char* part_file=NULL);
   ~binGraph();
 
   
