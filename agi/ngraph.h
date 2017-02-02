@@ -49,7 +49,6 @@ protected:
   lid_t* pin_degree_list[MAX_TYPES];
   lid_t* pin_list[MAX_TYPES];
 
-  //TODO: discuss using C++11 to get unordered map
   typedef std::unordered_map<gid_t,lid_t> map_t;
   map_t vtx_mapping;
   map_t edge_mapping[MAX_TYPES];
@@ -129,6 +128,7 @@ public:
   */
 };
 
+void destroyGraph(Ngraph* g);
 } //namespace
 
 #endif

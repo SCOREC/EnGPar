@@ -7,6 +7,9 @@
 #include <map>
 namespace agi {
 
+Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimension);
+Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int* secondary_dimension,
+	       int num_dimensions);
 class apfGraph : public Ngraph {
  private:
   apf::Mesh* m;

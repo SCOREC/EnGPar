@@ -13,7 +13,7 @@ Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimensi
 }
 Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int* secondary_dimensions,
 	       int num_dimensions) {
-  return new apfGraph(m,primary_dimension,secondary_dimensions,num_dimensions);
+  return new apfGraph(m,primary_dimension,secondary_dimensionsnum_dimensions);
 }
   
 apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,

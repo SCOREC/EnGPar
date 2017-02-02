@@ -267,4 +267,6 @@ void Ngraph::create_csr(int nv, int ne, int* srcs,
 
 }
   */
+
+void destroyGraph(Ngraph* g) {delete g;}
 }
