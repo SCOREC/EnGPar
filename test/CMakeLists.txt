@@ -38,13 +38,12 @@ endfunction(make_exe)
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 
-if (ENABLE_ZOLTAN)
+if (FOUND_ZOLTAN)
   make_exe(cutVertex cutVertex.cpp)
   make_exe(pagerank pagerank.cpp)
 endif()
 
-
-if (ENABLE_KOKKOS)
+if (FOUND_KOKKOS)
   make_exe(kokkosHelloWorld kokkosHelloWorld.cpp)
 endif()
 
