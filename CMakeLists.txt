@@ -34,6 +34,8 @@ add_subdirectory(agi)
 
 add_subdirectory(zoltan)
 
+add_subdirectory(partition)
+
 add_subdirectory(interfaces)
 
 add_subdirectory(test)

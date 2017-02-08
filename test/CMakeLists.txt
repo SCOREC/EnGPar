@@ -14,6 +14,7 @@ endif()
 include_directories(
   ../agi
   ../zoltan
+  ../partition
   ../interfaces
   ${ZOLTAN_INCLUDE_DIRS}
   ${PARMETIS_INCLUDE_DIRS}
@@ -24,6 +25,7 @@ set(ALL_LIBS
   agi
   interfaces
   agi_zoltan
+  engpar
   SCOREC::core
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
@@ -37,6 +39,7 @@ endfunction(make_exe)
 
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
+make_exe(vtxBalance vtxBalance.cpp)
 
 if (FOUND_ZOLTAN)
   make_exe(cutVertex cutVertex.cpp)
