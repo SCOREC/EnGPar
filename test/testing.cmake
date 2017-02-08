@@ -1,9 +1,6 @@
 set(MESHES ""
     CACHE STRING
     "Extracted http://scorec.rpi.edu/pumi/pumi_test_meshes.tar.gz")
-set(MESHES ""
-    CACHE STRING
-    "Extracted http://scorec.rpi.edu/pumi/pumi_test_meshes.tar.gz")
 
 function(mpi_test TESTNAME PROCS EXE)
   add_test(

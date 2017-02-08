@@ -2,6 +2,7 @@
 #include "engpar_bounds.h"
 #include "engpar_vtxWeights.h"
 #include "engpar_balancer.h"
+#include "engpar_targets.h"
 #include <PCU.h>
 namespace {
   class VtxBalancer : public engpar::Balancer {
@@ -16,7 +17,8 @@ namespace {
       printf("%d %s",PCU_Comm_Self(),b->print("Boundaries").c_str());
       engpar::VtxWeights* w = engpar::makeVtxWeights(graph,b);
       printf("%d %s",PCU_Comm_Self(),w->print("Weights").c_str());
-      //engpar::Targets* t = engpar::makeVtxTargets(graph,b,w);
+      engpar::Targets* t = engpar::makeTargets(b,w,factor);
+      printf("%d %s",PCU_Comm_Self(),t->print("Targets").c_str());
     }
     
   };

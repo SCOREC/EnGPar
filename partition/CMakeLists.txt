@@ -10,6 +10,7 @@ set(ENGPAR_SOURCES
   src/engpar_vtxBalancer.cpp
   src/engpar_edgeBounds.cpp
   src/engpar_vtxWeights.cpp
+  src/engpar_targets.cpp
   )
 
 set(ENGPAR_HEADERS
