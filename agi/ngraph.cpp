@@ -184,7 +184,7 @@ GraphVertex* Ngraph::findGID(gid_t gid) const {
 }
 
 EdgeIterator* Ngraph::begin(etype t) const {
-  return new EdgeIterator(t,num_types,edge_list[t],num_local_edges[t]);
+  return new EdgeIterator(t,num_types,0,num_local_edges[t]);
 }
   
 GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
