@@ -6,7 +6,6 @@
 #include <apfMDS.h>
 #include <apf.h>
 #include <cstdlib>
-#include <iostream>
 #include <stdint.h>
 
 void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);

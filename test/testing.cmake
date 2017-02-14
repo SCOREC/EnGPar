@@ -1,6 +1,9 @@
 set(MESHES ""
     CACHE STRING
     "Extracted http://scorec.rpi.edu/pumi/pumi_test_meshes.tar.gz")
+set(GRAPHS ""
+    CACHE STRING
+    "Extracted http://scorec.rpi.edu/pumi/pumi_test_meshes.tar.gz")
 
 function(mpi_test TESTNAME PROCS EXE)
   add_test(
@@ -11,8 +14,8 @@ endfunction(mpi_test)
 
 mpi_test(buildSerialMeshGraph32 1
   ./buildMeshGraph
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi11/cube.smb"
+  ${MESHES}/cube/cube.dmg
+  ${MESHES}/cube/pumi11/cube.smb
   3
   2)
 
@@ -43,4 +46,16 @@ mpi_test(buildSerialBinaryGraph 1
 
 mpi_test(buildParallelBinaryGraph 4
   ./buildBinaryGraph
+  "${GRAPHS}/google.ebin")
+
+mpi_test(testAdjacentSerial 1
+  ./testAdjacentTraversal
+  "${MESHES}/cube/cube.dmg"
+  "${MESHES}/cube/pumi11/cube.smb"
+  "${GRAPHS}/google.ebin")
+
+mpi_test(testAdjacentParallel 2
+  ./testAdjacentTraversal
+  "${MESHES}/cube/cube.dmg"
+  "${MESHES}/cube/pumi670/2/cube.smb"
   "${GRAPHS}/google.ebin")

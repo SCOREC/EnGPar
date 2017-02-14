@@ -7,6 +7,7 @@
 #include <cassert>
 #include "agi.h"
 #include "EdgeIterator.h"
+#include "GraphIterator.h"
 
 namespace agi {
 
@@ -73,6 +74,8 @@ public:
   int numEdgeTypes() const {return num_types;}
   lid_t numLocalEdges(etype i=0) const {return num_local_edges[i];}
   lid_t numLocalPins(etype i=0) const {return num_local_pins[i];}
+
+  bool isHyper() const {return isHyperGraph;}
   
   //Vertex Operations
   const wgt_t& weight(GraphVertex*) const;
@@ -92,6 +95,9 @@ public:
   lid_t degree(GraphVertex*,etype t=0) const;
   //Creates an iterator over the edges of the given vertex
   EdgeIterator* edges(GraphVertex*,etype t=0) const;
+  //Create an iterator over neighboring vertices given the vertex
+  GraphIterator* adjacent(GraphVertex*, etype t=0) const;
+  
   lid_t degree(GraphEdge*) const;
   //Creates an iterator over the pins of the given edge
   PinIterator* pins(GraphEdge*) const;
@@ -108,8 +114,13 @@ public:
   GraphEdge* iterate(EdgeIterator*&) const;
   //Iterate through Pins
   GraphVertex* iterate(PinIterator*&) const;
+  //Iterate through Neighboring vertices
+  GraphVertex* iterate(GraphIterator*&) const;
+  //Get the current edge of the graph iterator
+  GraphEdge* edge(GraphIterator*) const;
   //Destroys iterator
   void destroy(EdgeIterator*) const;
+  void destroy(GraphIterator*) const;
 
   
   //Utility

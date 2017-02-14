@@ -39,6 +39,7 @@ endfunction(make_exe)
 
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
+make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
 
 if (FOUND_ZOLTAN)

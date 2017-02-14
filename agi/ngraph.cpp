@@ -140,6 +140,8 @@ GraphVertex* Ngraph::v(GraphEdge* edge) const {
     fprintf(stderr,"v(edge) not supported in hypergraph mode");
     return NULL;
   }
+  if (edge==NULL) 
+    return NULL;
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
@@ -158,7 +160,16 @@ EdgeIterator* Ngraph::edges(GraphVertex* vtx,etype type) const {
   return eitr;
 }
 
+GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
+  uintptr_t index = (uintptr_t)(vtx)-1;
+  EdgeIterator* eitr = new EdgeIterator(type,num_types,(lid_t*)degree_list[type][index],degree(vtx,type));
+  return new GraphIterator(eitr,isHyperGraph);
+}
+
+
 lid_t  Ngraph::degree(GraphEdge* edge) const {
+  if (edge==NULL)
+    return 0;
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
@@ -211,8 +222,34 @@ GraphVertex* Ngraph::iterate(PinIterator*& itr) const {
   itr = reinterpret_cast<PinIterator*>(++e);
   return vtx;
 }
-
+GraphVertex* Ngraph::iterate(GraphIterator*& itr) const {
+  GraphVertex* vtx;
+  if (itr->isH) {
+    if (itr->count >= degree(itr->edge)) {
+      GraphEdge* edge = iterate(itr->eitr);
+      if (!edge)
+	return NULL;
+      itr->setEdge(edge,pins(edge));
+    }
+    vtx = iterate(itr->pitr);
+    itr->count++;
+  }
+  else {
+    itr->edge = iterate(itr->eitr);
+    vtx = v(itr->edge);
+  }
+  return vtx;
+}
+  
+GraphEdge* Ngraph::edge(GraphIterator* itr) const {
+  return itr->edge;
+}
+  
 void Ngraph::destroy(EdgeIterator* itr) const {
+  delete itr;
+}
+void Ngraph::destroy(GraphIterator* itr) const {
+  delete itr->eitr;
   delete itr;
 }
 
