@@ -34,6 +34,7 @@ int main(int argc, char* argv[]) {
   testEdges(g);
   
   //Destroy the graph
+  g->destroyData();
   destroyGraph(g);
   
   PCU_Barrier();

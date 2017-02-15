@@ -20,7 +20,7 @@ class binGraph : public Ngraph {
   // Part file contains partitioning
   // If no file is given applies a vertex block partitioning
   binGraph(char* graph_file,char* part_file=NULL);
-  ~binGraph();
+  void destroyData();
 
   
   void migrate(std::map<GraphVertex*,part_t>&) {};

@@ -58,12 +58,17 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
   constructGhostVerts();
 }
 
-apfGraph::~apfGraph() {
-  if (global_nums)
+void apfGraph::destroyData() {
+  printf("destroying\n");
+  if (global_nums) {
+    printf("nums\n");
     apf::destroyGlobalNumbering(global_nums);
+  }
   for (int i=0;i<MAX_TYPES;++i)
-    if (edge_nums[i])
+    if (edge_nums[i]) {
+      printf("edges\n");
       apf::destroyGlobalNumbering(edge_nums[i]);
+    }
 }
   
 
@@ -125,6 +130,7 @@ void apfGraph::setupPrimary(int primary_dimension) {
     vtx_mapping[gid]=lid;
     local_unmap[lid++] = gid;
   }
+  m->end(itr);
 }
 
   //TODO: discuss removing trivial edges (edges that only connect to one vertex)
@@ -154,6 +160,7 @@ etype apfGraph::setupSecondary(int secondary_dimension) {
     gid_t gid = apf::getNumber(edge_nums[type],ent,0);
     setEdge(lid++,gid,1.0,type);
   }
+  m->end(itr);
   return type;
 }
 
@@ -183,7 +190,7 @@ void apfGraph::connectToEdges(int primary_dimension,
     if (lid<num_local_verts)
       degree_list[type][lid+1]=edgs.size();
   }
-  
+  m->end(itr);
 
   edge_list[type] = new lid_t[edgs.size()];
   std::copy(edgs.begin(),edgs.end(),edge_list[type]);
@@ -266,6 +273,7 @@ void apfGraph::connectToPins(int primary_dimension,
         }
     }
   }
+  m->end(itr);
   PCU_Comm_Send();
 
   while (PCU_Comm_Receive()) {

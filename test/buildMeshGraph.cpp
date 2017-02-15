@@ -71,7 +71,7 @@ int main(int argc, char* argv[]) {
   testVertices(m,g);
   testEdges(m,g,primary,secondaries1,1);
   
-
+  g->destroyData();
   agi::destroyGraph(g);
 
   PCU_Barrier();
@@ -87,6 +87,7 @@ int main(int argc, char* argv[]) {
   testVertices(m,g2);
   testEdges(m,g2,primary,secondaries,2);
 
+  g2->destroyData();
   agi::destroyGraph(g2);
 
   m->destroyNative();
@@ -111,6 +112,7 @@ size_t getNumPins(apf::Mesh* m,int primary,int second) {
     m->getAdjacent(ent,primary,adj);
     num_pins+=adj.size();
   }
+  m->end(itr);
   return num_pins;
 }
 
@@ -127,6 +129,7 @@ size_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
       num_edges+=adj.size()-1;
     }
   }
+  m->end(itr);
   return num_edges;
 }
 

@@ -61,7 +61,8 @@ protected:
 public:
   Ngraph();
   ~Ngraph();
-
+  virtual void destroyData()=0;
+  
   //Global Part Information
   gid_t numGlobalVtxs() const {return num_global_verts;}
   gid_t numGlobalEdges(etype i=0) const {return num_global_edges[i];}
