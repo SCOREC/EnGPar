@@ -46,6 +46,7 @@ endif()
 
 if (KOKKOS_FOUND)
   make_exe(kokkosHelloWorld kokkosHelloWorld.cpp)
+  make_exe(bfsSearch bfsSearch.cpp)
 endif()
 
 #Ctest file
