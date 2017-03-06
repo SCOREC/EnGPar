@@ -11,7 +11,7 @@ namespace {
       : Balancer(g,f,v,"Vtx") {
       
     }
-
+    ~VtxBalancer() {}
     bool runStep(double tol) {
       engpar::Bounds* b = engpar::makeEdgeBounds(graph);
       printf("%d %s",PCU_Comm_Self(),b->print("Boundaries").c_str());
@@ -19,6 +19,7 @@ namespace {
       printf("%d %s",PCU_Comm_Self(),w->print("Weights").c_str());
       engpar::Targets* t = engpar::makeTargets(b,w,factor);
       printf("%d %s",PCU_Comm_Self(),t->print("Targets").c_str());
+      return true;
     }
     
   };

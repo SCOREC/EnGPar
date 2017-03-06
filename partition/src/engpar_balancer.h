@@ -9,7 +9,7 @@ namespace engpar {
   public:
     Balancer(agi::Ngraph* graph_, double factor_, int verbosity_,
 	     const char* name_);
-    ~Balancer();
+    virtual ~Balancer() {}
     virtual bool runStep(double tolerance)=0;
     void balance(double tolerance);
   protected:

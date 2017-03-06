@@ -97,7 +97,7 @@ void apfGraph::setupPrimary(int primary_dimension) {
   }
   //Create vtx weight array
   local_weights = new wgt_t[num_local_verts];
-  for (int i=0;i<num_local_verts;i++) {
+  for (lid_t i=0;i<num_local_verts;i++) {
     local_weights[i]=0;
   }
 
@@ -286,7 +286,7 @@ void apfGraph::connectToPins(int primary_dimension,
 
   }
   
-  for (int i=0;i<nle;i++) {
+  for (lid_t i=0;i<nle;i++) {
     assert(temp_counts[i]==pdl[i+1]);
   }
   delete [] temp_counts;

@@ -72,9 +72,8 @@ void testAdjacent(agi::Ngraph* g,agi::etype t) {
     printf("Beginning Traversal\n");
   agi::VertexIterator* vitr = g->begin();
   agi::GraphVertex* vtx = NULL;
-  int num_pins =0;
-  int num_edges=0;
-  int tot_degrees=0;
+  agi::lid_t num_pins =0;
+  agi::lid_t num_edges=0;
   while ((vtx = g->iterate(vitr))) {
     agi::GraphIterator* gitr = g->adjacent(vtx,t);
     agi::GraphVertex* other = NULL;
@@ -86,14 +85,12 @@ void testAdjacent(agi::Ngraph* g,agi::etype t) {
       if (g->isEqual(vtx,other))
 	num_pins++;
       num_edges++;      
-      //tot_degrees+=(g->degree(edge));
     }
     g->destroy(gitr);
   }
   if (g->isHyper()) {
     if (PCU_Comm_Peers()==1)
       assert(num_pins==g->numLocalPins(t));
-    //assert(num_edges==tot_degrees);
   }
   else {
     assert(num_edges==g->numLocalEdges(t));
@@ -105,15 +102,11 @@ void compareTraversal(agi::Ngraph* g,agi::etype t) {
     printf("Beginning Comparison\n");
   agi::VertexIterator* vitr = g->begin();
   agi::GraphVertex* vtx = NULL;
-  int num_pins =0;
-  int num_edges=0;
-  int tot_degrees=0;
   std::vector<agi::GraphEdge*> edges;
   std::vector<agi::GraphVertex*> vtxs;
   while ((vtx = g->iterate(vitr))) {
     agi::GraphIterator* gitr = g->adjacent(vtx,t);
     agi::GraphVertex* other = NULL;
-    agi::GraphEdge* edge = NULL;
     while ((other = g->iterate(gitr))) {
       edges.push_back(g->edge(gitr));
       vtxs.push_back(other);
@@ -121,7 +114,7 @@ void compareTraversal(agi::Ngraph* g,agi::etype t) {
     g->destroy(gitr);
   }
   vitr = g->begin();
-  int i=0;
+  agi::lid_t i=0;
   while ((vtx = g->iterate(vitr))) {
     agi::EdgeIterator* eitr = g->edges(vtx,t);
     agi::GraphVertex* other;

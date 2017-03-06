@@ -60,7 +60,7 @@ protected:
   
 public:
   Ngraph();
-  ~Ngraph();
+  virtual ~Ngraph();
 
   //Global Part Information
   gid_t numGlobalVtxs() const {return num_global_verts;}
@@ -81,7 +81,6 @@ public:
   const wgt_t& weight(GraphVertex*) const;
   const coord_t& coord(GraphVertex*) const;
   part_t owner(GraphVertex*) const;
-  const std::vector<double>& coordinates(GraphVertex*) const {};
   lid_t localID(GraphVertex*) const;
   gid_t globalID(GraphVertex*) const;
   GraphVertex* find(GraphVertex* vtx) const;

@@ -35,8 +35,8 @@ int main(int argc, char* argv[]) {
 void traverseEdges(agi::Ngraph* g) {
   agi::EdgeIterator* eitr = g->begin(0);
   agi::GraphEdge* edge =NULL;
-  int numEdges=0;
-  std::map<agi::GraphVertex*,int> edgesPerVertex;
+  agi::lid_t numEdges=0;
+  std::map<agi::GraphVertex*,agi::lid_t> edgesPerVertex;
   while ((edge = g->iterate(eitr))) {
     numEdges++;
     agi::GraphVertex* u = g->u(edge);
@@ -52,7 +52,7 @@ void traverseEdges(agi::Ngraph* g) {
     }
   }
   assert(numEdges==g->numLocalEdges());
-  std::map<agi::GraphVertex*,int>::iterator itr;
+  std::map<agi::GraphVertex*,agi::lid_t>::iterator itr;
   for (itr=edgesPerVertex.begin();itr!=edgesPerVertex.end();itr++) {
     assert(itr->second==g->degree(itr->first));
   }
