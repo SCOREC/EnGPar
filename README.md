@@ -4,9 +4,9 @@ EnGPar is a set of C/C++ libraries for partitioning relational data structures u
 
 ### Repository Layout ###
 
-* AGI: APIs for the graph structure, Ngraph.
-* interfaces: Extensions of the Ngraph for certain data structures.
-* zoltan: Partitioning methods utilizing zoltan
+* AGI: APIs for the graph structure, N-Graph.
+* interfaces: Extensions of the N-Graph for certain data structures.
+* Zoltan: Partitioning methods utilizing Zoltan
 * partition: Diffusive load balancing routines
 * test: A set of tests to utilize the features of EnGPar
 
