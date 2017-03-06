@@ -1,4 +1,4 @@
-option(ENABLE_ZOLTAN "Enable Zoltan itergace [ON|OFF]" OFF)
+option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
 message(STATUS "ENABLE_ZOLTAN: " ${ENABLE_ZOLTAN})
 
 set(CMAKE_MODULE_PATH
@@ -18,7 +18,12 @@ if (ENABLE_ZOLTAN)
     ZoltanCallbacks.cpp
     ZoltanCutVertex.cpp
     )
+else()
+  set(ZOLTAN_SOURCE
+    ZoltanShell.cpp
+    )
 endif()
+
 
 add_library(agi_zoltan ${ZOLTAN_SOURCE})
 

@@ -1,5 +1,5 @@
-option(ENABLE_ZOLTAN "Enable Zoltan itergace [ON|OFF]" OFF)
-message(STATUS "ENABLE_ZOLTAN: " ${ENABLE_ZOLTAN})
+option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
+
 
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
