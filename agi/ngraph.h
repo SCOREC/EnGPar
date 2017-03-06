@@ -88,7 +88,8 @@ public:
 
   //Edge Operations
   double weight(GraphEdge*) const;
-  lid_t u(lid_t) const;
+  lid_t u(lid_t,etype t =0) const;
+  GraphVertex* u(GraphEdge*) const;
   GraphVertex* v(GraphEdge*) const;
   
   //Adjacency Operations

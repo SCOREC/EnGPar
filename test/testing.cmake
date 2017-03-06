@@ -40,9 +40,13 @@ mpi_test(buildParallelMeshGraph31 4
   3
   1)
 
-mpi_test(buildSerialBinaryGraph 1
+mpi_test(buildSerialBinaryRing 1
   ./buildBinaryGraph
-  "${GRAPHS}/google.ebin")
+  "${GRAPHS}/ring.ebin")
+
+mpi_test(buildSerialBinaryTree 1
+  ./buildBinaryGraph
+  "${GRAPHS}/tree.ebin")
 
 mpi_test(buildParallelBinaryGraph 4
   ./buildBinaryGraph
@@ -52,10 +56,18 @@ mpi_test(testAdjacentSerial 1
   ./testAdjacentTraversal
   "${MESHES}/cube/cube.dmg"
   "${MESHES}/cube/pumi11/cube.smb"
-  "${GRAPHS}/google.ebin")
+  "${GRAPHS}/ring.ebin")
 
 mpi_test(testAdjacentParallel 2
   ./testAdjacentTraversal
   "${MESHES}/cube/cube.dmg"
   "${MESHES}/cube/pumi670/2/cube.smb"
-  "${GRAPHS}/google.ebin")
+  "${GRAPHS}/tree.ebin")
+
+mpi_test(testEdgeRing 1
+  ./testEdgeTraversal
+  "${GRAPHS}/ring.ebin")
+
+mpi_test(testEdgeTree 2
+  ./testEdgeTraversal
+  "${GRAPHS}/tree.ebin")

@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <stdint.h>
 #include <set>
 void testSizes(agi::Ngraph* g);
 void testVertices(agi::Ngraph* g);
