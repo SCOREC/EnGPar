@@ -39,15 +39,15 @@ set(CTEST_UPDATE_COMMAND "${CTEST_GIT_COMMAND}")
 
 ctest_start(${CTEST_TEST_TYPE})
 
-if(false)
-  if(CTEST_DO_SUBMIT)
-    ctest_submit(FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
-      RETURN_VALUE HAD_ERROR)
-    if(HAD_ERROR)
-      message(FATAL_ERROR "Cannot submit EnGPar Project.xml!")
-    endif()
+
+if(CTEST_DO_SUBMIT)
+  ctest_submit(FILES "${CTEST_SCRIPT_DIRECTORY}/Project.xml"
+    RETURN_VALUE HAD_ERROR)
+  if(HAD_ERROR)
+    message(FATAL_ERROR "Cannot submit EnGPar Project.xml!")
   endif()
 endif()
+
 
 macro(submit_part subproject_name part)
   if(CTEST_DO_SUBMIT)
