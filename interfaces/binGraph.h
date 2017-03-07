@@ -4,16 +4,21 @@
 #include "ngraph.h"
 #include <stdint.h>
 
-/* 
-   Interface for a binary edge list file
- */
 namespace agi {
-  
+
+  /** \brief Create the N-Graph for a binary graph file
+   * \param graph_file the compressed binary file name
+   * \param part_file a partitioning of the vertices 
+   *
+   * If no part_file is provided a simple block partitioning will be applied.
+   */
 Ngraph* createBinGraph(char* graph_file,char* part_file =NULL);
 
-
+/** \brief An extension of the N-Graph for binary graph files
+ */
 class binGraph : public Ngraph {
  public:
+  // \cond INTERFACE
   //Construct an empty binary graph
   binGraph() : Ngraph() {}
   //Construction for a partitioned example
@@ -25,7 +30,7 @@ class binGraph : public Ngraph {
   
   void migrate(std::map<GraphVertex*,part_t>&) {};
   void migrate(agi::EdgePartitionMap&);
-
+  // \endcond
  private:
   //Loads edges from binary file
   etype load_edges(char* filename,uint64_t*& read_edges, uint64_t& m_read);

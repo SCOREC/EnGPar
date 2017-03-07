@@ -252,7 +252,9 @@ public:
   part_t* owners;
   // \endcond
 };
-
+/** \brief Cleans up the memory of the graph
+ * \param g the graph
+ */
 void destroyGraph(Ngraph* g);
 } //namespace
 
