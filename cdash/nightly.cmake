@@ -104,7 +104,7 @@ macro(setup_repo repo_name repo_url)
 endmacro(setup_repo)
 
 
-set(flags "-O2 -g -Wall -Werror")
+set(flags "-O2 -g -Wall")
 SET(CONFIGURE_OPTIONS
   "-DCMAKE_C_COMPILER=mpicc"
   "-DCMAKE_CXX_COMPILER=mpicxx"
