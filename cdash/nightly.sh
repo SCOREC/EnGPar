@@ -1,5 +1,4 @@
 module load cmake/latest
-module load mpich3/3.1.2-thread-multiple
 module load pumi
 
 #cdash output root
