@@ -13,7 +13,7 @@ class GraphEdge;
   friend class Ngraph;
  private:
   bool isH;
-  int count;
+  lid_t count;
   EdgeIterator* eitr;
   PinIterator* pitr;
   GraphEdge* edge;

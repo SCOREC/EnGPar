@@ -4,7 +4,6 @@
 #include <cassert>
 #include <cstdlib>
 #include <iostream>
-#include <stdint.h>
 #include <set>
 void testSizes(agi::Ngraph* g);
 void testVertices(agi::Ngraph* g);
@@ -64,7 +63,7 @@ void testVertices(agi::Ngraph* g) {
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
   size_t i=0;
-  while (vtx = g->iterate(gitr)) {
+  while ((vtx = g->iterate(gitr))) {
     i++;
     //assert(g->weight(vtx)==1.0);
     assert(g->degree(vtx,0)>=0);
@@ -79,10 +78,9 @@ void testEdges(agi::Ngraph* g) {
     printf("Iterating over edges\n");
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
-  int num_edges =0;
-  int num_ghosts = 0;
+  agi::lid_t num_edges =0;
   std::set<agi::GraphVertex*> ghosts;
-  while (vtx = g->iterate(gitr)) {
+  while ((vtx = g->iterate(gitr))) {
     int deg = g->degree(vtx,0);
     agi::GraphVertex* other;
     agi::EdgeIterator* eitr = g->edges(vtx,0);
@@ -97,7 +95,7 @@ void testEdges(agi::Ngraph* g) {
     int temp_count =0;
     eitr = g->edges(vtx,0);
     agi::GraphEdge* edge;
-    while (edge = g->iterate(eitr)) {
+    while ((edge = g->iterate(eitr))) {
       other = g->v(edge);
       temp_count++;
     }

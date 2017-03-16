@@ -23,7 +23,7 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   uint64_t m_read;
   etype t = load_edges(graph_file,read_edges,m_read);
   int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
-  if (part_file=="")
+  if (!part_file)
     vert_block_ranks(ranks);
   else
     read_ranks(part_file,ranks);
@@ -71,7 +71,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   std::copy(recv_edges.begin(),recv_edges.end(),edge_list[0]);
   vtx_mapping.clear();
   int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
-  for (int i=0;i<num_global_verts;i++)
+  for (gid_t i=0;i<num_global_verts;i++)
     ranks[i] = -1;
   for (lid_t i=0;i<num_local_edges[0]*2;i++) {
     ranks[edge_list[0][i]] = PCU_Comm_Self();
@@ -82,7 +82,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
 
   //TODO: Make much more efficient
   PCU_Comm_Begin();
-  for (int i=0;i<num_local_verts;i++) {
+  for (lid_t i=0;i<num_local_verts;i++) {
     for (int j=1;j<PCU_Comm_Peers();j++)
       PCU_COMM_PACK((PCU_Comm_Self()+j)%PCU_Comm_Peers(),local_unmap[i]);
   }
@@ -90,7 +90,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   std::vector<part_t> owns;
   std::vector<gid_t> dups;
   degree_list[SPLIT_TYPE] = new lid_t[num_local_verts+1];
-  for (int i=0;i<num_local_verts+1;++i)
+  for (lid_t i=0;i<num_local_verts+1;++i)
     degree_list[SPLIT_TYPE][i]=0;
 
   while (PCU_Comm_Receive()) {
@@ -104,7 +104,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
     }
   }
 
-  for (int i=1;i<num_local_verts+1;++i)
+  for (lid_t i=1;i<num_local_verts+1;++i)
     degree_list[SPLIT_TYPE][i]+=degree_list[SPLIT_TYPE][i-1];
 
   assert(degree_list[SPLIT_TYPE][num_local_verts] ==dups.size());
@@ -212,7 +212,6 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
     rdispls[i] = 0;
   }
 
-  uint64_t n_per_rank = num_global_verts / PCU_Comm_Peers() + 1;
   for (uint64_t i = 0; i < m_read*2; i+=2)
   {
     uint64_t vert = read_edges[i];
@@ -223,7 +222,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   MPI_Alltoall(scounts, 1, MPI_INT32_T,
                rcounts, 1, MPI_INT32_T, PCU_Get_Comm());
 
-  for (uint64_t i = 1; i < PCU_Comm_Peers(); ++i) {
+  for (int i = 1; i < PCU_Comm_Peers(); ++i) {
     sdispls[i] = sdispls[i-1] + scounts[i-1];
     sdispls_cpy[i] = sdispls[i];
     rdispls[i] = rdispls[i-1] + rcounts[i-1];

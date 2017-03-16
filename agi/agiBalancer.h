@@ -7,7 +7,7 @@ namespace agi {
   class Balancer {
   public:
     Balancer(agi::Ngraph* graph_,int verbosity_,const char* name_);
-
+    virtual ~Balancer() {}
     virtual void balance(double tolerance) =0;
   protected:
     agi::Ngraph* graph;

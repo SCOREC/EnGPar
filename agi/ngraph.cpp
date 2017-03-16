@@ -117,22 +117,29 @@ wgt_t Ngraph::weight(GraphEdge* edge) const {
   return edge_weights[type][edge_list[type][id]];
 }
 
-lid_t Ngraph::u(lid_t e) const {
+lid_t Ngraph::u(lid_t e, etype t) const {
   bool found = false;
   lid_t index = 0;
   lid_t bound_low=0;
   lid_t bound_high = numLocalVtxs();
   while (!found) {
     index = (bound_high+bound_low)/2;
-    if (degree_list[0][index]<= e&& degree_list[0][index+1]>e) 
+    if (degree_list[t][index]<= e&& degree_list[t][index+1]>e) 
       found=true;
-    else if (degree_list[0][index]<=e)
+    else if (degree_list[t][index]<=e)
       bound_low=index;
     else
       bound_high=index;
 
   }
   return index;
+}
+GraphVertex* Ngraph::u(GraphEdge* edge) const {
+  lid_t lid = (uintptr_t)(edge)-1;
+  etype type = lid%num_types;
+  lid/=num_types;
+  lid_t vid = u(lid,type);
+  return reinterpret_cast<GraphVertex*>(vid+1);
 }
 
 GraphVertex* Ngraph::v(GraphEdge* edge) const {

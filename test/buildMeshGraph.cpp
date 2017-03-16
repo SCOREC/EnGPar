@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
   //check dimension too low
   try {
     agi::Ngraph* g = agi::createAPFGraph(m,3,-1);
+    destroyGraph(g);
     throw "FAIL\n";
   }
   catch(int e) {
@@ -51,6 +52,7 @@ int main(int argc, char* argv[]) {
   //check primary==secondary
   try {
     agi::Ngraph* g = agi::createAPFGraph(m,3,3);
+    destroyGraph(g);
     throw "FAIL!\n";
   }
   catch(int e) {
@@ -161,7 +163,7 @@ void testVertices(apf::Mesh* m,agi::Ngraph* g) {
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
   size_t i=0;
-  while (vtx = g->iterate(gitr)) {
+  while ((vtx = g->iterate(gitr))) {
     i++;
     assert(g->weight(vtx)==1.0);
     g->coord(vtx);
@@ -183,7 +185,7 @@ void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
     int ghost_pins=0;
     int other_count=0;
     gitr=g->begin();
-    while (vtx = g->iterate(gitr)) {
+    while ((vtx = g->iterate(gitr))) {
       int deg = g->degree(vtx,i);
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = g->edges(vtx,i);

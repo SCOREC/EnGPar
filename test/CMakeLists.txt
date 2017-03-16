@@ -1,5 +1,5 @@
-option(ENABLE_ZOLTAN "Enable Zoltan itergace [ON|OFF]" OFF)
-message(STATUS "ENABLE_ZOLTAN: " ${ENABLE_ZOLTAN})
+option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
+
 
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
@@ -40,15 +40,19 @@ endfunction(make_exe)
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
+make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
 
-if (FOUND_ZOLTAN)
+  
+if (ZOLTAN_FOUND)
   make_exe(cutVertex cutVertex.cpp)
   make_exe(pagerank pagerank.cpp)
 endif()
 
-if (FOUND_KOKKOS)
+
+if (KOKKOS_FOUND)
   make_exe(kokkosHelloWorld kokkosHelloWorld.cpp)
+  make_exe(bfsSearch bfsSearch.cpp)
 endif()
 
 #Ctest file
