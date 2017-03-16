@@ -37,7 +37,7 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
       printf("hi\n");
     }
   }
-binGraph::~binGraph() {
+void binGraph::destroyData() {
   //cleanup any additional memory
 }
 

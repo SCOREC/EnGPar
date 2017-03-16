@@ -36,7 +36,8 @@ class apfGraph : public Ngraph {
   // \cond INTERFACE
   apfGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
   apfGraph(apf::Mesh*, int primary_dimension, int* secondary_dimensions,int n);
-  ~apfGraph();
+  void destroyData();
+  ~apfGraph() {};
     
   //Utility
   void migrate(std::map<GraphVertex*,int>&) {};

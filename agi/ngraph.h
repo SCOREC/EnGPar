@@ -27,6 +27,7 @@ class Ngraph {
 public:
   Ngraph();
   virtual ~Ngraph();
+  virtual void destroyData()=0;
 
   //Global Part Information
   /** \brief Returns the number of vertices in the graph across all processes */
