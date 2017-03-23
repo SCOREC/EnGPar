@@ -71,3 +71,18 @@ mpi_test(testEdgeRing 1
 mpi_test(testEdgeTree 2
   ./testEdgeTraversal
   "${GRAPHS}/tree.ebin")
+
+if (ENABLE_ZOLTAN)
+
+endif()
+
+if (ENABLE_KOKKOS)
+  mpi_test(bfsSearchRing 1
+    ./bfsSearch
+    "${GRAPHS}/ring.ebin")
+
+  mpi_test(bfsSearchTree 1
+    ./bfsSearch
+    "${GRAPHS}/tree.ebin")
+
+endif()
