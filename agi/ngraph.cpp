@@ -1,4 +1,5 @@
 #include "ngraph.h"
+#include "HyperEdgeIterator.h"
 #include <cstdlib>
 #include <stdint.h>
 #include <iostream>
@@ -15,7 +16,7 @@ Ngraph::Ngraph() {
   local_weights=NULL;
   local_coords=NULL;
   for (int i=0;i<MAX_TYPES;i++) {
-    edge_ids[i] = NULL;
+    edge_unmap[i] = NULL;
     edge_weights[i] = NULL;
     num_global_edges[i]=0;
     num_local_edges[i]=0;
@@ -38,8 +39,8 @@ Ngraph::~Ngraph() {
   if (local_coords)
     delete [] local_coords;
   for (int i=0;i<MAX_TYPES;i++) {
-    if (edge_ids[i])
-      delete [] edge_ids[i];
+    if (edge_unmap[i])
+      delete [] edge_unmap[i];
     if (edge_weights[i])
       delete [] edge_weights[i];
     if (degree_list[i])
@@ -117,6 +118,17 @@ wgt_t Ngraph::weight(GraphEdge* edge) const {
   return edge_weights[type][edge_list[type][id]];
 }
 
+lid_t Ngraph::localID(GraphEdge* edge) const {
+  uintptr_t id = (uintptr_t)(edge)-1;
+  return id/num_types;
+}
+
+gid_t Ngraph::globalID(GraphEdge* edge) const {
+  uintptr_t id = (uintptr_t)(edge)-1;
+  etype type = id%num_types;
+  return edge_unmap[type][id/num_types];
+}
+
 lid_t Ngraph::u(lid_t e, etype t) const {
   bool found = false;
   lid_t index = 0;
@@ -175,20 +187,24 @@ GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
 
 
 lid_t  Ngraph::degree(GraphEdge* edge) const {
+  if (!isHyperGraph)
+    return 0;
   if (edge==NULL)
     return 0;
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
-  lid_t index = edge_list[type][id];
+  lid_t index = id;
   return pin_degree_list[type][index+1]-pin_degree_list[type][index];
 }
 
 PinIterator* Ngraph::pins(GraphEdge* edge) const {
+  if (!isHyperGraph)
+    return NULL;
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
-  lid_t index = edge_list[type][id];
+  lid_t index = id;//edge_list[type][id];
   return reinterpret_cast<PinIterator*>(pin_list[type]+
                                         pin_degree_list[type][index]);
 }
@@ -202,6 +218,8 @@ GraphVertex* Ngraph::findGID(gid_t gid) const {
 }
 
 EdgeIterator* Ngraph::begin(etype t) const {
+  if (isHyperGraph)
+    return new HyperEdgeIterator(t,num_types,num_local_edges[t]);
   return new EdgeIterator(t,num_types,0,num_local_edges[t]);
 }
   
@@ -219,7 +237,13 @@ GraphEdge* Ngraph::iterate(EdgeIterator*& itr) const {
   if (itr->loc>=itr->end)
     return NULL;
   uintptr_t index = (uintptr_t)itr->loc;
-  itr->loc = (gid_t*)(index+num_types);
+  itr->iterate();
+  if (isHyperGraph&&!itr->isHyper()) {
+    index-=1;
+    etype t = index%num_types;
+    index/=num_types;
+    return (GraphEdge*)(num_types*edge_list[t][index]+t+1);
+  }
   return (GraphEdge*)(index);
 }
 GraphVertex* Ngraph::iterate(PinIterator*& itr) const {
@@ -267,12 +291,12 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
 //Protected functions
 
 void Ngraph::makeEdgeArray(etype t, int count) {
-  edge_ids[t] = new gid_t[count];
+  edge_unmap[t] = new gid_t[count];
   edge_weights[t] = new wgt_t[count];
 }
 
 void Ngraph::setEdge(lid_t lid,gid_t gid, wgt_t w,etype t) {
-  edge_ids[t][lid] = gid;
+  edge_unmap[t][lid] = gid;
   edge_weights[t][lid] = w;
   edge_mapping[t][gid]=lid;
   

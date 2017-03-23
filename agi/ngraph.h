@@ -85,7 +85,10 @@ public:
    * \return the weight
    */
   double weight(GraphEdge* edge) const;
+  
   // \cond HACK
+  lid_t localID(GraphEdge*) const;
+  gid_t globalID(GraphEdge*) const;
   lid_t u(lid_t,etype t =0) const;
   // \endcond
   /** \brief Returns the source of an edge [Not HG]
@@ -235,7 +238,7 @@ public:
   
   //edge weights
   // size=num_edges
-  gid_t* edge_ids[MAX_TYPES];
+  gid_t* edge_unmap[MAX_TYPES];
   wgt_t* edge_weights[MAX_TYPES];
   
   

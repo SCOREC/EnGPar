@@ -33,12 +33,12 @@ mpi_test(buildParallelMeshGraph32 2
   3
   2)
 
-mpi_test(buildParallelMeshGraph31 4
+mpi_test(buildParallelMeshGraph30 4
   ./buildMeshGraph
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi670/4/cube.smb"
+  "${MESHES}/torus/torus.dmg"
+  "${MESHES}/torus/4imb/torus.smb"
   3
-  1)
+  0)
 
 mpi_test(buildSerialBinaryRing 1
   ./buildBinaryGraph

@@ -7,10 +7,22 @@
 #include <apf.h>
 #include <cstdlib>
 #include <stdint.h>
+#include <apfNumbering.h>
+#include <cstring>
 
 void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
+void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
 void testVertices(apf::Mesh* m,agi::Ngraph* g);
 void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n);
+void testGhosts(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n);
+
+void testGraph(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
+  testSizes(m,g,primary,seconds,n);
+  testIds(m,g,primary,seconds,n);
+  testVertices(m,g);
+  testEdges(m,g,primary,seconds,n);
+  testGhosts(m,g,primary,seconds,n);
+}
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -69,9 +81,7 @@ int main(int argc, char* argv[]) {
            primary,second);
   agi::Ngraph* g = agi::createAPFGraph(m,primary,second);
   int secondaries1[1] = {second};
-  testSizes(m,g,primary,secondaries1,1);
-  testVertices(m,g);
-  testEdges(m,g,primary,secondaries1,1);
+  testGraph(m,g,primary,secondaries1,1);
   
   g->destroyData();
   agi::destroyGraph(g);
@@ -85,9 +95,7 @@ int main(int argc, char* argv[]) {
 
   agi::Ngraph* g2 = agi::createAPFGraph(m,primary,secondaries,2);
   MPI_Barrier(MPI_COMM_WORLD);
-  testSizes(m,g2,primary,secondaries,2);
-  testVertices(m,g2);
-  testEdges(m,g2,primary,secondaries,2);
+  testGraph(m,g2,primary,secondaries,2);
 
   g2->destroyData();
   agi::destroyGraph(g2);
@@ -156,6 +164,38 @@ void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
   }
 }
 
+void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
+  //Test the ids of the graph vertices
+  if (!PCU_Comm_Self())
+    printf("Testing Ids\n");
+  agi::VertexIterator* gitr = g->begin();
+  agi::GraphVertex* vtx = NULL;
+  apf::MeshIterator* mitr = m->begin(primary);
+  apf::MeshEntity* ent = NULL;
+  apf::GlobalNumbering* id_nums=NULL;
+  id_nums = m->findGlobalNumbering("primary_ids_global");
+  assert(id_nums);
+  while ((vtx = g->iterate(gitr)) && (ent = m->iterate(mitr))) {
+    assert(g->globalID(vtx)==(gid_t)apf::getNumber(id_nums,ent,0,0));
+  }
+  m->end(mitr);
+  for (int i=0;i<n;i++) {
+    agi::EdgeIterator* eitr = g->begin(i);
+    char name[30];
+    sprintf(name,"secondary_ids%d_global",i);
+    id_nums = m->findGlobalNumbering(name);
+    assert(id_nums);
+    mitr = m->begin(seconds[i]);
+    agi::GraphEdge* edge;
+    while ((edge = g->iterate(eitr)) && (ent = m->iterate(mitr))) {
+      printf("%p\n",edge);
+      assert(g->globalID(edge)==(gid_t)apf::getNumber(id_nums,ent,0,0));
+    }
+    m->end(mitr);
+    g->destroy(eitr);
+  }
+}
+
 void testVertices(apf::Mesh* m,agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Iterating over vertices\n");
@@ -211,4 +251,41 @@ void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
     assert(tot_pins-ghost_pins==num_pins);
   }
 
+}
+
+void testGhosts(apf::Mesh* m,agi::Ngraph* g, int primary, int* seconds, int n) {
+  if (!PCU_Comm_Self())
+    printf("Iterating to check ghost counts\n");
+  //For each edge type
+  for (int i=0;i<n;i++) {
+    agi::GraphEdge* edge;
+    agi::EdgeIterator* eitr = g->begin(i);
+
+    apf::MeshIterator* mitr = m->begin(seconds[i]);
+    apf::MeshEntity* ent;
+    //Iterate over graph hyperedges
+    while ((edge = g->iterate(eitr))) {
+      //Iterate the mesh entity
+      ent = m->iterate(mitr);
+      //Iterate over the graph pins
+      agi::GraphVertex* pin;
+      agi::PinIterator* pitr = g->pins(edge);
+      agi::lid_t deg = g->degree(edge);
+      agi::lid_t owned_pins=0,ghost_pins=0;
+      for (agi::lid_t i=0;i<deg;i++) {
+	pin = g->iterate(pitr);
+	//Get the owner of the graph vertex
+	agi::part_t owner = g->owner(pin);
+	if (PCU_Comm_Self()==owner)
+	  owned_pins++;
+	else
+	  ghost_pins++;
+      }
+      //Get the number of adjacent mesh primaries
+      apf::Adjacent adj;
+      m->getAdjacent(ent,primary,adj);
+      assert(owned_pins==adj.getSize());
+      assert(owned_pins+ghost_pins == deg);
+    }
+  }
 }
