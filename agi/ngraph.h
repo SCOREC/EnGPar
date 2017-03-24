@@ -204,56 +204,144 @@ public:
    */
   etype addEdgeType() {assert(num_types!=MAX_TYPES);return num_types++;}
 
-  // \cond
+  /** \brief Creates the edge array for a certain type
+   * \param t the edge type
+   * \param count the number of edges of this type
+   */
   void makeEdgeArray(etype t,int count);
-  void setEdge(lid_t,gid_t,wgt_t,etype);
-  // \endcond
+  /** \brief sets the values of a specific edge
+   * \param l the local id of the edge
+   * \param g the global id of the edge
+   * \param w the weight of the edge
+   * \param t the type of the edge
+   */
+  void setEdge(lid_t l,gid_t g,wgt_t w,etype t);
   
   /*
   void create_csr(int num_verts, int num_edges, int* srcs,
                   int* dsts, int* wgts);
   */
-  // \cond members
+  // \cond DEV
   //TODO: Try to compress global id
-
+  /* \brief A flag for if the hypergraph functionality is turned on
+   */
   bool isHyperGraph;
-  //Global number of vertices and edges
+
+  /* \brief The number of edge types
+   */
+  int num_types;
+
+  /* \brief The number of unique vertices across all parts
+   */
   gid_t num_global_verts;
+  /* \brief The number of unique edges of each type across all parts
+   */
   gid_t num_global_edges[MAX_TYPES];
+  /* \brief The number of unique pins of each type across all parts
+   * 
+   * Only needed when isHyperGraph=true.
+   */
   gid_t num_global_pins[MAX_TYPES];
   
-  // number of vertices and edges
+  /* \brief The number of vertices on this part
+   */
   lid_t num_local_verts;
+  /* \brief The number of ghosted vertices on the part
+   */
   lid_t num_ghost_verts;
-  int num_types;
+  /* \brief The number of edges on the part of each type
+   *
+   * This includes edges going from local vertices to ghosted vertices
+   */
   lid_t num_local_edges[MAX_TYPES];
+  /* \brief The number of pins on the part of each type
+   *
+   * Only needed when isHyperGraph=true.
+   * This includes pins going from edges to ghost vertices.
+   */
   lid_t num_local_pins[MAX_TYPES];
   
-  // vertex weights
-  // size = num_local_verts
+  /* \brief The weights of the vertices.
+   *
+   * size = num_local_verts
+   */
   wgt_t* local_weights;
-  // vertex coordinates
-  // size = num_local_verts
+  /* \brief The coordinates of the vertices
+   *
+   * size = num_local_verts
+   * Only needed if using a geometric partitioner
+   */
   coord_t* local_coords;
   
-  //edge weights
-  // size=num_edges
-  gid_t* edge_unmap[MAX_TYPES];
+  /* \brief The weights of the edges
+   *
+   * size = num_local_edges
+   */
   wgt_t* edge_weights[MAX_TYPES];
   
-  
+  /* \brief A stricly increasing list of the offsets into edge_list for each vertex for each edge type
+   *
+   * size = num_local_verts+1
+   * Each entry represents the offset into the beginning of the vertex's edges.
+   * The degree is calculated by: degree_list[type][i+1] - degree_list[type][i]
+   */
   lid_t* degree_list[MAX_TYPES];
+  /* \brief The list of edges off of each vertex
+   *
+   * size = num_local_edges
+   * The starting position for a given vertex is found at degree_list[type][vertex]
+   * and goes up to degree_list[type][vertex+1].
+   */
   lid_t* edge_list[MAX_TYPES];
+  /* \brief A stricly increasing list of the offsets into pin_list for each edge for each edge type
+   *
+   * size = num_local_edges+1
+   * Only needed when isHyperGraph=true.
+   * Each entry represents the offset into the beginning of the edges's pins.
+   * The degree is calculated by: pin_degree_list[type][i+1] - pin_degree_list[type][i]
+   */
   lid_t* pin_degree_list[MAX_TYPES];
+  /* \brief The list of pins off of each edge
+   *
+   * size = num_local_pins
+   * Only needed when isHyperGraph=true.
+   * The starting position for a given edge is found at pin_degree_list[type][edge]
+   * and goes up to pin_degree_list[type][edge+1].
+   */
+
   lid_t* pin_list[MAX_TYPES];
 
   typedef std::unordered_map<gid_t,lid_t> map_t;
+  /* \brief A mapping from global id to local id for vertices
+   *
+   * Includes ghost vertices mapping
+   */
   map_t vtx_mapping;
-  map_t edge_mapping[MAX_TYPES];
-  //TODO: Tack ghost unmap on top of local_unmap
+  /* \brief A mapping from local id to global id for vertices
+   *
+   * size = num_local_verts
+   */
   gid_t* local_unmap;
+  /* \brief A mapping from local id to global id for ghost vertices
+   *
+   * size = num_ghost_verts
+   */
   gid_t* ghost_unmap;
+  /* \brief The part owners of each ghost vertex
+   *
+   * size = num_ghost_verts
+   */
   part_t* owners;
+
+  /* \brief A mapping from global id to local id for edges of each type
+   */
+  map_t edge_mapping[MAX_TYPES];
+  /* \brief A mapping from local id to global id for edges of each type
+   *
+   * size = num_local_edges
+   */
+  gid_t* edge_unmap[MAX_TYPES];  
+
   // \endcond
 };
 /** \brief Cleans up the memory of the graph
