@@ -287,6 +287,72 @@ void Ngraph::destroy(GraphIterator* itr) const {
 bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   return u==v;
 }
+
+void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
+  char vertex[100];
+  gid_t gid = globalID(vtx);
+  PCU_COMM_PACK(toSend,gid);
+  GraphIterator* gitr = adjacent(vtx);
+  GraphVertex* other;
+  lid_t deg = degree(vtx);
+  PCU_COMM_PACK(toSend,deg);
+  GraphEdge* prevEdge=NULL;
+  sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg); 
+  while ((other = iterate(gitr))) {
+    if (isHyperGraph) {
+      GraphEdge* e = edge(gitr);
+      if (prevEdge!=e) {
+	prevEdge=e;
+	gid_t edge_gid = globalID(e);
+	PCU_COMM_PACK(toSend,edge_gid);
+	sprintf(vertex,"%s%lu\n",vertex,edge_gid);
+      }
+    }
+    else {
+      gid_t other_gid = globalID(other);
+      PCU_COMM_PACK(toSend,other_gid);
+      sprintf(vertex,"%s%lu\n",vertex,other_gid);
+    }
+  }
+  printf("%s",vertex);
+}
+
+void Ngraph::recvVertex() {
+  char vertex[100];
+  gid_t gid;
+  PCU_COMM_UNPACK(gid);
+  lid_t deg;
+  PCU_COMM_UNPACK(deg);
+  sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg);
+  for (lid_t i=0; i<deg;i++) {
+    if (isHyperGraph) {
+      gid_t edge_gid;
+      PCU_COMM_UNPACK(edge_gid);
+      sprintf(vertex,"%s%lu\n",vertex,edge_gid);
+    }
+    else {
+      gid_t other_gid;
+      PCU_COMM_UNPACK(other_gid);
+      sprintf(vertex,"%s%lu\n",vertex,other_gid);
+    }
+  }
+  printf("%s",vertex);
+}
+
+  
+void Ngraph::migrate(Migration* plan) {
+  Migration::iterator itr;
+  PCU_Comm_Begin();
+  for (itr = plan->begin();itr!=plan->end();itr++) {
+    printf("%d sending %p to %d\n",PCU_Comm_Self(),itr->first,itr->second);
+    sendVertex(itr->first,itr->second);
+  }
+  PCU_Comm_Send();
+  while (PCU_Comm_Receive()) {
+    printf("%d getting vertex\n",PCU_Comm_Self());
+    recvVertex();
+  }
+}
   
 //Protected functions
 
@@ -301,40 +367,6 @@ void Ngraph::setEdge(lid_t lid,gid_t gid, wgt_t w,etype t) {
   edge_mapping[t][gid]=lid;
   
 }
-  /*
-void Ngraph::create_csr(int nv, int ne, int* srcs,
-                          int* dsts, int* wgts) {
-  num_verts = nv;
-  num_edges = ne;
-  weights = new double[num_verts];
-  out_vertices = new int[num_edges];
-  out_weights = new double[num_edges];
-  out_degree_list = new int[num_verts+1];
-
-  for (size_t i = 0; i < num_edges; ++i)
-    out_vertices[i] = 0;
-  for (size_t i = 0; i < num_edges; ++i)
-    out_weights[i] = 0;
-  for (size_t i = 0; i < num_verts+1; ++i)
-    out_degree_list[i] = 0;
-
-  int* temp_counts = new int[num_verts];
-  for (size_t i = 0; i < num_verts; ++i)
-    temp_counts[i] = 0;
-  for (size_t i = 0; i < num_edges; ++i)
-    ++temp_counts[srcs[i]];
-  for (size_t i = 0; i < num_verts; ++i)
-    out_degree_list[i+1] = out_degree_list[i] + temp_counts[i];
-  std::copy(out_degree_list, out_degree_list + num_verts, temp_counts);
-  for (size_t i = 0; i < num_edges; ++i) {
-    out_vertices[temp_counts[srcs[i]]] = dsts[i];
-    out_weights[temp_counts[srcs[i]]++] = wgts[i];
-  }
-  
-  delete [] temp_counts;
-
-}
-  */
 
 void destroyGraph(Ngraph* g) {delete g;}
 }

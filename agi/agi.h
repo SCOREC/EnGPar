@@ -9,14 +9,16 @@
 //TODO: discuss what these should be?
 namespace agi {
   
-typedef uint64_t gid_t;
-typedef uint64_t lid_t;
-typedef double wgt_t;
-typedef int32_t part_t;
-typedef apf::Vector3 coord_t;
- 
-typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
-typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
+  typedef uint64_t gid_t;
+  typedef uint64_t lid_t;
+  typedef double wgt_t;
+  typedef int32_t part_t;
+  typedef apf::Vector3 coord_t;
+
+  class GraphVertex;
+  typedef std::unordered_map<GraphVertex*,part_t> Migration;
+  typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
+  typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
 
 //Definitions for edge types
 //static size of edge types

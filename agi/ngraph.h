@@ -199,6 +199,11 @@ public:
    */
   virtual void migrate(std::map<GraphVertex*,int>& plan) = 0;
 
+  // \cond
+
+  void migrate(Migration* plan);
+  // \endcond
+
  protected:
   /** \brief Adds an edge type to the graph
    * \return the new edge type id
@@ -345,6 +350,11 @@ public:
    */
   gid_t* edge_unmap[MAX_TYPES];  
 
+  // \endcond
+  // \cond
+ private:
+  void sendVertex(GraphVertex*, part_t);
+  void recvVertex();
   // \endcond
 };
 /** \brief Cleans up the memory of the graph
