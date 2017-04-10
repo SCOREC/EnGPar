@@ -23,10 +23,13 @@ int main(int argc, char* argv[]) {
   //Construct graph
   agi::Ngraph* g = agi::createAPFGraph(m,3,2);
 
+  engpar::evaluatePartition(g);
+  
   //Create the balancer
   agi::Balancer* balancer = engpar::makeVtxBalancer(g,1.1,argc==4);
   balancer->balance(0.1);
 
+  engpar::evaluatePartition(g);
   //Destroy balancer
   delete balancer;
   

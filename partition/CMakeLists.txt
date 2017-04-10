@@ -6,6 +6,7 @@ include_directories(
   )
 
 set(ENGPAR_SOURCES
+  engpar.cpp
   src/engpar_balancer.cpp
   src/engpar_vtxBalancer.cpp
   src/engpar_queue.cpp

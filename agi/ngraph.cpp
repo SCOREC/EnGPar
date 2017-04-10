@@ -289,7 +289,7 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
 }
 
 void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
-  char vertex[100];
+  //char vertex[100];
   gid_t gid = globalID(vtx);
   PCU_COMM_PACK(toSend,gid);
   GraphIterator* gitr = adjacent(vtx);
@@ -297,7 +297,7 @@ void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
   lid_t deg = degree(vtx);
   PCU_COMM_PACK(toSend,deg);
   GraphEdge* prevEdge=NULL;
-  sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg); 
+  //sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg); 
   while ((other = iterate(gitr))) {
     if (isHyperGraph) {
       GraphEdge* e = edge(gitr);
@@ -305,38 +305,38 @@ void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
 	prevEdge=e;
 	gid_t edge_gid = globalID(e);
 	PCU_COMM_PACK(toSend,edge_gid);
-	sprintf(vertex,"%s%lu\n",vertex,edge_gid);
+	//sprintf(vertex,"%s%lu\n",vertex,edge_gid);
       }
     }
     else {
       gid_t other_gid = globalID(other);
       PCU_COMM_PACK(toSend,other_gid);
-      sprintf(vertex,"%s%lu\n",vertex,other_gid);
+      //sprintf(vertex,"%s%lu\n",vertex,other_gid);
     }
   }
-  printf("%s",vertex);
+  //printf("%s",vertex);
 }
 
 void Ngraph::recvVertex() {
-  char vertex[100];
+  //char vertex[100];
   gid_t gid;
   PCU_COMM_UNPACK(gid);
   lid_t deg;
   PCU_COMM_UNPACK(deg);
-  sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg);
+  //sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg);
   for (lid_t i=0; i<deg;i++) {
     if (isHyperGraph) {
       gid_t edge_gid;
       PCU_COMM_UNPACK(edge_gid);
-      sprintf(vertex,"%s%lu\n",vertex,edge_gid);
+      //sprintf(vertex,"%s%lu\n",vertex,edge_gid);
     }
     else {
       gid_t other_gid;
       PCU_COMM_UNPACK(other_gid);
-      sprintf(vertex,"%s%lu\n",vertex,other_gid);
+      //sprintf(vertex,"%s%lu\n",vertex,other_gid);
     }
   }
-  printf("%s",vertex);
+  //printf("%s",vertex);
 }
 
   
@@ -344,12 +344,12 @@ void Ngraph::migrate(Migration* plan) {
   Migration::iterator itr;
   PCU_Comm_Begin();
   for (itr = plan->begin();itr!=plan->end();itr++) {
-    printf("%d sending %p to %d\n",PCU_Comm_Self(),itr->first,itr->second);
+    //printf("%d sending %p to %d\n",PCU_Comm_Self(),itr->first,itr->second);
     sendVertex(itr->first,itr->second);
   }
   PCU_Comm_Send();
   while (PCU_Comm_Receive()) {
-    printf("%d getting vertex\n",PCU_Comm_Self());
+    //printf("%d getting vertex\n",PCU_Comm_Self());
     recvVertex();
   }
 }
