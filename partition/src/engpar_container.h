@@ -14,6 +14,9 @@ namespace engpar {
     iterator begin() {
       return d.begin();
     }
+    T total() {
+      return my_total;
+    }
     typedef std::pair<const int, T> Item;
     const Item* iterate(iterator& itr) {
       if( itr == d.end() ) 
@@ -30,7 +33,15 @@ namespace engpar {
     T get(int key) {
       return d[key];
     }
+    void increment(int key) {
+      my_total++;
+      d[key]++;
+    }
     void set(int key, T value) {
+      iterator old = d.find(key);
+      if (old!=d.end())
+	my_total-=old->second;;
+      my_total+=value;
       d[key] = value;
     }
     bool has(int key) {
@@ -50,7 +61,7 @@ namespace engpar {
     }
   protected:
     Data d;
-    
+    T my_total;
   };
 }
 #endif

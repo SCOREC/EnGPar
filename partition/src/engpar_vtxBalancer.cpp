@@ -1,10 +1,11 @@
 #include "../engpar.h"
-#include "engpar_bounds.h"
-#include "engpar_vtxWeights.h"
+#include "engpar_sides.h"
+#include "engpar_weights.h"
 #include "engpar_balancer.h"
 #include "engpar_targets.h"
+#include <unordered_set>
 #include <PCU.h>
-namespace {
+namespace engpar {
   class VtxBalancer : public engpar::Balancer {
   public:
     VtxBalancer(agi::Ngraph* g, double f, int v)
@@ -12,18 +13,83 @@ namespace {
       
     }
     ~VtxBalancer() {}
-    bool runStep(double tol) {
-      engpar::Bounds* b = engpar::makeEdgeBounds(graph);
-      printf("%d %s",PCU_Comm_Self(),b->print("Boundaries").c_str());
-      engpar::VtxWeights* w = engpar::makeVtxWeights(graph,b);
-      printf("%d %s",PCU_Comm_Self(),w->print("Weights").c_str());
-      engpar::Targets* t = engpar::makeTargets(b,w,factor);
-      printf("%d %s",PCU_Comm_Self(),t->print("Targets").c_str());
-      return true;
+
+    //Count the number of pins across part boundaries
+    virtual Sides* makeSides() {
+      Sides* s = new Sides;
+      agi::GraphEdge* edge;
+      agi::EdgeIterator* eitr = graph->begin(0);
+      printf("%d made it here with %lu ghost vertices\n",PCU_Comm_Self(),graph->numGhostVtxs());
+      while ((edge = graph->iterate(eitr))) {
+	agi::GraphVertex* pin;
+	agi::PinIterator* pitr = graph->pins(edge);
+	int deg = graph->degree(edge);
+	for (int i=0;i<deg;i++) {
+	  pin = graph->iterate(pitr);
+	  part_t owner = graph->owner(pin);
+	  if (PCU_Comm_Self()!=owner){
+	    s->increment(owner);
+	  }
+	}
+      }
+      return s;
     }
     
+    virtual Weights* makeVtxWeights(Sides* s) {
+      Weights* w = new Weights();
+      //calculate the total weight of the vertices
+      agi::GraphVertex* vtx;
+      agi::VertexIterator* vitr = graph->begin();
+      while ((vtx = graph->iterate(vitr))) {
+	w->addWeight(graph->weight(vtx));
+      }
+
+      //Share weight with all neighbors
+      PCU_Comm_Begin();
+      Sides::iterator itr;
+      for (itr=s->begin();itr!=s->end();itr++) 
+	PCU_COMM_PACK(itr->first,w->myWeight());
+      
+      PCU_Comm_Send();
+      while (PCU_Comm_Listen()) {
+	double otherWeight;
+	PCU_COMM_UNPACK(otherWeight);
+	w->set(PCU_Comm_Sender(),otherWeight);
+      }
+      return w;
+
+    }
+    //Only balancing vertices so we won't have edge weights
+    virtual Weights* makeEdgeWeights(Sides* s, agi::etype i) {
+      return NULL;
+    }
+
+    //Calculates the amount fo weight to send to each neighbor
+    virtual Targets* makeTargets(Sides* s, Weights* vtxW,
+				 Weights** edgeW) {
+      Targets* t = new Targets();
+      Sides::iterator itr;
+      for (itr = s->begin();itr!=s->end();itr++) {
+	int neighbor = itr->first;
+	engpar::wgt_t myW = vtxW->myWeight();
+	engpar::wgt_t neighborW = vtxW->get(neighbor);
+	if (myW>neighborW) {
+	  engpar::wgt_t diff = myW-neighborW;
+	  engpar::wgt_t sideFraction = itr->second;
+	  sideFraction /= s->total();
+	  engpar::wgt_t scaledW = diff * sideFraction* factor;
+	  t->set(neighbor,scaledW);
+	}
+      }
+      return t;
+    }
+    virtual Selector* makeSelector(Queue* q) {
+      return new Selector(graph,q);
+    }
+
   };
 }
+
 namespace engpar {
   agi::Balancer* makeVtxBalancer(agi::Ngraph* g, double f, int v) {
     return new VtxBalancer(g,f,v);

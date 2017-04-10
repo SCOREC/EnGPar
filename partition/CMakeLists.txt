@@ -8,9 +8,8 @@ include_directories(
 set(ENGPAR_SOURCES
   src/engpar_balancer.cpp
   src/engpar_vtxBalancer.cpp
-  src/engpar_edgeBounds.cpp
-  src/engpar_vtxWeights.cpp
-  src/engpar_targets.cpp
+  src/engpar_queue.cpp
+  src/engpar_selector.cpp
   )
 
 set(ENGPAR_HEADERS

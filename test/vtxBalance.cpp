@@ -10,9 +10,9 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   PCU_Comm_Init();
 
-  if ( argc != 3 ) {
+  if ( argc != 3&&argc!=4) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh>\n", argv[0]);
+      printf("Usage: %s <model> <mesh> [verbosity]\n", argv[0]);
     MPI_Finalize();
     assert(false);
   }
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
   agi::Ngraph* g = agi::createAPFGraph(m,3,2);
 
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeVtxBalancer(g);
+  agi::Balancer* balancer = engpar::makeVtxBalancer(g,1.1,argc==4);
   balancer->balance(0.1);
 
   //Destroy balancer
