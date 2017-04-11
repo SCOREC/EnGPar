@@ -63,7 +63,7 @@ macro(build_subproject subproject_name config_opts)
   set_property(GLOBAL PROPERTY Label ${subproject_name})
 
   setup_repo(${subproject_name} "https://github.com/SCOREC/EnGPar.git")
-  setup_repo(engpar "https://github.com/SCOREC/EnGPar.git")
+  setup_repo(EnGPar "https://github.com/SCOREC/EnGPar.git")
 
   if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${subproject_name}")
     file(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${subproject_name})
