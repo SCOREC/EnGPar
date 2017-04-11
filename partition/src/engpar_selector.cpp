@@ -21,7 +21,7 @@ namespace engpar {
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
 		  part_t peer, agi::Migration* plan) {
     Cavity::iterator itr;
-    wgt_t w;
+    wgt_t w=0.0;
     for (itr = cav.begin();itr!=cav.end();itr++) {
       plan->insert(std::make_pair(*itr,peer));
       w+= g->weight(*itr);
