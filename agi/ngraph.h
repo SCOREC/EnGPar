@@ -9,6 +9,7 @@
 #include "EdgeIterator.h"
 #include "GraphIterator.h"
 
+
 /** \file ngraph.h
     \brief The N-Graph interface */
 namespace agi {
@@ -362,5 +363,16 @@ public:
  */
 void destroyGraph(Ngraph* g);
 } //namespace
+
+
+#ifdef KOKKOS_ENABLED
+#include <Kokkos_Core.hpp>
+#define KOKKOS_FOR_VERTS(g)						\
+  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {	\
+      agi::GraphVertex* vtx = reinterpret_cast<agi::GraphVertex*>((char*)(i+1));
+      
+#define KOKKOS_END_FOR() });
+#endif
+
 
 #endif

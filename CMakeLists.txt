@@ -41,7 +41,15 @@ set(VALGRIND_ARGS "" CACHE string
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
 find_package(SCOREC 2.1.0 REQUIRED CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
 
-include_directories(${SCOREC_PREFIX}/include)
+if (ENABLE_KOKKOS)
+  find_package(Kokkos MODULE REQUIRED)
+  add_definitions(-DKOKKOS_ENABLED)
+endif()
+
+include_directories(
+  ${SCOREC_PREFIX}/include
+  ${KOKKOS_INCLUDE_DIRS}
+  )
 
 add_subdirectory(agi)
 
