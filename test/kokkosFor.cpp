@@ -20,10 +20,9 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc,argv);
 
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
-
-  KOKKOS_FOR_VERTS(g) {
-    printf("%lu\n",g->globalID(vtx));
-    printf("%lu\n",g->localID(vtx));
+  KOKKOS_FOR_VERTS(g,v) {
+    printf("%lu\n",g->globalID(v));
+    printf("%lu\n",g->localID(v));
   }
   KOKKOS_END_FOR()
   
