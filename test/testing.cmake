@@ -77,6 +77,17 @@ if (ENABLE_ZOLTAN)
 endif()
 
 if (ENABLE_KOKKOS)
+  mpi_test(kokkosHelloWorld 1
+    ./kokkosHelloWorld)
+
+  mpi_test(kokkosForRing 1
+    ./kokkosFor
+    "${GRAPHS}/ring.ebin")
+
+  mpi_test(kokkosForTree 1
+    ./kokkosFor
+    "${GRAPHS}/tree.ebin")
+
   mpi_test(bfsSearchRing 1
     ./bfsSearch
     "${GRAPHS}/ring.ebin")
