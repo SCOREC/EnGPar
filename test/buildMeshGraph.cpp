@@ -9,6 +9,7 @@
 #include <stdint.h>
 #include <apfNumbering.h>
 #include <cstring>
+#include <engpar_support.h>
 
 void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
 void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
@@ -27,7 +28,7 @@ void testGraph(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   PCU_Comm_Init();
-  
+  EnGPar_Initialize();
   if ( argc != 5 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <model> <mesh> <primary_dimension> <secondary_dimension>\n", argv[0]);
@@ -106,7 +107,7 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
-  
+  EnGPar_Finalize();
   PCU_Comm_Free();
   MPI_Finalize();
 

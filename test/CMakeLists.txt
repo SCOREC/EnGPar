@@ -12,6 +12,7 @@ if (ENABLE_KOKKOS)
   find_package(Kokkos MODULE REQUIRED)
 endif()
 include_directories(
+  ../support
   ../agi
   ../zoltan
   ../partition
@@ -22,6 +23,7 @@ include_directories(
   )
 
 set(ALL_LIBS
+  engpar_support
   agi
   interfaces
   agi_zoltan
