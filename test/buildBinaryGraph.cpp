@@ -16,7 +16,7 @@ int main(int argc, char* argv[]) {
   if ( argc != 2&&argc!=3 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <binary_graph_file> [vertex_partition_file]",argv[0]);
-    PCU_Comm_Free();
+    EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
   }

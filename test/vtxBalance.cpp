@@ -1,19 +1,20 @@
+#include <engpar_support.h>
 #include <apfGraph.h>
 #include <apfMesh2.h>
-#include <PCU.h>
 #include <apfMDS.h>
 #include <gmi_mesh.h>
 #include <apf.h>
 #include <engpar.h>
+
 int main(int argc, char* argv[]) {
 
   MPI_Init(&argc,&argv);
-  PCU_Comm_Init();
+  EnGPar_Initialize();
 
   if ( argc != 3&&argc!=4) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <model> <mesh> [verbosity]\n", argv[0]);
-    MPI_Finalize();
+    EnGPar_Finalize();
     assert(false);
   }
   
@@ -43,6 +44,6 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
 
-  PCU_Comm_Free();
+  EnGPar_Finalize();
   MPI_Finalize();
 }

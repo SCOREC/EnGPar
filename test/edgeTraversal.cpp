@@ -1,17 +1,17 @@
 #include <binGraph.h>
 #include <mpi.h>
-#include <PCU.h>
 #include <cassert>
+#include <engpar_support.h>
 
 void traverseEdges(agi::Ngraph*);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
-  PCU_Comm_Init();
+  EnGPar_Initialize();
   if ( argc != 2&&argc!=3 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <binary_graph_file>",argv[0]);
-    PCU_Comm_Free();
+    EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
   }
@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("All tests passed\n");
 
-  PCU_Comm_Free();
+  EnGPar_Finalize();
   MPI_Finalize();
 
   return 0;

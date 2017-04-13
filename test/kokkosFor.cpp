@@ -1,18 +1,18 @@
 #include <Kokkos_Core.hpp>
 #include <binGraph.h>
 #include <mpi.h>
-#include <PCU.h>
 #include <stdio.h>
+#include <engpar_support.h>
 
 
 int main(int argc, char* argv[]) {
 
   MPI_Init(&argc,&argv);
-  PCU_Comm_Init();
+  EnGPar_Initialize();
   if ( argc != 2 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <binary_graph_file>",argv[0]);
-    PCU_Comm_Free();
+    EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
   }
@@ -31,7 +31,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
   Kokkos::finalize();
-  PCU_Comm_Free();
+  EnGPar_Finalize();
   MPI_Finalize();
 
   return 0;

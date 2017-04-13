@@ -1,6 +1,5 @@
 #include "engpar_version.h"
 #include "engpar_support.h"
-#include <PCU.h>
 
 bool handlingPCU=false;
 void EnGPar_Initialize() {

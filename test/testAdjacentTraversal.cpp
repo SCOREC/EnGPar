@@ -1,17 +1,25 @@
 #include <apfGraph.h>
 #include <apfMesh2.h>
 #include <cassert>
-#include <PCU.h>
 #include <gmi_mesh.h>
 #include <apfMDS.h>
 #include <binGraph.h>
 #include <apf.h>
 #include <vector>
+#include <engpar_support.h>
+
 void testAdjacent(agi::Ngraph* g,agi::etype t=0);
 void compareTraversal(agi::Ngraph* g,agi::etype t=0);
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
-  PCU_Comm_Init();
+  EnGPar_Initialize();
+
+  if ( argc != 4) {
+    if ( !PCU_Comm_Self() )
+      printf("Usage: %s <model> <mesh> <graph>\n", argv[0]);
+    EnGPar_Finalize();
+    assert(false);
+  }
 
   //Load in PUMI mesh
   gmi_register_mesh();
@@ -58,7 +66,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
 
-  PCU_Comm_Free();
+  EnGPar_Finalize();
   MPI_Finalize();
 }
 

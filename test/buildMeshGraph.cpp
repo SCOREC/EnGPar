@@ -1,7 +1,6 @@
 #include <apfGraph.h>
 #include <apfMesh2.h>
 #include <cassert>
-#include <PCU.h>
 #include <gmi_mesh.h>
 #include <apfMDS.h>
 #include <apf.h>
@@ -32,6 +31,7 @@ int main(int argc, char* argv[]) {
   if ( argc != 5 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <model> <mesh> <primary_dimension> <secondary_dimension>\n", argv[0]);
+    EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
   }
