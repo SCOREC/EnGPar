@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <iostream>
 #include <PCU.h>
+#include <cstring>
 namespace agi {
 
 Ngraph::Ngraph() {
@@ -33,6 +34,100 @@ Ngraph::Ngraph() {
   owners = NULL;
 }
 
+  void phi2(std::string s="") {
+    if (PCU_Comm_Self())
+      printf("hi %s\n",s.c_str());
+  }
+void Ngraph::constructGraph(std::vector<gid_t>& verts,
+			    std::vector<gid_t>& edge_ids,
+			    std::vector<lid_t>& degs,
+			    std::vector<gid_t>& pins_to_verts) {
+  isHyperGraph=false;
+  num_local_verts=verts.size();
+  local_unmap = new gid_t[num_local_verts];
+  local_weights =NULL;
+  local_coords=NULL;
+  num_types=0;
+  etype t = addEdgeType();
+  degree_list[t] = new lid_t[num_local_verts+1];
+  degree_list[t][0]=0;
+  for (lid_t i=0;i<verts.size();i++) {
+    local_unmap[i] = verts[i];
+    vtx_mapping[verts[i]]=i;
+    degree_list[t][i+1]=0;
+    //set local_weights
+    //set local coords
+  }
+
+  num_ghost_verts=0;
+  num_local_edges[t] = edge_ids.size();
+  num_local_pins[t] = pins_to_verts.size();
+  edge_weights[t] = NULL;
+  edge_unmap[t] = new gid_t[edge_ids.size()];
+  pin_degree_list[t] = new lid_t[degs.size()+1];
+  pin_degree_list[t][0]=0;
+  pin_list[t] = new lid_t[pins_to_verts.size()];
+  for (lid_t i=0;i<edge_ids.size();i++) {
+    //set edge_weight
+    gid_t gid = edge_ids[i];
+    edge_mapping[t][gid]=i;
+    edge_unmap[t][i]=gid;
+    pin_degree_list[t][i+1]=pin_degree_list[t][i]+degs[i];
+    if (pin_degree_list[t][i+1]-pin_degree_list[t][i]!=2) 
+      isHyperGraph=true;
+    for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
+      gid_t v = pins_to_verts[j];
+      map_t::iterator vitr = vtx_mapping.find(v);
+      if (vitr!=vtx_mapping.end()&&vitr->second<num_local_verts) {
+	degree_list[t][vitr->second+1]++;
+	pin_list[t][j]=vitr->second;
+      }
+      else {
+	if (vitr==vtx_mapping.end()) {
+	  vtx_mapping[v]=num_local_verts+num_ghost_verts;
+	  pin_list[t][j] = num_local_verts+num_ghost_verts++;
+	}
+	else {
+	  pin_list[t][j]=vitr->second;
+	}
+	num_local_pins[t]--;
+      }
+    }
+  }
+  if (!isHyperGraph)
+    num_local_edges[t] = num_local_pins[t];
+  for (lid_t i=1;i<num_local_verts+1;i++) {
+    degree_list[t][i]+=degree_list[t][i-1];
+  }
+  uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
+  std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
+  edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
+  ghost_unmap = new lid_t[num_ghost_verts];
+  for (lid_t i=0;i<edge_ids.size();i++) {
+    for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
+      lid_t u = pin_list[t][j];
+      if (u>=num_local_verts){
+	ghost_unmap[u-num_local_verts] = pins_to_verts[j];
+      }
+      if (isHyperGraph) {
+	if (u<num_local_verts)
+	  edge_list[t][temp_counts[u]++] = i;
+      }
+      else {
+	lid_t v = pin_list[t][++j];
+	if (u<num_local_verts)
+	  edge_list[t][temp_counts[u]++] = v;
+	if (v<num_local_verts)
+	  edge_list[t][temp_counts[v]++] = u;
+      }
+    }
+  }
+  free(temp_counts);
+  //Setup global counters
+  num_global_verts = PCU_Add_Long(num_local_verts);
+  num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
+  num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
+}
 Ngraph::~Ngraph() {
   if (local_weights)
     delete [] local_weights;
@@ -286,72 +381,6 @@ void Ngraph::destroy(GraphIterator* itr) const {
 
 bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   return u==v;
-}
-
-void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
-  //char vertex[100];
-  gid_t gid = globalID(vtx);
-  PCU_COMM_PACK(toSend,gid);
-  GraphIterator* gitr = adjacent(vtx);
-  GraphVertex* other;
-  lid_t deg = degree(vtx);
-  PCU_COMM_PACK(toSend,deg);
-  GraphEdge* prevEdge=NULL;
-  //sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg); 
-  while ((other = iterate(gitr))) {
-    if (isHyperGraph) {
-      GraphEdge* e = edge(gitr);
-      if (prevEdge!=e) {
-	prevEdge=e;
-	gid_t edge_gid = globalID(e);
-	PCU_COMM_PACK(toSend,edge_gid);
-	//sprintf(vertex,"%s%lu\n",vertex,edge_gid);
-      }
-    }
-    else {
-      gid_t other_gid = globalID(other);
-      PCU_COMM_PACK(toSend,other_gid);
-      //sprintf(vertex,"%s%lu\n",vertex,other_gid);
-    }
-  }
-  //printf("%s",vertex);
-}
-
-void Ngraph::recvVertex() {
-  //char vertex[100];
-  gid_t gid;
-  PCU_COMM_UNPACK(gid);
-  lid_t deg;
-  PCU_COMM_UNPACK(deg);
-  //sprintf(vertex,"gid: %lu\nHas degree: %lu\nEdges:\n",gid,deg);
-  for (lid_t i=0; i<deg;i++) {
-    if (isHyperGraph) {
-      gid_t edge_gid;
-      PCU_COMM_UNPACK(edge_gid);
-      //sprintf(vertex,"%s%lu\n",vertex,edge_gid);
-    }
-    else {
-      gid_t other_gid;
-      PCU_COMM_UNPACK(other_gid);
-      //sprintf(vertex,"%s%lu\n",vertex,other_gid);
-    }
-  }
-  //printf("%s",vertex);
-}
-
-  
-void Ngraph::migrate(Migration* plan) {
-  Migration::iterator itr;
-  PCU_Comm_Begin();
-  for (itr = plan->begin();itr!=plan->end();itr++) {
-    //printf("%d sending %p to %d\n",PCU_Comm_Self(),itr->first,itr->second);
-    sendVertex(itr->first,itr->second);
-  }
-  PCU_Comm_Send();
-  while (PCU_Comm_Receive()) {
-    //printf("%d getting vertex\n",PCU_Comm_Self());
-    recvVertex();
-  }
 }
   
 //Protected functions

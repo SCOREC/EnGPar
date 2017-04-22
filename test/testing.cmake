@@ -12,6 +12,13 @@ function(mpi_test TESTNAME PROCS EXE)
   )
 endfunction(mpi_test)
 
+mpi_test(constructGraphSerial 1
+  ./constructGraph)
+mpi_test(constructGraph2 2
+  ./constructGraph)
+mpi_test(constructGraph4 4
+  ./constructGraph)
+
 mpi_test(buildSerialMeshGraph32 1
   ./buildMeshGraph
   ${MESHES}/cube/cube.dmg

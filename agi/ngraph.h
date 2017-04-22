@@ -27,9 +27,21 @@ class Ngraph {
   
 public:
   Ngraph();
+  /** \brief Constructs the Ngraph given a set of information
+   * \param verts list of global ids of vertices that this part owns
+   * \param edge_ids list of global ids of edges that this part has
+   * \param degs list of degrees of each edge (always 2 if 
+   *        constructing a traiditional graph)
+   * \param pins_to_verts list of the vertices the edges are connected to
+   */
+  void constructGraph(std::vector<gid_t>& verts,
+		      std::vector<gid_t>& edge_ids,
+		      std::vector<lid_t>& degs,
+		      std::vector<gid_t>& pins_to_verts);
+
   virtual ~Ngraph();
   // \cond
-  virtual void destroyData()=0;
+  virtual void destroyData(){}//=0;
   // \endcond
   //Global Part Information
   /** \brief Returns the number of vertices in the graph across all processes */
@@ -198,7 +210,7 @@ public:
   /** \brief A method to provide a migration plan of the vertices
    * \param plan a map from graph vertex to part id
    */
-  virtual void migrate(std::map<GraphVertex*,int>& plan) = 0;
+  virtual void migrate(std::map<GraphVertex*,int>& plan) {}// = 0;
 
   // \cond
 
@@ -355,7 +367,7 @@ public:
   // \cond
  private:
   void sendVertex(GraphVertex*, part_t);
-  void recvVertex();
+  void recvVertex(std::vector<gid_t>&);
   // \endcond
 };
 /** \brief Cleans up the memory of the graph

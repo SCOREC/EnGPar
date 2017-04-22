@@ -39,6 +39,7 @@ function(make_exe exename srcname)
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_exe)
 
+make_exe(constructGraph constructGraph.cpp)
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)

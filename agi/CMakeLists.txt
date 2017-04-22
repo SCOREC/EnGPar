@@ -4,6 +4,7 @@ project(agi)
 set(AGI_SOURCES
   ngraph.cpp
   agiBalancer.cpp
+  migrate.cpp
   )
 
 set(AGI_HEADERS
