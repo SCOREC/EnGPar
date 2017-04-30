@@ -76,7 +76,7 @@ void Ngraph::constructGraph(bool isHG,
       gid_t v = pins_to_verts[j];
       map_t::iterator vitr = vtx_mapping.find(v);
       if (vitr!=vtx_mapping.end()&&vitr->second<num_local_verts) {
-	if (!isHyperGraph&&!(j%2))
+	if (!(j%2))
 	  degree_list[t][vitr->second+1]++;
 	else if (isHyperGraph)
 	  degree_list[t][vitr->second+1]++;
@@ -137,30 +137,41 @@ Ngraph::~Ngraph() {
 }
 
 void Ngraph::destroyData() {
-  if (local_weights)
+  if (local_weights) 
     delete [] local_weights;
+  local_weights = NULL;
   if (local_coords)
     delete [] local_coords;
+  local_coords = NULL;
   for (int i=0;i<MAX_TYPES;i++) {
     if (edge_unmap[i])
       delete [] edge_unmap[i];
+    edge_unmap[i] = NULL;
     if (edge_weights[i])
       delete [] edge_weights[i];
+    edge_weights[i] = NULL;
     if (degree_list[i])
       delete [] degree_list[i];
+    degree_list[i] =NULL;
     if (edge_list[i])
       delete [] edge_list[i];
+    edge_list[i] = NULL;
     if (pin_degree_list[i])
       delete [] pin_degree_list[i];
+    pin_degree_list[i] = NULL;
     if (pin_list[i])
       delete [] pin_list[i];
+    pin_list[i] = NULL;
   }
   if (local_unmap)
     delete [] local_unmap;
+  local_unmap = NULL;
   if (ghost_unmap)
     delete [] ghost_unmap;
+  ghost_unmap = NULL;
   if (owners)
     delete [] owners;
+  owners = NULL;
 
 }
  

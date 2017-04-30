@@ -20,8 +20,9 @@ void EnGPar_Finalize() {
   if (handlingPCU &&PCU_Comm_Initialized())
     PCU_Comm_Free();
 }
-FILE* old_stdout;
-void EnGPar_Debug_Open() {
+FILE* old_stdout=NULL;
+FILE* old_stderr=NULL;
+void EnGPar_Debug_Open(std::string s) {
   char file[80];
   sprintf(file,"debug/debug%d.txt",PCU_Comm_Self());
 
@@ -29,15 +30,30 @@ void EnGPar_Debug_Open() {
   if (stat("debug", &st) == -1) {
     mkdir("debug", 0700);
   }
-  old_stdout = stdout;
-  stdout = freopen(file,"w",stdout);
-  if (!stdout) {
-    stdout = old_stdout;
-    fprintf(stderr,"Failed to open debug files\n");
+  if (s.find("o")!=std::string::npos||s.find("e")!=std::string::npos) {
+    old_stdout = stdout;
+    stdout = freopen(file,"w",stdout);
+    if (!stdout) {
+      stdout = old_stdout;
+      fprintf(stderr,"Failed to open debug files\n");
+      return;
+    }
+  
+    if (s.find("e")!=std::string::npos) {
+      old_stderr = stderr;
+      stderr = stdout;
+      if (!stderr) {
+	stderr = old_stderr;
+	fprintf(stderr,"Failed to open debug files\n");
+	return;
+      }
+    }
   }
 }
 
 void EnGPar_Debug_Close() {
+  if (old_stdout)
     stdout = old_stdout;
-    
+  if (old_stderr)
+    stderr = old_stderr;
 }

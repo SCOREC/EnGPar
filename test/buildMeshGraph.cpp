@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
   int secondaries1[1] = {second};
   testGraph(m,g,primary,secondaries1,1);
   
-  g->destroyData();
+  //g->destroyData();
   agi::destroyGraph(g);
 
   PCU_Barrier();
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   testGraph(m,g2,primary,secondaries,2);
 
-  g2->destroyData();
+  //g2->destroyData();
   agi::destroyGraph(g2);
 
   m->destroyNative();

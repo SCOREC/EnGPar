@@ -3,11 +3,11 @@
 #include <engpar_support.h>
 #include <set>
 agi::Ngraph* buildGraph();
-void testGraph(agi::Ngraph*);
+agi::Ngraph* buildHyperGraph();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  EnGPar_Debug_Open();
+  EnGPar_Debug_Open("");
   agi::Ngraph* g = buildGraph();
   if (!PCU_Comm_Self())
     printf("Constructing migration plan\n");
@@ -26,17 +26,34 @@ int main(int argc, char* argv[]) {
       }
     }
   }
-
-  //if (!PCU_Comm_Self()) 
-  printf("Migrating: %lu\n",plan->size());
-  
+  if (!PCU_Comm_Self()) 
+    printf("Migrating: %lu\n",plan->size());
   g->migrate(plan);
-
 
   agi::destroyGraph(g);
   
   PCU_Barrier();
 
+  g = buildHyperGraph();
+  if (!PCU_Comm_Self())
+    printf("Constructing migration plan\n");
+  PCU_Barrier();
+  plan = new agi::Migration;
+
+  itr=g->begin();
+  while ((v = g->iterate(itr))) {
+    (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+    break;
+  }
+  printf("Migrating: %lu\n",plan->size());
+  g->migrate(plan);
+
+  if (!PCU_Comm_Self())
+    printf("hello\n");
+  agi::destroyGraph(g);
+  
+  PCU_Barrier();
+  
   if (!PCU_Comm_Self()) 
     printf("All Tests Passed\n");
   
@@ -90,4 +107,58 @@ agi::Ngraph* buildGraph() {
   }
   graph->constructGraph(false,verts,edges,degrees,pins,owners);
   return graph;
+}
+
+agi::Ngraph* buildHyperGraph() {
+  if (!PCU_Comm_Self())
+    printf("Building HyperGraph\n");
+  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::lid_t local_verts = 4;
+  agi::gid_t start_vert = local_verts*PCU_Comm_Self();
+  agi::gid_t end_vert = local_verts*(PCU_Comm_Self()+1)-1;
+  agi::lid_t local_edges = 3;
+  agi::gid_t global_verts = local_verts*PCU_Comm_Peers();
+  agi::gid_t global_edges = local_edges*PCU_Comm_Peers();
+  std::vector<agi::gid_t> verts;
+  std::unordered_map<agi::gid_t,agi::part_t> ghost_owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  for (agi::gid_t i=0;i<local_verts;i++) 
+    verts.push_back(local_verts*PCU_Comm_Self()+i);
+   
+  for (agi::gid_t i=0;i<local_edges;i++)
+    edges.push_back(local_edges*PCU_Comm_Self()+i);
+  degrees.push_back(4);
+  degrees.push_back(2);
+  degrees.push_back(4);
+  for (agi::gid_t i=0;i<local_verts;i++)
+    pins.push_back(verts[i]);
+  pins.push_back(verts[1]);
+  pins.push_back(verts[3]);
+  for (agi::gid_t i=0;i<local_verts;i++) {
+    gid_t v = (verts[i]+2)%global_verts;
+    pins.push_back(v);
+    
+    if (v<start_vert||v>end_vert) {
+      ghost_owners[v] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
+    }
+  }
+  //add the edge backward from the first vertex of this part
+  //  to the last of the previous
+  if (PCU_Comm_Peers()>1) {
+    edges.push_back((edges[0]+global_edges-1)%global_edges);
+    degrees.push_back(4);
+    for (agi::gid_t i=0;i<local_verts;i++) {
+      gid_t v = (verts[i]+global_verts-2)%global_verts;
+      pins.push_back(v);
+      if (v<start_vert||v>end_vert)
+	ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+
+    }
+
+  }
+  graph->constructGraph(true,verts,edges,degrees,pins,ghost_owners);
+  return graph;
+
 }

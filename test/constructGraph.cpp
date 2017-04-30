@@ -166,7 +166,7 @@ void buildHyperGraph() {
   agi::lid_t vert_degs[4] = {2,3,2,3};
   agi::lid_t edge_degs[4] = {4,2,4,4};
   agi::lid_t ghost_degs[4] = {0,0,2,2};
-
+  agi::gid_t pin[14] = {0,1,2,3,1,3,2,3,4,5,6,7,0,1};
   agi::VertexIterator* itr = graph->begin();
   agi::GraphVertex* vtx;
   lid_t i=0;
@@ -189,6 +189,7 @@ void buildHyperGraph() {
 
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = graph->begin(0);
+  int k=0;
   while ((e = graph->iterate(eitr))) {
     agi::lid_t deg = graph->degree(e);
     assert(deg==edge_degs[i]);
@@ -197,7 +198,10 @@ void buildHyperGraph() {
     agi::PinIterator* pitr = graph->pins(e);
     for (lid_t j=0;j<deg;j++) {
       vtx = graph->iterate(pitr);
+      if (PCU_Comm_Peers()>1||pin[k]<graph->numLocalVtxs())
+      assert(graph->localID(vtx)==pin[k++]);
       assert(graph->localID(vtx)<graph->numTotalVtxs());
+      assert(graph->globalID(vtx)<graph->numGlobalVtxs());
       count++;
       if (graph->localID(vtx)>=graph->numLocalVtxs()) {
 	assert(PCU_Comm_Peers()>1);
