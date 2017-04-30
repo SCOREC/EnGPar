@@ -28,20 +28,24 @@ class Ngraph {
 public:
   Ngraph();
   /** \brief Constructs the Ngraph given a set of information
+   * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
    *        constructing a traiditional graph)
    * \param pins_to_verts list of the vertices the edges are connected to
+   * \param owns mapping from global_id to owner for each ghosted vertex
    */
-  void constructGraph(std::vector<gid_t>& verts,
+  void constructGraph(bool isHG,
+		      std::vector<gid_t>& verts,
 		      std::vector<gid_t>& edge_ids,
 		      std::vector<lid_t>& degs,
-		      std::vector<gid_t>& pins_to_verts);
+		      std::vector<gid_t>& pins_to_verts,
+		      std::unordered_map<gid_t,part_t>& owns);
 
   virtual ~Ngraph();
   // \cond
-  virtual void destroyData(){}//=0;
+  void destroyData();//=0;
   // \endcond
   //Global Part Information
   /** \brief Returns the number of vertices in the graph across all processes */
@@ -235,7 +239,7 @@ public:
    * \param t the type of the edge
    */
   void setEdge(lid_t l,gid_t g,wgt_t w,etype t);
-  
+
   /*
   void create_csr(int num_verts, int num_edges, int* srcs,
                   int* dsts, int* wgts);
@@ -366,6 +370,7 @@ public:
   // \endcond
   // \cond
  private:
+  void updateGhostOwners(Migration*);
   void sendVertex(GraphVertex*, part_t);
   void recvVertex(std::vector<gid_t>&);
   // \endcond

@@ -5,4 +5,7 @@
 void EnGPar_Initialize();
 void EnGPar_Finalize();
 
+
+void EnGPar_Debug_Open();
+void EnGPar_Debug_Close();
 #endif

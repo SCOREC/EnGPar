@@ -1,4 +1,4 @@
-//This file is for type definitions used throughout the graph iterface
+//This file is for type definitions used throughout the graph interface
 
 #ifndef _AGI_H__
 #define _AGI_H__

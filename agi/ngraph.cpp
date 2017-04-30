@@ -34,27 +34,26 @@ Ngraph::Ngraph() {
   owners = NULL;
 }
 
-  void phi2(std::string s="") {
-    if (PCU_Comm_Self())
-      printf("hi %s\n",s.c_str());
-  }
-void Ngraph::constructGraph(std::vector<gid_t>& verts,
+void Ngraph::constructGraph(bool isHG,
+			    std::vector<gid_t>& verts,
 			    std::vector<gid_t>& edge_ids,
 			    std::vector<lid_t>& degs,
-			    std::vector<gid_t>& pins_to_verts) {
-  isHyperGraph=false;
+			    std::vector<gid_t>& pins_to_verts,
+			    std::unordered_map<gid_t,part_t>& owns) {
+  destroyData();
+  isHyperGraph=isHG;
   num_local_verts=verts.size();
   local_unmap = new gid_t[num_local_verts];
-  local_weights =NULL;
-  local_coords=NULL;
-  num_types=0;
+  local_weights = NULL;
+  local_coords = NULL;
+  num_types = 0;
   etype t = addEdgeType();
   degree_list[t] = new lid_t[num_local_verts+1];
-  degree_list[t][0]=0;
+  degree_list[t][0] = 0;
   for (lid_t i=0;i<verts.size();i++) {
     local_unmap[i] = verts[i];
     vtx_mapping[verts[i]]=i;
-    degree_list[t][i+1]=0;
+    degree_list[t][i+1]=0;//degree_list[t][i]+degs[i];
     //set local_weights
     //set local coords
   }
@@ -73,13 +72,14 @@ void Ngraph::constructGraph(std::vector<gid_t>& verts,
     edge_mapping[t][gid]=i;
     edge_unmap[t][i]=gid;
     pin_degree_list[t][i+1]=pin_degree_list[t][i]+degs[i];
-    if (pin_degree_list[t][i+1]-pin_degree_list[t][i]!=2) 
-      isHyperGraph=true;
     for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
       gid_t v = pins_to_verts[j];
       map_t::iterator vitr = vtx_mapping.find(v);
       if (vitr!=vtx_mapping.end()&&vitr->second<num_local_verts) {
-	degree_list[t][vitr->second+1]++;
+	if (!isHyperGraph&&!(j%2))
+	  degree_list[t][vitr->second+1]++;
+	else if (isHyperGraph)
+	  degree_list[t][vitr->second+1]++;
 	pin_list[t][j]=vitr->second;
       }
       else {
@@ -90,24 +90,26 @@ void Ngraph::constructGraph(std::vector<gid_t>& verts,
 	else {
 	  pin_list[t][j]=vitr->second;
 	}
-	num_local_pins[t]--;
       }
     }
   }
   if (!isHyperGraph)
-    num_local_edges[t] = num_local_pins[t];
+    num_local_edges[t] = num_local_pins[t]/2;
   for (lid_t i=1;i<num_local_verts+1;i++) {
     degree_list[t][i]+=degree_list[t][i-1];
   }
   uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
+  
   std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
   edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
   ghost_unmap = new lid_t[num_ghost_verts];
+  owners = new part_t[num_ghost_verts];
   for (lid_t i=0;i<edge_ids.size();i++) {
     for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
       lid_t u = pin_list[t][j];
       if (u>=num_local_verts){
 	ghost_unmap[u-num_local_verts] = pins_to_verts[j];
+	owners[u-num_local_verts] = owns[pins_to_verts[j]];
       }
       if (isHyperGraph) {
 	if (u<num_local_verts)
@@ -115,10 +117,12 @@ void Ngraph::constructGraph(std::vector<gid_t>& verts,
       }
       else {
 	lid_t v = pin_list[t][++j];
+	if (v>=num_local_verts){
+	  ghost_unmap[v-num_local_verts] = pins_to_verts[j];
+	  owners[v-num_local_verts] = owns[pins_to_verts[j]];
+	}
 	if (u<num_local_verts)
 	  edge_list[t][temp_counts[u]++] = v;
-	if (v<num_local_verts)
-	  edge_list[t][temp_counts[v]++] = u;
       }
     }
   }
@@ -129,6 +133,10 @@ void Ngraph::constructGraph(std::vector<gid_t>& verts,
   num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
 }
 Ngraph::~Ngraph() {
+  destroyData();
+}
+
+void Ngraph::destroyData() {
   if (local_weights)
     delete [] local_weights;
   if (local_coords)
@@ -153,6 +161,7 @@ Ngraph::~Ngraph() {
     delete [] ghost_unmap;
   if (owners)
     delete [] owners;
+
 }
  
 const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
@@ -189,6 +198,7 @@ int Ngraph::owner(GraphVertex* vtx) const {
   }
   if (index<num_local_verts)
     return PCU_Comm_Self();
+  assert(PCU_Comm_Peers()>1);
   index-=num_local_verts;
   return owners[index];
 }
@@ -198,7 +208,10 @@ lid_t Ngraph::localID(GraphVertex* vtx) const {
 
 }
 gid_t Ngraph::globalID(GraphVertex* vtx) const {
-  return  local_unmap[(uintptr_t)(vtx)-1];
+  agi::lid_t lid= (uintptr_t)(vtx)-1;
+  if (lid>=num_local_verts)
+    return ghost_unmap[lid-num_local_verts];
+  return  local_unmap[lid];
 }
 
 GraphVertex* Ngraph::find(GraphVertex* vtx) const {
