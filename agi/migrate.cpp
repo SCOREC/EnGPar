@@ -3,6 +3,10 @@
 #include <unordered_set>
 #include <vector>
 namespace agi {
+  void phi() {
+    if (PCU_Comm_Self())
+      printf("hi\n");
+  }
   typedef std::unordered_set<GraphVertex*> VertexVector;
   //TODO: Make a vector by using a "tag" on the edges to detect added or not
   typedef std::unordered_set<GraphEdge*> EdgeVector;
@@ -252,32 +256,10 @@ namespace agi {
 	delete [] pin_owners;
       }
     }
-    printf("Vertices:");
-    for (unsigned int i=0;i<ownedVerts.size();++i)
-      printf(" %lu",ownedVerts[i]);
-    printf("\n");
-    lid_t deg=0;
-    for (unsigned int i=0;i<ownedEdges.size();++i) {
-      printf("Edge: %lu Degree: %lu\n",ownedEdges[i],degrees[i]);
-      printf("Pins:");
-      for (lid_t j=0;j<degrees[i];j++)
-	printf(" %lu",pins[deg+j]);
-      printf("\n");
-      deg+=degrees[i];
-    }
-    printf("Ghost Owners:");
-    std::unordered_map<gid_t,part_t>::iterator uitr;
-    for (uitr=ghost_owners.begin();uitr!=ghost_owners.end();uitr++) {
-      printf(" %lu->%d",uitr->first,uitr->second);
-    }
-    printf("\n");
-
-
     constructGraph(isHyperGraph,ownedVerts,ownedEdges,degrees,pins,ghost_owners);
     delete [] affectedEdges;
-
     delete plan;
-    fflush(stdout);
+
   }
 
 

@@ -9,8 +9,6 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Debug_Open("");
   agi::Ngraph* g = buildGraph();
-  if (!PCU_Comm_Self())
-    printf("Constructing migration plan\n");
   PCU_Barrier();
   agi::Migration* plan = new agi::Migration;
   agi::GraphVertex* v;
@@ -26,8 +24,6 @@ int main(int argc, char* argv[]) {
       }
     }
   }
-  if (!PCU_Comm_Self()) 
-    printf("Migrating: %lu\n",plan->size());
   g->migrate(plan);
 
   agi::destroyGraph(g);
@@ -35,23 +31,15 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
 
   g = buildHyperGraph();
-  if (!PCU_Comm_Self())
-    printf("Constructing migration plan\n");
   PCU_Barrier();
   plan = new agi::Migration;
 
   itr=g->begin();
-  while ((v = g->iterate(itr))) {
-    (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
-    break;
-  }
-  printf("Migrating: %lu\n",plan->size());
+  v = g->iterate(itr);
+  (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
   g->migrate(plan);
-
-  if (!PCU_Comm_Self())
-    printf("hello\n");
-  agi::destroyGraph(g);
   
+  agi::destroyGraph(g);
   PCU_Barrier();
   
   if (!PCU_Comm_Self()) 

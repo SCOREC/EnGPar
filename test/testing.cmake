@@ -18,6 +18,10 @@ mpi_test(constructGraph2 2
   ./constructGraph)
 mpi_test(constructGraph4 4
   ./constructGraph)
+mpi_test(testMigration2 2
+  ./testMigration)
+mpi_test(testMigration4 4
+  ./testMigration)
 
 mpi_test(buildSerialMeshGraph32 1
   ./buildMeshGraph

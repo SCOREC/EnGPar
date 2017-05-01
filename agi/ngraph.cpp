@@ -53,7 +53,7 @@ void Ngraph::constructGraph(bool isHG,
   for (lid_t i=0;i<verts.size();i++) {
     local_unmap[i] = verts[i];
     vtx_mapping[verts[i]]=i;
-    degree_list[t][i+1]=0;//degree_list[t][i]+degs[i];
+    degree_list[t][i+1]=0;
     //set local_weights
     //set local coords
   }
@@ -102,8 +102,13 @@ void Ngraph::constructGraph(bool isHG,
   
   std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
   edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
-  ghost_unmap = new lid_t[num_ghost_verts];
-  owners = new part_t[num_ghost_verts];
+  ghost_unmap=NULL;
+  owners=NULL;
+  if (num_ghost_verts>0) {
+    ghost_unmap = new lid_t[num_ghost_verts];
+    owners = new part_t[num_ghost_verts];
+  }
+  
   for (lid_t i=0;i<edge_ids.size();i++) {
     for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
       lid_t u = pin_list[t][j];
@@ -162,6 +167,8 @@ void Ngraph::destroyData() {
     if (pin_list[i])
       delete [] pin_list[i];
     pin_list[i] = NULL;
+
+    edge_mapping[i].clear();
   }
   if (local_unmap)
     delete [] local_unmap;
@@ -172,6 +179,8 @@ void Ngraph::destroyData() {
   if (owners)
     delete [] owners;
   owners = NULL;
+
+  vtx_mapping.clear();
 
 }
  
