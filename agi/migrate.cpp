@@ -3,10 +3,6 @@
 #include <unordered_set>
 #include <vector>
 namespace agi {
-  void phi() {
-    if (PCU_Comm_Self())
-      printf("hi\n");
-  }
   typedef std::unordered_set<GraphVertex*> VertexVector;
   //TODO: Make a vector by using a "tag" on the edges to detect added or not
   typedef std::unordered_set<GraphEdge*> EdgeVector;
@@ -75,12 +71,13 @@ namespace agi {
   }
   
   void addVertices(Ngraph* g, std::vector<gid_t>& ownedVerts,
-		   VertexVector& verts) {
+		   VertexVector& verts, std::vector<wgt_t>& weights) {
     VertexIterator* vitr = g->begin();
     GraphVertex* v;
     while ((v = g->iterate(vitr))) {
       if (verts.find(v)==verts.end()) {
 	ownedVerts.push_back(g->globalID(v));
+	weights.push_back(g->weight(v));
       }
     }
   }
@@ -136,13 +133,19 @@ namespace agi {
   }
   void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
     gid_t gid = globalID(vtx);
+    wgt_t w = weight(vtx);
     PCU_COMM_PACK(toSend,gid);
+    PCU_COMM_PACK(toSend,w);
   }
 
-  void Ngraph::recvVertex(std::vector<gid_t>& recv) {
+  void Ngraph::recvVertex(std::vector<gid_t>& recv,
+			  std::vector<wgt_t>& wgts) {
     gid_t gid;
     PCU_COMM_UNPACK(gid);
+    wgt_t w;
+    PCU_COMM_UNPACK(w);
     recv.push_back(gid);
+    wgts.push_back(w);
   }
   
   void Ngraph::migrate(Migration* plan) {
@@ -150,14 +153,16 @@ namespace agi {
     VertexVector affectedVerts;
     EdgeVector* affectedEdges = new EdgeVector[num_types];
     std::vector<gid_t> ownedVerts;
+    std::vector<wgt_t> vertWeights;
     ownedVerts.reserve(num_local_verts);
+    vertWeights.reserve(num_local_verts);
     std::vector<gid_t> ownedEdges;
     ownedEdges.reserve(num_local_edges[0]);
     std::vector<lid_t> degrees;
     std::vector<gid_t> pins;
     std::unordered_map<gid_t,part_t> ghost_owners;
     getAffected(this,plan,affectedVerts,affectedEdges);
-    addVertices(this,ownedVerts,affectedVerts);
+    addVertices(this,ownedVerts,affectedVerts,vertWeights);
     std::unordered_set<gid_t> addedEdges;
     addEdges(this,plan,ownedEdges,degrees,pins,ghost_owners,addedEdges);
     Migration::iterator itr;
@@ -169,7 +174,7 @@ namespace agi {
     PCU_Comm_Send();
     //Recieve vertices
     while (PCU_Comm_Receive()) {
-      recvVertex(ownedVerts);
+      recvVertex(ownedVerts,vertWeights);
     }
     for (etype t = 0;t < num_types;t++) {
       PCU_Comm_Begin();
@@ -256,7 +261,8 @@ namespace agi {
 	delete [] pin_owners;
       }
     }
-    constructGraph(isHyperGraph,ownedVerts,ownedEdges,degrees,pins,ghost_owners);
+    constructGraph(isHyperGraph,ownedVerts,vertWeights,ownedEdges,degrees,
+		   pins,ghost_owners);
     delete [] affectedEdges;
     delete plan;
 

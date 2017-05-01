@@ -93,7 +93,8 @@ agi::Ngraph* buildGraph() {
     pins.push_back(e);
     owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
   }
-  graph->constructGraph(false,verts,edges,degrees,pins,owners);
+  std::vector<agi::wgt_t> weights;
+  graph->constructGraph(false,verts,weights,edges,degrees,pins,owners);
   return graph;
 }
 
@@ -146,7 +147,8 @@ agi::Ngraph* buildHyperGraph() {
     }
 
   }
-  graph->constructGraph(true,verts,edges,degrees,pins,ghost_owners);
+  std::vector<agi::wgt_t> weights;
+  graph->constructGraph(true,verts,weights,edges,degrees,pins,ghost_owners);
   return graph;
 
 }

@@ -19,7 +19,6 @@ namespace engpar {
       Sides* s = new Sides;
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = graph->begin(0);
-      printf("%d made it here with %lu ghost vertices\n",PCU_Comm_Self(),graph->numGhostVtxs());
       while ((edge = graph->iterate(eitr))) {
 	agi::GraphVertex* pin;
 	agi::PinIterator* pitr = graph->pins(edge);

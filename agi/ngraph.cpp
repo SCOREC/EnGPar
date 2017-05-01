@@ -36,6 +36,7 @@ Ngraph::Ngraph() {
 
 void Ngraph::constructGraph(bool isHG,
 			    std::vector<gid_t>& verts,
+			    std::vector<wgt_t>& wgts,
 			    std::vector<gid_t>& edge_ids,
 			    std::vector<lid_t>& degs,
 			    std::vector<gid_t>& pins_to_verts,
@@ -44,7 +45,7 @@ void Ngraph::constructGraph(bool isHG,
   isHyperGraph=isHG;
   num_local_verts=verts.size();
   local_unmap = new gid_t[num_local_verts];
-  local_weights = NULL;
+  local_weights = new wgt_t[num_local_verts];
   local_coords = NULL;
   num_types = 0;
   etype t = addEdgeType();
@@ -55,6 +56,10 @@ void Ngraph::constructGraph(bool isHG,
     vtx_mapping[verts[i]]=i;
     degree_list[t][i+1]=0;
     //set local_weights
+    if (wgts.size()>i)
+      local_weights[i] = wgts[i];
+    else
+      local_weights[i] = 1;
     //set local coords
   }
 

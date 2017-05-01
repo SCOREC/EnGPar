@@ -30,6 +30,7 @@ public:
   /** \brief Constructs the Ngraph given a set of information
    * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
+   * \param weights list of the weights of each vertex
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
    *        constructing a traiditional graph)
@@ -38,6 +39,7 @@ public:
    */
   void constructGraph(bool isHG,
 		      std::vector<gid_t>& verts,
+		      std::vector<wgt_t>& weights,
 		      std::vector<gid_t>& edge_ids,
 		      std::vector<lid_t>& degs,
 		      std::vector<gid_t>& pins_to_verts,
@@ -372,7 +374,7 @@ public:
  private:
   void updateGhostOwners(Migration*);
   void sendVertex(GraphVertex*, part_t);
-  void recvVertex(std::vector<gid_t>&);
+  void recvVertex(std::vector<gid_t>&,std::vector<wgt_t>&);
   // \endcond
 };
 /** \brief Cleans up the memory of the graph

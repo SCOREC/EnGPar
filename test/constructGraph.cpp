@@ -68,7 +68,8 @@ void buildGraph() {
   }
   //  owners[first_vert] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
   //owners[last_vert] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
-  graph->constructGraph(false,verts,edges,degrees,pins,owners);
+  std::vector<agi::wgt_t> weights;
+  graph->constructGraph(false,verts,weights,edges,degrees,pins,owners);
 
   assert(graph->numLocalVtxs()==local_verts);
   if (PCU_Comm_Peers()>1) {
@@ -152,7 +153,8 @@ void buildHyperGraph() {
     }
 
   }
-  graph->constructGraph(true,verts,edges,degrees,pins,ghost_owners);
+  std::vector<agi::wgt_t> weights;
+  graph->constructGraph(true,verts,weights,edges,degrees,pins,ghost_owners);
 
   assert(graph->numLocalVtxs()==local_verts);
   if (PCU_Comm_Peers()>1) {
