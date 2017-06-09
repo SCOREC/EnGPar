@@ -29,7 +29,8 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
     read_ranks(part_file,ranks);
   exchange_edges(m_read,read_edges,ranks,t);
   create_dist_csr(ranks,t);
-
+  std::vector<wgt_t> wgts;
+  setEdgeWeights(wgts,0);
 }
 
   void phi() {

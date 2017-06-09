@@ -44,7 +44,7 @@ public:
 		      std::vector<lid_t>& degs,
 		      std::vector<gid_t>& pins_to_verts,
 		      std::unordered_map<gid_t,part_t>& owns);
-
+  
   virtual ~Ngraph();
   // \cond
   void destroyData();//=0;
@@ -217,8 +217,12 @@ public:
    * \param plan a map from graph vertex to part id
    */
   virtual void migrate(std::map<GraphVertex*,int>& plan) {}// = 0;
-
   // \cond
+  /** \brief Sets the weights of the edges of a specific type
+   * \param wgts the edge weights
+   * \param t the edge type of the weights
+   */
+  void setEdgeWeights(std::vector<wgt_t>& wgts, etype t);
 
   void migrate(Migration* plan);
   // \endcond

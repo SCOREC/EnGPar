@@ -30,6 +30,8 @@ void EnGPar_Debug_Open(std::string s) {
   if (stat("debug", &st) == -1) {
     mkdir("debug", 0700);
   }
+  if (!PCU_Comm_Self())
+    printf("Opening debug files. Output can be found in debug/debug#.txt\n");
   if (s.find("o")!=std::string::npos||s.find("e")!=std::string::npos) {
     old_stdout = stdout;
     stdout = freopen(file,"w",stdout);

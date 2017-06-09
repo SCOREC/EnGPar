@@ -248,7 +248,9 @@ wgt_t Ngraph::weight(GraphEdge* edge) const {
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
-  return edge_weights[type][edge_list[type][id]];
+  if (isHyperGraph)
+    return edge_weights[type][edge_list[type][id]];
+  return edge_weights[type][id];
 }
 
 lid_t Ngraph::localID(GraphEdge* edge) const {
@@ -420,7 +422,20 @@ void Ngraph::destroy(GraphIterator* itr) const {
 bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   return u==v;
 }
-  
+
+
+void Ngraph::setEdgeWeights(std::vector<wgt_t>& wgts, etype t) {
+  if (wgts.size()==0) {
+    edge_weights[t] = new wgt_t[num_local_edges[t]];
+    for (gid_t i=0;i<num_local_edges[t];i++)
+      edge_weights[t][i]=1;
+    return;
+  }
+  assert(wgts.size()==num_local_edges[t]);
+  edge_weights[t] = new wgt_t[num_local_edges[t]];
+  memcpy(edge_weights[t],&(wgts[0]),num_local_edges[t]);
+}
+
 //Protected functions
 
 void Ngraph::makeEdgeArray(etype t, int count) {
@@ -436,4 +451,6 @@ void Ngraph::setEdge(lid_t lid,gid_t gid, wgt_t w,etype t) {
 }
 
 void destroyGraph(Ngraph* g) {delete g;}
+
+
 }

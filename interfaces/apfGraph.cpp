@@ -33,7 +33,9 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   connectToPins(primary_dimension,secondary_dimension,t);
   
   constructGhostVerts();
-  
+
+  std::vector<wgt_t> wgts;
+  setEdgeWeights(wgts,0);
 }
 
 apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
@@ -54,6 +56,8 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
     etype t = setupSecondary(secondary_dimensions[i]);
     connectToEdges(primary_dimension,secondary_dimensions[i],t);
     connectToPins(primary_dimension,secondary_dimensions[i],t);
+    std::vector<wgt_t> wgts;
+    setEdgeWeights(wgts,t);
   }
   constructGhostVerts();
 }

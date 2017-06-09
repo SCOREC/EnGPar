@@ -7,7 +7,6 @@ agi::Ngraph* buildHyperGraph();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  EnGPar_Debug_Open("");
   agi::Ngraph* g = buildGraph();
   PCU_Barrier();
   agi::Migration* plan = new agi::Migration;
@@ -95,6 +94,7 @@ agi::Ngraph* buildGraph() {
   }
   std::vector<agi::wgt_t> weights;
   graph->constructGraph(false,verts,weights,edges,degrees,pins,owners);
+  graph->setEdgeWeights(weights,0);
   return graph;
 }
 
@@ -149,6 +149,7 @@ agi::Ngraph* buildHyperGraph() {
   }
   std::vector<agi::wgt_t> weights;
   graph->constructGraph(true,verts,weights,edges,degrees,pins,ghost_owners);
+  graph->setEdgeWeights(weights,0);
   return graph;
 
 }

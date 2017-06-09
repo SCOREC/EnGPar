@@ -82,6 +82,7 @@ namespace agi {
     }
   }
   void addEdges(Ngraph* g, Migration* plan, std::vector<gid_t>& ownedEdges,
+		std::vector<wgt_t>& edgeWeights,
 		std::vector<lid_t>& degrees,std::vector<gid_t>& pins,
 		std::unordered_map<gid_t,part_t>& ghost_owners,
 		std::unordered_set<gid_t>& addedEdges) {
@@ -102,10 +103,12 @@ namespace agi {
 	    addedEdges.insert(g->globalID(old));
 	  if (g->isHyper()) {
 	    ownedEdges.push_back(g->globalID(e));
+	    edgeWeights.push_back(g->weight(e));
 	    degrees.push_back(g->degree(e));
 	  }
 	  else {
 	    ownedEdges.push_back(g->localID(e));
+	    edgeWeights.push_back(g->weight(e));
 	    pins.push_back(g->globalID(v));
 	    degrees.push_back(2);
 	  }
@@ -123,14 +126,6 @@ namespace agi {
     }
   }
   
-  void getSenders(Ngraph* g, VertexVector& verts, EdgeVector* edges,
-		  VertexVector& vSenders,EdgeVector* eSenders) {
-    /*    vSenders.reserve(verts.size());
-    for (int i=0;i<verts.size();i++) {
-      if (
-    }
-    */
-  }
   void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
     gid_t gid = globalID(vtx);
     wgt_t w = weight(vtx);
@@ -156,15 +151,20 @@ namespace agi {
     std::vector<wgt_t> vertWeights;
     ownedVerts.reserve(num_local_verts);
     vertWeights.reserve(num_local_verts);
+
     std::vector<gid_t> ownedEdges;
+    std::vector<wgt_t> edgeWeights;
     ownedEdges.reserve(num_local_edges[0]);
+    edgeWeights.reserve(num_local_edges[0]);
     std::vector<lid_t> degrees;
     std::vector<gid_t> pins;
     std::unordered_map<gid_t,part_t> ghost_owners;
     getAffected(this,plan,affectedVerts,affectedEdges);
     addVertices(this,ownedVerts,affectedVerts,vertWeights);
     std::unordered_set<gid_t> addedEdges;
-    addEdges(this,plan,ownedEdges,degrees,pins,ghost_owners,addedEdges);
+    addEdges(this,plan,ownedEdges,edgeWeights,degrees,pins,ghost_owners,
+	     addedEdges);
+    
     Migration::iterator itr;
     PCU_Comm_Begin();
     //Send vertices
@@ -176,6 +176,7 @@ namespace agi {
     while (PCU_Comm_Receive()) {
       recvVertex(ownedVerts,vertWeights);
     }
+    
     for (etype t = 0;t < num_types;t++) {
       PCU_Comm_Begin();
       EdgeVector::iterator eitr;
@@ -186,6 +187,7 @@ namespace agi {
 	part_t* pin_owners;
 	lid_t deg=0;
 	gid_t id;
+	wgt_t eweight = weight(e);
 	std::unordered_set<part_t> residence;
 	if (isHyperGraph) {
 	  id = globalID(e);
@@ -226,19 +228,23 @@ namespace agi {
 	std::unordered_set<part_t>::iterator sitr;
 	for (sitr=residence.begin();sitr!=residence.end();sitr++) {
 	  PCU_COMM_PACK(*sitr,id);
+	  PCU_COMM_PACK(*sitr,eweight);
 	  PCU_COMM_PACK(*sitr,deg);
 	  PCU_Comm_Pack(*sitr,pin,deg*sizeof(gid_t));
 	  PCU_Comm_Pack(*sitr,pin_owners,deg*sizeof(part_t));
+
 	}
 	delete [] pin;
 	delete [] pin_owners;
       }
-  
+      
       PCU_Comm_Send();
       while (PCU_Comm_Receive()) {
 	gid_t id;
+	wgt_t eweight;
 	lid_t deg;
 	PCU_COMM_UNPACK(id);
+	PCU_COMM_UNPACK(eweight);
 	PCU_COMM_UNPACK(deg);
 	gid_t* pin = new gid_t[deg];
 	part_t* pin_owners = new part_t[deg];
@@ -251,6 +257,7 @@ namespace agi {
 	addedEdges.insert(id);
 	edge_mapping[t][id]=0;
 	ownedEdges.push_back(id);
+	edgeWeights.push_back(eweight);
 	degrees.push_back(deg);
 	for (lid_t i=0;i<deg;i++) {
 	  pins.push_back(pin[i]);
@@ -263,6 +270,7 @@ namespace agi {
     }
     constructGraph(isHyperGraph,ownedVerts,vertWeights,ownedEdges,degrees,
 		   pins,ghost_owners);
+    setEdgeWeights(edgeWeights,0);
     delete [] affectedEdges;
     delete plan;
 
