@@ -7,28 +7,28 @@
 #include <engpar.h>
 
 int main(int argc, char* argv[]) {
-
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
-  if ( argc != 3&&argc!=4) {
+  if ( argc != 4&&argc!=5) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh> [verbosity]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <step factor> [verbosity]\n", argv[0]);
     EnGPar_Finalize();
     assert(false);
   }
-  
+
   //Load mesh
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
+
   //Construct graph
-  agi::Ngraph* g = agi::createAPFGraph(m,3,2);
+  agi::Ngraph* g = agi::createAPFGraph(m,3,0);
 
   engpar::evaluatePartition(g);
   
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeVtxBalancer(g,1.1,argc==4);
-  balancer->balance(0.1);
+  agi::Balancer* balancer = engpar::makeVtxBalancer(g,atof(argv[3]),argc==5);
+  balancer->balance(1.1);
 
   engpar::evaluatePartition(g);
   //Destroy balancer

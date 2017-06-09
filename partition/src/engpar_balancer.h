@@ -10,6 +10,8 @@
 
 namespace engpar {
 
+  wgt_t getMaxWeight(agi::Ngraph*, int);
+  wgt_t getAvgWeight(agi::Ngraph*, int);
   class Balancer : public agi::Balancer{
   public:
     Balancer(agi::Ngraph* graph_, double factor_, int verbosity_,
@@ -24,13 +26,18 @@ namespace engpar {
 				 Weights** edgeW)=0;
     virtual Selector* makeSelector(Queue*)=0;
   protected:
+
+    int target_dimension;
+    std::vector<int> completed_dimensions;
+    std::vector<wgt_t> completed_weights;
+    
     double factor;
     int maxStep;
     Sides* sides;
     Weights* vtxWeights,**edgeWeights;
     Targets* targets;
     Selector* selector;
-    
+    double times[2];
   };
 }
 

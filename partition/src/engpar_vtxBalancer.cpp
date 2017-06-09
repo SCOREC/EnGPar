@@ -37,11 +37,7 @@ namespace engpar {
     virtual Weights* makeVtxWeights(Sides* s) {
       Weights* w = new Weights();
       //calculate the total weight of the vertices
-      agi::GraphVertex* vtx;
-      agi::VertexIterator* vitr = graph->begin();
-      while ((vtx = graph->iterate(vitr))) {
-	w->addWeight(graph->weight(vtx));
-      }
+      w->addWeight(getWeight(graph,-1));
 
       //Share weight with all neighbors
       PCU_Comm_Begin();
@@ -83,7 +79,7 @@ namespace engpar {
       return t;
     }
     virtual Selector* makeSelector(Queue* q) {
-      return new Selector(graph,q);
+      return new Selector(graph,q,&completed_dimensions,&completed_weights);
     }
 
   };
