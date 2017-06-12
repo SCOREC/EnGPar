@@ -10,7 +10,7 @@ namespace engpar {
 
   public:
     typedef typename Data::iterator iterator;
-    Container() {}
+    Container() {my_total=0;}
     iterator begin() {
       return d.begin();
     }

@@ -267,4 +267,10 @@ namespace engpar {
       plan->insert(keep[i]);
   }
 
+
+  Selector* makeSelector(Input* in,Queue* q,
+                         std::vector<int>* cd,
+                         std::vector<double>* cw ) {
+    return new Selector(in,q,cd,cw);
+  }
 }

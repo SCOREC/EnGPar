@@ -15,29 +15,38 @@ namespace engpar {
   }
   
   Balancer::Balancer(agi::Ngraph* g, double f, int v, const char* n) :
-    agi::Balancer(g,v,n), factor(f) {
-    maxStep =100;
+    agi::Balancer(g,v,n) {
+    input = new Input(g);
+    input->step_factor = f;
+    times[0]=0;
+    times[1]=0;
+  }
+  Balancer::Balancer(Input* input_, int v, const char* n) :
+    agi::Balancer(input_->g,v,n), input(input_) {
     times[0]=0;
     times[1]=0;
   }
   bool Balancer::runStep(double tolerance) {
     double time[2];
     time[0] = PCU_Time();
-    sides = makeSides();
+    Sides* sides = makeSides(input);
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
-    vtxWeights = makeVtxWeights(sides);
+    Weights* vtxWeights = makeVtxWeights(input, sides);
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), vtxWeights->print("Weights").c_str());
-    edgeWeights = new Weights*[graph->numEdgeTypes()];
-    for (agi::etype i=0;i<graph->numEdgeTypes();i++) {
+    
+    Weights** edgeWeights= NULL;/* = new Weights*[input->g->numEdgeTypes()];
+    for (agi::etype i=0;i<input->g->numEdgeTypes();i++) {
       edgeWeights[i] = makeEdgeWeights(sides,i);
     }
-    targets = makeTargets(sides,vtxWeights,edgeWeights);
+    */
+    Targets* targets = makeTargets(input,sides,vtxWeights,edgeWeights);
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
-    Queue* pq = createIterationQueue(graph);
-    selector = makeSelector(pq);
+    Queue* pq = createIterationQueue(input->g);
+    Selector* selector = makeSelector(input,pq,&completed_dimensions,
+                                      &completed_weights);
     agi::Migration* plan = new agi::Migration;
     wgt_t planW = 0.0;
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
@@ -63,7 +72,7 @@ namespace engpar {
 	  printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);
     }
     time[1] = PCU_Time();
-    graph->migrate(plan);
+    input->g->migrate(plan);
     time[1] = PCU_Time()-time[1];
     numMigrate = PCU_Add_Int(numMigrate);
     PCU_Max_Doubles(time,2);
@@ -76,27 +85,33 @@ namespace engpar {
 
     
     double imb = EnGPar_Get_Imbalance(vtxWeights->myWeight());
-    //Check for completition of dimension
+    //Check for completition of criteria
+    delete pq;
+    delete sides;
+    delete vtxWeights;
+    delete targets;
+    delete selector;
     return imb>tolerance;
   }
   void Balancer::balance(double tol) {
-    target_dimension = 0;
-    
+    unsigned int index=0;
+    target_dimension = input->priorities[index];
     if (1 == PCU_Comm_Peers()) return;
 
     int step = 0;
+    int inner_steps=0;
     double time = PCU_Time();
     double targetTime=PCU_Time();
-    while (step++<maxStep) {
-      if (!runStep(tol)) {
-	if (target_dimension==-1) {
+    while (step++<input->maxIterations) {
+      if (!runStep(tol)||inner_steps++>=input->maxIterationsPerType) {
 
-	  completed_dimensions.push_back(target_dimension);
-	  double maxW = getMaxWeight(graph,target_dimension);
-	  double tgtMaxW = getAvgWeight(graph,target_dimension)*tol;
-	  maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
-	  completed_weights.push_back(maxW);
-	}
+
+        completed_dimensions.push_back(target_dimension);
+        double maxW = getMaxWeight(input->g,target_dimension);
+        double tgtMaxW = getAvgWeight(input->g,target_dimension)*tol;
+        maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
+        completed_weights.push_back(maxW);
+        
 	targetTime = PCU_Time()-targetTime;
 	targetTime = PCU_Max_Double(targetTime);
 	if (!PCU_Comm_Self()) {
@@ -104,18 +119,21 @@ namespace engpar {
 		 targetTime);
 	}
 	targetTime=PCU_Time();
-	if (target_dimension<0)
+        
+        index++;
+	if (index==input->priorities.size())
 	  break;
-	target_dimension--;
+        inner_steps=0;
+	target_dimension=input->priorities[index];
 
       }
     }
     time = PCU_Time()-time;
     time = PCU_Max_Double(time);
     if (!PCU_Comm_Self()) {
-      if (step==maxStep)
+      if (step==input->maxIterations)
 	printf("EnGPar ran to completion in %d iterations in %f seconds\n",
-	       maxStep, time);
+	       input->maxIterations, time);
       else
 	printf("EnGPar converged in %d iterations in %f seconds\n",step,
 	       time);
@@ -123,4 +141,9 @@ namespace engpar {
 	printf("Migration took %f%% of the total time\n",times[1]/time*100);
     }
   }
+
+  agi::Balancer* makeBalancer(Input* in,int v_) {
+    return new Balancer(in,v_,"balancer");
+  }
 }
+

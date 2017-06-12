@@ -11,6 +11,8 @@ set(ENGPAR_SOURCES
   src/engpar_vtxBalancer.cpp
   src/engpar_queue.cpp
   src/engpar_selector.cpp
+  src/engpar_input.cpp
+  src/engpar_make.cpp
   )
 
 set(ENGPAR_HEADERS

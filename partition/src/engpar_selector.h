@@ -6,7 +6,7 @@
 #include "engpar_targets.h"
 #include "engpar_queue.h"
 #include <unordered_set>
-
+#include "engpar_input.h"
 namespace engpar {
 
   typedef std::vector<agi::GraphVertex*> Cavity;
@@ -17,14 +17,16 @@ namespace engpar {
 
   class Selector {
   public:
-    Selector(agi::Ngraph* graph, Queue* queue,
-             std::vector<int>* cd, std::vector<double>* cw) : g(graph), q(queue),
-             completed_dimensions(cd), completed_weights(cw) {}
+    Selector(Input* in_, Queue* queue,
+             std::vector<int>* cd, std::vector<double>* cw) :
+      in(in_), g(in_->g),
+      q(queue),
+      completed_dimensions(cd), completed_weights(cw) {}
 
-    virtual wgt_t select(Targets* targets,agi::Migration* plan,
+    wgt_t select(Targets* targets,agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int);
-    virtual Midd* trim(Targets* targets, agi::Migration* plan);
-    virtual void cancel(agi::Migration*& plan,Midd* capacity);
+    Midd* trim(Targets* targets, agi::Migration* plan);
+    void cancel(agi::Migration*& plan,Midd* capacity);
 
   protected:
     typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
@@ -35,13 +37,18 @@ namespace engpar {
 					   EdgeSet&,int,const EdgeSet&);
     double weight(const EdgeSet&);
     void combineSets(EdgeSet&,const EdgeSet&);
-				       
+
+    Input* in;
     agi::Ngraph* g;
     Sending sending;
     Queue* q;
     std::vector<int>* completed_dimensions;
     std::vector<double>* completed_weights;
   };
+
+  Selector* makeSelector(Input* in,Queue* q,
+                         std::vector<int>* cd,
+                         std::vector<double>* cw );
 }
 
 #endif

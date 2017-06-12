@@ -8,10 +8,13 @@ namespace engpar {
   typedef agi::part_t part_t;
   typedef std::vector<agi::GraphEdge*> Queue;
 
+  class Input;
+  
   wgt_t getWeight(agi::Ngraph*,int);
   //Balancers:
   agi::Balancer* makeVtxBalancer(agi::Ngraph*, double stepFactor=0.1,
 					int verbosity=0);
+  agi::Balancer* makeBalancer(Input*,int verbosity=0);
 
   double EnGPar_Get_Imbalance(wgt_t);
   //Partition info:

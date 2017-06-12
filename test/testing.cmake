@@ -83,6 +83,20 @@ mpi_test(testEdgeTree 2
   ./testEdgeTraversal
   "${GRAPHS}/tree.ebin")
 
+#Diffusive Load Balancing Tests
+
+mpi_test(vtxBalanceCube 2
+  ./vtxBalance
+  "${MESHES}/cube/cube.dmg"
+  "${MESHES}/cube/pumi670/2/cube.smb"
+  .1)
+
+mpi_test(vtxBalanceTorus 4
+  ./vtxBalance
+  "${MESHES}/torus/torus.dmg"
+  "${MESHES}/torus/4imb/torus.smb"
+  .1)
+
 if (ENABLE_ZOLTAN)
 
 endif()
