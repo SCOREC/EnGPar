@@ -7,7 +7,6 @@
 #include "engpar_weights.h"
 #include "engpar_targets.h"
 #include "engpar_selector.h"
-#include "engpar_input.h"
 
 namespace engpar {
   wgt_t getMaxWeight(agi::Ngraph*, int);

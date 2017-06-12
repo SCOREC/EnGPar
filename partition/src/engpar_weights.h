@@ -4,7 +4,6 @@
 #include "../engpar.h"
 #include "engpar_container.h"
 #include "engpar_sides.h"
-#include "engpar_input.h"
 
 namespace engpar {
   class Balancer;

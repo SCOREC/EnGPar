@@ -6,7 +6,6 @@
 #include "engpar_targets.h"
 #include "engpar_queue.h"
 #include <unordered_set>
-#include "engpar_input.h"
 namespace engpar {
 
   typedef std::vector<agi::GraphVertex*> Cavity;

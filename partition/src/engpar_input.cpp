@@ -1,4 +1,4 @@
-#include "engpar_input.h"
+#include "../engpar_input.h"
 
 namespace engpar {
   

@@ -42,6 +42,9 @@ namespace engpar {
     }
     */
     Targets* targets = makeTargets(input,sides,vtxWeights,edgeWeights);
+    delete sides;
+    delete vtxWeights;
+        
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq = createIterationQueue(input->g);
@@ -57,6 +60,10 @@ namespace engpar {
       Midd* midd = selector->trim(targets,plan);
       selector->cancel(plan,midd);
     }
+
+    delete pq;
+    delete targets;
+    delete selector;
     
     time[0] = PCU_Time()-time[0];
     int numMigrate = plan->size();
@@ -83,19 +90,16 @@ namespace engpar {
       times[1]+=time[1];
     }
 
-    
-    double imb = EnGPar_Get_Imbalance(vtxWeights->myWeight());
+    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
     //Check for completition of criteria
-    delete pq;
-    delete sides;
-    delete vtxWeights;
-    delete targets;
-    delete selector;
     return imb>tolerance;
   }
-  void Balancer::balance(double tol) {
+  void Balancer::balance(double) {
     unsigned int index=0;
     target_dimension = input->priorities[index];
+    double tol=1.1;
+    if (input->tolerances.size()>index)
+      tol = input->tolerances[index];
     if (1 == PCU_Comm_Peers()) return;
 
     int step = 0;
@@ -115,7 +119,7 @@ namespace engpar {
 	targetTime = PCU_Time()-targetTime;
 	targetTime = PCU_Max_Double(targetTime);
 	if (!PCU_Comm_Self()) {
-	  printf("Completed dimension %d in %f seconds\n",target_dimension,
+	  printf("Completed criteria type %d in %f seconds\n",target_dimension,
 		 targetTime);
 	}
 	targetTime=PCU_Time();
@@ -125,7 +129,8 @@ namespace engpar {
 	  break;
         inner_steps=0;
 	target_dimension=input->priorities[index];
-
+        if (input->tolerances.size()>index)
+          tol = input->tolerances[index];
       }
     }
     time = PCU_Time()-time;

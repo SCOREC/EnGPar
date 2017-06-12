@@ -46,6 +46,7 @@ make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
 make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
+make_exe(balance balance.cpp)
 
   
 if (ZOLTAN_FOUND)
