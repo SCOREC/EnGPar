@@ -22,3 +22,5 @@ set(ENGPAR_HEADERS
 add_library(engpar ${ENGPAR_SOURCES})
 
 target_link_libraries(engpar PUBLIC agi)
+
+engpar_export_lib(engpar "${ENGPAR_HEADERS}")

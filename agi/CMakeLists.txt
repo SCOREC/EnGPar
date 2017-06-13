@@ -8,9 +8,9 @@ set(AGI_SOURCES
   )
 
 set(AGI_HEADERS
-  agi.h
   ngraph.h
-  agiBalancer.h
   )
 
 add_library(agi ${AGI_SOURCES})
+
+engpar_export_lib(agi "${AGI_HEADERS}")

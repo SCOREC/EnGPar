@@ -16,4 +16,10 @@ set(SOURCES
   engpar_support.cpp
   )
 
+set(SUPPORT_HEADERS
+  engpar_support.h
+  )
+
 add_library(engpar_support ${SOURCES})
+
+engpar_export_lib(engpar_support "${SUPPORT_HEADERS}")

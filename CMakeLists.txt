@@ -51,6 +51,15 @@ include_directories(
   ${KOKKOS_INCLUDE_DIRS}
   )
 
+macro(engpar_export_lib target headers)
+  install(TARGETS ${target}
+    RUNTIME DESTINATION bin
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib)
+  install(FILES ${headers} DESTINATION include)
+endmacro(engpar_export_lib)
+
+
 add_subdirectory(support)
 
 add_subdirectory(agi)
