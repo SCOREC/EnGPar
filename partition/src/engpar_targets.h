@@ -8,24 +8,31 @@ namespace engpar {
 
   class Targets : public Container<wgt_t> {
   public:
-    Targets(Input* in, Sides* s, Weights* vtxW,
-	    Weights** edgeWs) {
+    Targets(Input* in, Sides* s, Weights* targetW,
+	    Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;
       for (itr = s->begin();itr!=s->end();itr++) {
 	int neighbor = itr->first;
-	engpar::wgt_t myW = vtxW->myWeight();
-	engpar::wgt_t neighborW = vtxW->get(neighbor);
+        bool canSend=true;
+        for (unsigned int i=0;i<completedTolerances.size();i++) {
+          if (completedWs[i]->get(neighbor)>=completedTolerances[i])
+            canSend=false;
+        }
+        if (!canSend)
+          continue;
+	wgt_t myW = targetW->myWeight();
+	wgt_t neighborW = targetW->get(neighbor);
 	if (myW>neighborW) {
-	  engpar::wgt_t diff = myW-neighborW;
-	  engpar::wgt_t sideFraction = itr->second;
+	  wgt_t diff = myW-neighborW;
+	  wgt_t sideFraction = itr->second;
 	  sideFraction /= s->total();
-	  engpar::wgt_t scaledW = diff * sideFraction* in->step_factor;
+	  wgt_t scaledW = diff * sideFraction* in->step_factor;
 	  set(neighbor,scaledW);
 	}
       }
     }
   };
-  Targets* makeTargets(Input* in, Sides* s, Weights* vW,Weights** eWs);
+  Targets* makeTargets(Input* in, Sides* s, Weights* tW,Weights** cWs,std::vector<wgt_t>& cTs);
 }
 
 #endif

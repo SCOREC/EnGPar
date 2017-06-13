@@ -10,9 +10,9 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
-  if ( argc != 4&&argc!=5) {
+  if ( argc != 3&& argc!=4) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh> <step factor> [verbosity]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> [verbosity]\n", argv[0]);
     EnGPar_Finalize();
     assert(false);
   }
@@ -29,12 +29,12 @@ int main(int argc, char* argv[]) {
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
   input->tolerances.push_back(1.1);
-  // input->priorities.push_back(-1);
-  // input->tolerances.push_back(1.07);
+  input->priorities.push_back(-1);
+  input->tolerances.push_back(1.1);
   input->step_factor=.2;
   
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input,argc==5);
+  agi::Balancer* balancer = engpar::makeBalancer(input,argc==4);
   balancer->balance(1.1);
 
   engpar::evaluatePartition(g);

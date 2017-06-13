@@ -9,8 +9,6 @@ namespace engpar {
   typedef agi::wgt_t wgt_t;
   typedef agi::part_t part_t;
   typedef std::vector<agi::GraphEdge*> Queue;
-
-  class Input;
   
   wgt_t getWeight(agi::Ngraph*,int);
   //Balancers:

@@ -8,7 +8,11 @@ namespace engpar {
   Weights* makeVtxWeights(Input* in, Sides* s) {
     return new Weights(in,s,-1);
   }
-  Targets* makeTargets(Input* in, Sides* s, Weights* vW,Weights** eWs) {
-    return new Targets(in,s,vW,eWs);
+  Weights* makeWeights(Input* in, Sides* s, int target) {
+    return new Weights(in,s,target);
+  }
+  Targets* makeTargets(Input* in, Sides* s, Weights* tW,Weights** cWs,
+                       std::vector<wgt_t>& cTs) {
+    return new Targets(in,s,tW,cWs,cTs);
   }
 }

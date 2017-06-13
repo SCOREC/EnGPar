@@ -32,18 +32,19 @@ namespace engpar {
     Sides* sides = makeSides(input);
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
-    Weights* vtxWeights = makeVtxWeights(input, sides);
+    Weights* targetWeights = makeWeights(input, sides,target_dimension);
     if (verbosity)
-      printf("%d: %s\n",PCU_Comm_Self(), vtxWeights->print("Weights").c_str());
+      printf("%d: %s\n",PCU_Comm_Self(), targetWeights->print("Weights").c_str());
     
-    Weights** edgeWeights= NULL;/* = new Weights*[input->g->numEdgeTypes()];
-    for (agi::etype i=0;i<input->g->numEdgeTypes();i++) {
-      edgeWeights[i] = makeEdgeWeights(sides,i);
+    Weights** completedWs= new Weights*[completed_dimensions.size()];
+    for (unsigned int i=0;i<completed_dimensions.size();i++) {
+      completedWs[i] = makeWeights(input,sides,completed_dimensions[i]);
     }
-    */
-    Targets* targets = makeTargets(input,sides,vtxWeights,edgeWeights);
+    
+    Targets* targets = makeTargets(input,sides,targetWeights,
+                                   completedWs,completed_weights);
     delete sides;
-    delete vtxWeights;
+    delete targetWeights;
         
     if (verbosity)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
@@ -55,10 +56,9 @@ namespace engpar {
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       planW += selector->select(targets,plan,planW,cavSize,target_dimension);
     }
-
     if (completed_dimensions.size()>0) {
-      Midd* midd = selector->trim(targets,plan);
-      selector->cancel(plan,midd);
+      //Midd* midd = selector->trim(targets,plan);
+      //selector->cancel(plan,midd);
     }
 
     delete pq;

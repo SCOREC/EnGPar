@@ -32,6 +32,7 @@ namespace engpar {
   };
 
   Weights* makeVtxWeights(Input* in, Sides* s);
+  Weights* makeWeights(Input* in, Sides* s,int target);
 }
 
 #endif
