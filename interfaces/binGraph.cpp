@@ -1,3 +1,4 @@
+#include <engpar_support.h>
 #include "binGraph.h"
 #include <mpi.h>
 #include <cstdlib>
@@ -13,6 +14,13 @@
 namespace agi {
 
 Ngraph* createBinGraph(char* graph_file,char* part_file) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[50];
+    sprintf(message,"createBinGraph %s\n",graph_file);
+    EnGPar_Log_Function(message);
+    EnGPar_End_Function();
+  }
+
   return new binGraph(graph_file,part_file);
 }
 

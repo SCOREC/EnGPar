@@ -9,7 +9,8 @@
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-
+  EnGPar_Open_Log();
+  
   if ( argc != 4&&argc!=5) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <model> <mesh> <step factor> [verbosity]\n", argv[0]);

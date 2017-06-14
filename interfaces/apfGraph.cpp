@@ -1,3 +1,4 @@
+#include <engpar_support.h>
 #include "apfGraph.h"
 #include <stdio.h>
 #include <vector>
@@ -9,10 +10,28 @@ namespace agi {
 
 //TODO: make work for primary_dimension!=mesh_dimension
 Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimension) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[50];
+    sprintf(message,"createAPFGraph %d with edge %d\n",
+            primary_dimension,secondary_dimension);
+    EnGPar_Log_Function(message);
+    EnGPar_End_Function();
+  }
+
   return new apfGraph(m,primary_dimension,secondary_dimension);
 }
-Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int* secondary_dimensions,
-	       int num_dimensions) {
+Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,
+                       int* secondary_dimensions,int num_dimensions) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[50];
+    sprintf(message,"createAPFGraph %d with edges",primary_dimension);
+    for (int i=0;i<num_dimensions;i++)
+      sprintf(message,"%s%d ",message,secondary_dimensions[i]);
+    sprintf(message,"%s\n",message);
+    EnGPar_Log_Function(message);
+    EnGPar_End_Function();
+  }
+
   return new apfGraph(m,primary_dimension,secondary_dimensions,num_dimensions);
 }
   

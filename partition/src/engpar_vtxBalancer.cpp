@@ -1,9 +1,9 @@
+#include <engpar_support.h>
 #include "../engpar.h"
 #include "engpar_sides.h"
 #include "engpar_weights.h"
 #include "engpar_balancer.h"
 #include "engpar_targets.h"
-#include <unordered_set>
 #include <PCU.h>
 namespace engpar {
   class VtxBalancer : public engpar::Balancer {
@@ -18,6 +18,12 @@ namespace engpar {
 
 namespace engpar {
   agi::Balancer* makeVtxBalancer(agi::Ngraph* g, double f, int v) {
+    if (EnGPar_Is_Log_Open()) {
+      char message[25];
+      sprintf(message,"makeBalancer\n");
+      EnGPar_Log_Function(message);
+      EnGPar_End_Function();
+    }
     return new VtxBalancer(g,f,v);
   }
 }

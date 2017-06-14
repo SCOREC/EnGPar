@@ -47,7 +47,7 @@ public:
   
   virtual ~Ngraph();
   // \cond
-  void destroyData();//=0;
+  void destroyData();
   // \endcond
   //Global Part Information
   /** \brief Returns the number of vertices in the graph across all processes */
@@ -222,7 +222,7 @@ public:
   /** \brief A method to provide a migration plan of the vertices
    * \param plan a map from graph vertex to part id
    */
-  virtual PartitionMap* getPartition();// = 0;
+  virtual PartitionMap* getPartition();
   // \cond
   /** \brief Sets the weights of the edges of a specific type
    * \param wgts the edge weights

@@ -9,25 +9,31 @@ namespace engpar {
   public:
     Input(agi::Ngraph*);
     ~Input();
+
     /** \brief The graph being balanced */
     agi::Ngraph* g;
+
     /** \brief The order of graph entities to be balanced 
      *
      *  -1 represents graph vertices, 0-MAX_TYPES represent edge_types
      */
     std::vector<int> priorities;
+
     /** \brief The imbalance tolerance for each priority
      *
      * tolerances must be given in the same order as in the priorities vector
      */
     std::vector<double> tolerances;
+
     /** \brief The maximum iterations for all load balancing */
     int maxIterations;
+
     /** \brief The maximum iterations of load balancing foreach graph entity type 
      *
      *  defaults to 100
      */
     int maxIterationsPerType;
+
     /** \brief The percent of difference in weight to send in each iteration 
      *
      * defaults to .1 
@@ -39,6 +45,7 @@ namespace engpar {
      * defaults to 0
      */
     int sides_edge_type;
+
     /** \brief The edge type used for creating cavities for selection 
      *
      * defaults to 0

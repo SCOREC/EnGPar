@@ -3,8 +3,9 @@
 #include <cstdlib>
 #include <stdint.h>
 #include <iostream>
-#include <PCU.h>
 #include <cstring>
+#include <engpar_support.h>
+
 namespace agi {
 
 Ngraph::Ngraph() {
@@ -42,6 +43,15 @@ void Ngraph::constructGraph(bool isHG,
 			    std::vector<lid_t>& degs,
 			    std::vector<gid_t>& pins_to_verts,
 			    std::unordered_map<gid_t,part_t>& owns) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[45];
+    sprintf(message,"constructGraph: ");
+    if (isHG)
+      sprintf(message,"%sCreating hypergraph\n",message);
+    else
+      sprintf(message,"%sCreating traditional graph\n",message);
+    EnGPar_Log_Function(message);
+  }
   destroyData();
   isHyperGraph=isHG;
   num_local_verts=verts.size();
@@ -142,12 +152,21 @@ void Ngraph::constructGraph(bool isHG,
   num_global_verts = PCU_Add_Long(num_local_verts);
   num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
   num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }  
 }
 Ngraph::~Ngraph() {
   destroyData();
 }
 
 void Ngraph::destroyData() {
+  if (EnGPar_Is_Log_Open()) {
+    char message[45];
+    sprintf(message,"destroyData\n");
+    EnGPar_Log_Function(message);
+  }
+
   if (local_weights) 
     delete [] local_weights;
   local_weights = NULL;
@@ -190,6 +209,9 @@ void Ngraph::destroyData() {
   original_owners = NULL;
 
   vtx_mapping.clear();
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }  
 
 }
  
@@ -247,10 +269,19 @@ part_t Ngraph::originalOwner(GraphVertex* vtx) const {
 }
 
 void Ngraph::setOriginalOwners() {
+  if (EnGPar_Is_Log_Open()) {
+    char message[25];
+    sprintf(message,"setOriginalOwners\n");
+    EnGPar_Log_Function(message);
+  }
+
   assert(!original_owners);
   original_owners = new part_t[num_local_verts];
   for (lid_t i=0;i<num_local_verts;i++)
     original_owners[i]=PCU_Comm_Self();
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }
 }
 
 void Ngraph::setOriginalOwners(std::vector<part_t>& oos) {
@@ -455,6 +486,12 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
 }
 
 PartitionMap* Ngraph::getPartition() {
+  if (EnGPar_Is_Log_Open()) {
+    char message[20];
+    sprintf(message,"getPartition\n");
+    EnGPar_Log_Function(message);
+  }
+
   PCU_Comm_Begin();
   VertexIterator* itr = begin();
   GraphVertex* vtx;
@@ -469,6 +506,9 @@ PartitionMap* Ngraph::getPartition() {
     PCU_COMM_UNPACK(v);
     map->insert(std::make_pair(v,PCU_Comm_Sender()));
   }
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }  
   return map;
 }
 
@@ -498,7 +538,19 @@ void Ngraph::setEdge(lid_t lid,gid_t gid, wgt_t w,etype t) {
   
 }
 
-void destroyGraph(Ngraph* g) {delete g;}
+void destroyGraph(Ngraph* g) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[25];
+    sprintf(message,"destroyGraph\n");
+    EnGPar_Log_Function(message);
+  }
+
+  delete g;
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }  
+
+}
 
 
 }

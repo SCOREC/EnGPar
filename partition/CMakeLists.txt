@@ -2,6 +2,7 @@ set(PACKAGE_VERSION "1.0")
 project(partition)
 
 include_directories(
+  ../support
   ../agi
   )
 

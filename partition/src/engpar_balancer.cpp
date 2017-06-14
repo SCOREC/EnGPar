@@ -2,6 +2,7 @@
 #include "engpar_queue.h"
 #include <PCU.h>
 #include "../engpar.h"
+#include <engpar_support.h>
 namespace engpar {
 
   wgt_t getMaxWeight(agi::Ngraph* g, int dimension) {
@@ -95,6 +96,32 @@ namespace engpar {
     return imb>tolerance;
   }
   void Balancer::balance(double) {
+    if (EnGPar_Is_Log_Open()) {
+      char message[1000];
+      sprintf(message,"balance() : \n");
+      //Log the input parameters
+      sprintf(message,"%s priorities :",message);
+      for (unsigned int i=0;i<input->priorities.size();i++)
+        sprintf(message,"%s %d",message,input->priorities[i]);
+      sprintf(message,"%s\n",message);
+      if (input->tolerances.size()>0) {
+        sprintf(message,"%s tolerances :",message);
+        for (unsigned int i=0;i<input->tolerances.size();i++)
+          sprintf(message,"%s %f",message,input->tolerances[i]);
+        sprintf(message,"%s\n",message);
+      }
+      sprintf(message,"%s maxIterations : %d\n",message,input->maxIterations);
+      sprintf(message,"%s maxIterationsPerType : %d\n",
+              message,input->maxIterationsPerType);
+      sprintf(message,"%s step_factor : %f\n",message,input->step_factor);
+      sprintf(message,"%s sides_edge_type : %d\n",message,input->sides_edge_type);
+      sprintf(message,"%s selection_edge_type : %d\n",
+              message,input->selection_edge_type);
+      sprintf(message,"%s countGhosts : %d\n",message,input->countGhosts);
+      
+      EnGPar_Log_Function(message);
+    }
+
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
     
@@ -146,9 +173,17 @@ namespace engpar {
       if (verbosity)
 	printf("Migration took %f%% of the total time\n",times[1]/time*100);
     }
+    if (EnGPar_Is_Log_Open())
+      EnGPar_End_Function();
   }
 
   agi::Balancer* makeBalancer(Input* in,int v_) {
+    if (EnGPar_Is_Log_Open()) {
+      char message[25];
+      sprintf(message,"makeBalancer\n");
+      EnGPar_Log_Function(message);
+      EnGPar_End_Function();
+    }
     return new Balancer(in,v_,"balancer");
   }
 }
