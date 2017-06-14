@@ -71,13 +71,15 @@ namespace agi {
   }
   
   void addVertices(Ngraph* g, std::vector<gid_t>& ownedVerts,
-		   VertexVector& verts, std::vector<wgt_t>& weights) {
+		   VertexVector& verts, std::vector<wgt_t>& weights,
+                   std::vector<part_t>& originalOwners) {
     VertexIterator* vitr = g->begin();
     GraphVertex* v;
     while ((v = g->iterate(vitr))) {
       if (verts.find(v)==verts.end()) {
 	ownedVerts.push_back(g->globalID(v));
 	weights.push_back(g->weight(v));
+        originalOwners.push_back(g->originalOwner(v));
       }
     }
   }
@@ -129,18 +131,24 @@ namespace agi {
   void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
     gid_t gid = globalID(vtx);
     wgt_t w = weight(vtx);
+    part_t old_owner = originalOwner(vtx);
     PCU_COMM_PACK(toSend,gid);
     PCU_COMM_PACK(toSend,w);
+    PCU_COMM_PACK(toSend,old_owner);
   }
 
   void Ngraph::recvVertex(std::vector<gid_t>& recv,
-			  std::vector<wgt_t>& wgts) {
+			  std::vector<wgt_t>& wgts,
+                          std::vector<part_t>& old_owners) {
     gid_t gid;
     PCU_COMM_UNPACK(gid);
     wgt_t w;
     PCU_COMM_UNPACK(w);
+    part_t old_owner;
+    PCU_COMM_UNPACK(old_owner);
     recv.push_back(gid);
     wgts.push_back(w);
+    old_owners.push_back(old_owner);
   }
   
   void Ngraph::migrate(Migration* plan) {
@@ -149,6 +157,7 @@ namespace agi {
     EdgeVector* affectedEdges = new EdgeVector[num_types];
     std::vector<gid_t> ownedVerts;
     std::vector<wgt_t> vertWeights;
+    std::vector<part_t> old_owners;
     ownedVerts.reserve(num_local_verts);
     vertWeights.reserve(num_local_verts);
 
@@ -160,7 +169,7 @@ namespace agi {
     std::vector<gid_t> pins;
     std::unordered_map<gid_t,part_t> ghost_owners;
     getAffected(this,plan,affectedVerts,affectedEdges);
-    addVertices(this,ownedVerts,affectedVerts,vertWeights);
+    addVertices(this,ownedVerts,affectedVerts,vertWeights,old_owners);
     std::unordered_set<gid_t> addedEdges;
     addEdges(this,plan,ownedEdges,edgeWeights,degrees,pins,ghost_owners,
 	     addedEdges);
@@ -174,7 +183,7 @@ namespace agi {
     PCU_Comm_Send();
     //Recieve vertices
     while (PCU_Comm_Receive()) {
-      recvVertex(ownedVerts,vertWeights);
+      recvVertex(ownedVerts,vertWeights,old_owners);
     }
     
     for (etype t = 0;t < num_types;t++) {
@@ -270,7 +279,9 @@ namespace agi {
     }
     constructGraph(isHyperGraph,ownedVerts,vertWeights,ownedEdges,degrees,
 		   pins,ghost_owners);
+    setOriginalOwners(old_owners);
     setEdgeWeights(edgeWeights,0);
+    
     delete [] affectedEdges;
     delete plan;
 

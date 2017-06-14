@@ -32,6 +32,7 @@ Ngraph::Ngraph() {
   local_unmap = NULL;
   ghost_unmap=NULL;
   owners = NULL;
+  original_owners = NULL;
 }
 
 void Ngraph::constructGraph(bool isHG,
@@ -184,6 +185,9 @@ void Ngraph::destroyData() {
   if (owners)
     delete [] owners;
   owners = NULL;
+  if (original_owners)
+    delete [] original_owners;
+  original_owners = NULL;
 
   vtx_mapping.clear();
 
@@ -228,6 +232,34 @@ int Ngraph::owner(GraphVertex* vtx) const {
   return owners[index];
 }
 
+part_t Ngraph::originalOwner(GraphVertex* vtx) const {
+  assert(original_owners);
+  uintptr_t index = (uintptr_t)(vtx)-1;
+  if (index>=num_local_verts+num_ghost_verts) {
+    fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
+    return -1;
+  }
+  if (index<num_local_verts)
+    return PCU_Comm_Self();
+  assert(PCU_Comm_Peers()>1);
+  index-=num_local_verts;
+  return original_owners[index];
+}
+
+void Ngraph::setOriginalOwners() {
+  assert(!original_owners);
+  original_owners = new part_t[num_local_verts];
+  for (lid_t i=0;i<num_local_verts;i++)
+    original_owners[i]=PCU_Comm_Self();
+}
+
+void Ngraph::setOriginalOwners(std::vector<part_t>& oos) {
+  assert(!original_owners);
+  original_owners = new part_t[num_local_verts];
+  for (lid_t i=0;i<num_local_verts;i++)
+    original_owners[i]=oos[i];
+}
+
 lid_t Ngraph::localID(GraphVertex* vtx) const {
   return  (uintptr_t)(vtx)-1;
 
@@ -242,7 +274,6 @@ gid_t Ngraph::globalID(GraphVertex* vtx) const {
 GraphVertex* Ngraph::find(GraphVertex* vtx) const {
   return findGID(globalID(vtx));
 }
-
 
 wgt_t Ngraph::weight(GraphEdge* edge) const {
   uintptr_t id = (uintptr_t)(edge)-1;
@@ -423,6 +454,23 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   return u==v;
 }
 
+PartitionMap* Ngraph::getPartition() {
+  PCU_Comm_Begin();
+  VertexIterator* itr = begin();
+  GraphVertex* vtx;
+  while ((vtx = iterate(itr))) {
+    gid_t v = globalID(vtx);
+    PCU_COMM_PACK(originalOwner(vtx),v);
+  }
+  PCU_Comm_Send();
+  PartitionMap* map = new PartitionMap;
+  while (PCU_Comm_Listen()) {
+    gid_t v;
+    PCU_COMM_UNPACK(v);
+    map->insert(std::make_pair(v,PCU_Comm_Sender()));
+  }
+  return map;
+}
 
 void Ngraph::setEdgeWeights(std::vector<wgt_t>& wgts, etype t) {
   if (wgts.size()==0) {

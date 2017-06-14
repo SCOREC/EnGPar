@@ -40,6 +40,10 @@ int main(int argc, char* argv[]) {
   engpar::evaluatePartition(g);
   //Destroy balancer
   delete balancer;
+
+  agi::PartitionMap* map = g->getPartition();
+  //map can be used to migrate the original structure
+  delete map;
   
   //Destroy graph
   agi::destroyGraph(g);

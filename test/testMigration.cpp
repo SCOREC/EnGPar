@@ -23,6 +23,7 @@ int main(int argc, char* argv[]) {
       }
     }
   }
+  g->setOriginalOwners();
   g->migrate(plan);
 
   agi::destroyGraph(g);
@@ -36,6 +37,7 @@ int main(int argc, char* argv[]) {
   itr=g->begin();
   v = g->iterate(itr);
   (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+  g->setOriginalOwners();
   g->migrate(plan);
   
   agi::destroyGraph(g);

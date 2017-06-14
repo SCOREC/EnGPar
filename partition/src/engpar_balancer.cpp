@@ -95,6 +95,9 @@ namespace engpar {
     return imb>tolerance;
   }
   void Balancer::balance(double) {
+    //Setup the original owners arrays before balancing
+    input->g->setOriginalOwners();
+    
     unsigned int index=0;
     target_dimension = input->priorities[index];
     double tol=1.1;
@@ -108,8 +111,6 @@ namespace engpar {
     double targetTime=PCU_Time();
     while (step++<input->maxIterations) {
       if (!runStep(tol)||inner_steps++>=input->maxIterationsPerType) {
-
-
         completed_dimensions.push_back(target_dimension);
         double maxW = getMaxWeight(input->g,target_dimension);
         double tgtMaxW = getAvgWeight(input->g,target_dimension)*tol;

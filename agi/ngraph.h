@@ -93,6 +93,12 @@ public:
    * \return the part id of the owner
    */
   part_t owner(GraphVertex* vtx) const;
+  // \cond
+  part_t originalOwner(GraphVertex* vtx) const;
+  void setOriginalOwners();
+  void setOriginalOwners(std::vector<part_t>&);
+  // \endcond
+  
   // \cond HACK
   lid_t localID(GraphVertex*) const;
   gid_t globalID(GraphVertex*) const;
@@ -216,7 +222,7 @@ public:
   /** \brief A method to provide a migration plan of the vertices
    * \param plan a map from graph vertex to part id
    */
-  virtual void migrate(std::map<GraphVertex*,int>& plan) {}// = 0;
+  virtual PartitionMap* getPartition();// = 0;
   // \cond
   /** \brief Sets the weights of the edges of a specific type
    * \param wgts the edge weights
@@ -289,7 +295,12 @@ public:
    * This includes pins going from edges to ghost vertices.
    */
   lid_t num_local_pins[MAX_TYPES];
-  
+
+  /** \brief The original owners of each vertex
+   *
+   * size = num_local_verts
+   */
+  part_t* original_owners;
   /** \brief The weights of the vertices.
    *
    * size = num_local_verts
@@ -378,7 +389,8 @@ public:
  private:
   void updateGhostOwners(Migration*);
   void sendVertex(GraphVertex*, part_t);
-  void recvVertex(std::vector<gid_t>&,std::vector<wgt_t>&);
+  void recvVertex(std::vector<gid_t>&,std::vector<wgt_t>&,
+                  std::vector<part_t>&);
   // \endcond
 };
 /** \brief Cleans up the memory of the graph
