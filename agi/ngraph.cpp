@@ -261,10 +261,6 @@ part_t Ngraph::originalOwner(GraphVertex* vtx) const {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
     return -1;
   }
-  if (index<num_local_verts)
-    return PCU_Comm_Self();
-  assert(PCU_Comm_Peers()>1);
-  index-=num_local_verts;
   return original_owners[index];
 }
 
@@ -287,7 +283,7 @@ void Ngraph::setOriginalOwners() {
 void Ngraph::setOriginalOwners(std::vector<part_t>& oos) {
   assert(!original_owners);
   original_owners = new part_t[num_local_verts];
-  for (lid_t i=0;i<num_local_verts;i++)
+  for (lid_t i=0;i<num_local_verts;i++) 
     original_owners[i]=oos[i];
 }
 
@@ -501,14 +497,15 @@ PartitionMap* Ngraph::getPartition() {
   }
   PCU_Comm_Send();
   PartitionMap* map = new PartitionMap;
-  while (PCU_Comm_Listen()) {
+  while (PCU_Comm_Receive()) {
     gid_t v;
     PCU_COMM_UNPACK(v);
     map->insert(std::make_pair(v,PCU_Comm_Sender()));
   }
   if (EnGPar_Is_Log_Open()) {
     EnGPar_End_Function();
-  }  
+  }
+  PCU_Barrier();
   return map;
 }
 

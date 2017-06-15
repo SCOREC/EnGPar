@@ -97,6 +97,16 @@ mpi_test(vtxBalanceTorus 4
   "${MESHES}/torus/4imb/torus.smb"
   .1)
 
+mpi_test(balanceCube 2
+  ./balance
+  "${MESHES}/cube/cube.dmg"
+  "${MESHES}/cube/pumi670/2/cube.smb")
+
+mpi_test(balanceTorus 4
+  ./balance
+  "${MESHES}/torus/torus.dmg"
+  "${MESHES}/torus/4imb/torus.smb")
+
 if (ENABLE_ZOLTAN)
 
 endif()
