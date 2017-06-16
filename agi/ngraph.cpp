@@ -518,7 +518,7 @@ void Ngraph::setEdgeWeights(std::vector<wgt_t>& wgts, etype t) {
   }
   assert(wgts.size()==num_local_edges[t]);
   edge_weights[t] = new wgt_t[num_local_edges[t]];
-  memcpy(edge_weights[t],&(wgts[0]),num_local_edges[t]);
+  memcpy(edge_weights[t],&(wgts[0]),num_local_edges[t]*sizeof(wgt_t));
 }
 
 //Protected functions

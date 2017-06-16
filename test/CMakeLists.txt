@@ -40,6 +40,7 @@ function(make_exe exename srcname)
 endfunction(make_exe)
 
 make_exe(constructGraph constructGraph.cpp)
+make_exe(testFileIO testFileIO.cpp)
 make_exe(testMigration testMigration.cpp)
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)

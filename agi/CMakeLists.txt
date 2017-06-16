@@ -8,6 +8,7 @@ set(AGI_SOURCES
   ngraph.cpp
   agiBalancer.cpp
   migrate.cpp
+  agiIO.cpp
   )
 
 set(AGI_HEADERS

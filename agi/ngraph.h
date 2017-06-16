@@ -44,11 +44,12 @@ public:
 		      std::vector<lid_t>& degs,
 		      std::vector<gid_t>& pins_to_verts,
 		      std::unordered_map<gid_t,part_t>& owns);
-  
   virtual ~Ngraph();
   // \cond
   void destroyData();
   // \endcond
+
+  
   //Global Part Information
   /** \brief Returns the number of vertices in the graph across all processes */
   gid_t numGlobalVtxs() const {return num_global_verts;}
@@ -233,6 +234,10 @@ public:
   void migrate(Migration* plan);
   // \endcond
 
+
+  void saveToFile(char* prefix);
+  void loadFromFile(char* prefix);
+  
  protected:
   /** \brief Adds an edge type to the graph
    * \return the new edge type id
