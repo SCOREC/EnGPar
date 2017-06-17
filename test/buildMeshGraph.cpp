@@ -149,13 +149,14 @@ void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
     printf("Checking Sizes\n");
   size_t num_verts = countOwned(m,primary);
   size_t global_verts = countOwned(m,primary);
-  PCU_Add_Long(global_verts);
+  global_verts = PCU_Add_Long(global_verts);
   assert(g->numLocalVtxs()==num_verts);
   assert(g->numGlobalVtxs()==global_verts);
 
   for (int i=0;i<n;i++) {
     size_t num_edges = m->count(seconds[i]);
     size_t global_edges = countOwned(m,seconds[i]);
+    global_edges = PCU_Add_Long(global_edges);
     assert(g->numLocalEdges(i)==num_edges);
     assert(g->numGlobalEdges(i)==global_edges);
     if (PCU_Comm_Peers()==1)

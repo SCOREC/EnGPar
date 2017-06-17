@@ -51,6 +51,19 @@ mpi_test(buildParallelMeshGraph30 4
   3
   0)
 
+mpi_test(testFileIOSerial 1
+  ./testFileIO
+  ${MESHES}/cube/cube.dmg
+  ${MESHES}/cube/pumi11/cube.smb
+  serial_save)
+
+mpi_test(testFileIOParallel 4
+  ./testFileIO
+  ${MESHES}/cube/cube.dmg
+  ${MESHES}/cube/pumi670/4/cube.smb
+  parallel_save)
+
+
 mpi_test(buildSerialBinaryRing 1
   ./buildBinaryGraph
   "${GRAPHS}/ring.ebin")

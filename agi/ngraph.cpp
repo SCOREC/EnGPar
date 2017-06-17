@@ -406,7 +406,7 @@ GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
 
 lid_t  Ngraph::degree(GraphEdge* edge) const {
   if (!isHyperGraph)
-    return 2;
+    return 0;
   if (edge==NULL)
     return 0;
   uintptr_t id = (uintptr_t)(edge)-1;
@@ -417,8 +417,9 @@ lid_t  Ngraph::degree(GraphEdge* edge) const {
 }
 
 PinIterator* Ngraph::pins(GraphEdge* edge) const {
-  if (!isHyperGraph)
+  if (!isHyperGraph) {
     return NULL;
+  }
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
