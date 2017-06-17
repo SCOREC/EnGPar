@@ -13,16 +13,12 @@
 void testSizes(agi::Ngraph*,agi::Ngraph*);
 void testVertices(agi::Ngraph*,agi::Ngraph*);
 void testEdges(agi::Ngraph*,agi::Ngraph*);
-void testGhosts(agi::Ngraph*,agi::Ngraph*);
 
 void testGraphs(agi::Ngraph* g1,agi::Ngraph* g2) {
   
   testSizes(g1,g2);
-  testVertices(g1,g2);
-  
-  testEdges(g1,g2);
-  //testGhosts(g1,g2);
-  
+  testVertices(g1,g2);  
+  testEdges(g1,g2);  
 }
 
 int main(int argc, char* argv[]) {
@@ -71,9 +67,8 @@ void testSizes(agi::Ngraph* g1,agi::Ngraph* g2) {
     printf("Checking Sizes\n");
   assert(g1->numLocalVtxs()==g2->numLocalVtxs());
   assert(g1->numGlobalVtxs()==g2->numGlobalVtxs());
-
-  //assert(g1->numLocalEdges(0)==g2->numLocalEdges(0));
-  //assert(g1->numGlobalEdges()==g2->numGlobalEdges(0));
+  assert(g1->numLocalEdges(0)==g2->numLocalEdges(0));
+  assert(g1->numGlobalEdges(0)==g2->numGlobalEdges(0));
 }
 
 void testVertices(agi::Ngraph* g1,agi::Ngraph* g2) {
@@ -122,43 +117,4 @@ void testEdges(agi::Ngraph* g1,agi::Ngraph* g2) {
       assert(g1->globalID(out1)==g2->globalID(out2));
     }
   }
-}
-
-void testGhosts(agi::Ngraph* g1,agi::Ngraph* g2) {
-  if (!PCU_Comm_Self())
-    printf("Iterating to check ghost counts\n");
-  /*
-  //For each edge type
-  for (int i=0;i<n;i++) {
-    agi::GraphEdge* edge;
-    agi::EdgeIterator* eitr = g->begin(i);
-
-    apf::MeshIterator* mitr = m->begin(seconds[i]);
-    apf::MeshEntity* ent;
-    //Iterate over graph hyperedges
-    while ((edge = g->iterate(eitr))) {
-      //Iterate the mesh entity
-      ent = m->iterate(mitr);
-      //Iterate over the graph pins
-      agi::GraphVertex* pin;
-      agi::PinIterator* pitr = g->pins(edge);
-      agi::lid_t deg = g->degree(edge);
-      agi::lid_t owned_pins=0,ghost_pins=0;
-      for (agi::lid_t i=0;i<deg;i++) {
-	pin = g->iterate(pitr);
-	//Get the owner of the graph vertex
-	agi::part_t owner = g->owner(pin);
-	if (PCU_Comm_Self()==owner)
-	  owned_pins++;
-	else
-	  ghost_pins++;
-      }
-      //Get the number of adjacent mesh primaries
-      apf::Adjacent adj;
-      m->getAdjacent(ent,primary,adj);
-      assert(owned_pins==adj.getSize());
-      assert(owned_pins+ghost_pins == deg);
-    }
-  }
-  */
 }

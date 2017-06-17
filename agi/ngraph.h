@@ -99,10 +99,12 @@ public:
   void setOriginalOwners();
   void setOriginalOwners(std::vector<part_t>&);
   // \endcond
+  void getResidence(GraphEdge* e,Peers& residence) const;
   
-  // \cond HACK
+
   lid_t localID(GraphVertex*) const;
   gid_t globalID(GraphVertex*) const;
+  // \cond HACK
   GraphVertex* find(GraphVertex* vtx) const;
   // \endcond
   
@@ -113,9 +115,9 @@ public:
    */
   double weight(GraphEdge* edge) const;
   
-  // \cond HACK
   lid_t localID(GraphEdge*) const;
   gid_t globalID(GraphEdge*) const;
+  // \cond HACK
   lid_t u(lid_t,etype t =0) const;
   // \endcond
   /** \brief Returns the source of an edge [Not HG]

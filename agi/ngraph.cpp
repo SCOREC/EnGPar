@@ -150,11 +150,26 @@ void Ngraph::constructGraph(bool isHG,
   free(temp_counts);
   //Setup global counters
   num_global_verts = PCU_Add_Long(num_local_verts);
-  num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
+
+  gid_t nOwnedEdges=num_local_edges[t];
+  EdgeIterator* eitr = begin(t);
+  GraphEdge* edge;
+  while ((edge = iterate(eitr))) {
+    Peers neighbors;
+    getResidence(edge,neighbors);
+    Peers::iterator itr;
+    for (itr = neighbors.begin();itr!=neighbors.end();itr++) {
+      if (*itr<PCU_Comm_Self()) {
+        --nOwnedEdges;
+        break;
+      }
+    }
+  }
+  num_global_edges[t] = PCU_Add_Long(nOwnedEdges);
   num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
   if (EnGPar_Is_Log_Open()) {
     EnGPar_End_Function();
-  }  
+  }
 }
 Ngraph::~Ngraph() {
   destroyData();
@@ -287,6 +302,16 @@ void Ngraph::setOriginalOwners(std::vector<part_t>& oos) {
     original_owners[i]=oos[i];
 }
 
+void Ngraph::getResidence(GraphEdge* e, Peers& residence) const {
+  agi::PinIterator* pitr = pins(e);
+  agi::GraphVertex* vtx;
+  lid_t deg = degree(e);
+  for (lid_t i=0;i<deg;i++) {
+    vtx = iterate(pitr);
+    residence.insert(owner(vtx));
+  }
+}
+  
 lid_t Ngraph::localID(GraphVertex* vtx) const {
   return  (uintptr_t)(vtx)-1;
 
@@ -381,7 +406,7 @@ GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
 
 lid_t  Ngraph::degree(GraphEdge* edge) const {
   if (!isHyperGraph)
-    return 0;
+    return 2;
   if (edge==NULL)
     return 0;
   uintptr_t id = (uintptr_t)(edge)-1;

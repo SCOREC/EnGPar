@@ -5,6 +5,7 @@
 
 #include <stdint.h>
 #include <apfVector.h>
+#include <set>
 //ID types
 //TODO: discuss what these should be?
 namespace agi {
@@ -15,6 +16,8 @@ namespace agi {
   typedef int32_t part_t;
   typedef apf::Vector3 coord_t;
 
+  typedef std::set<part_t> Peers;
+  
   class GraphVertex;
   typedef std::unordered_map<gid_t,part_t> PartitionMap;
   typedef std::unordered_map<GraphVertex*,part_t> Migration;

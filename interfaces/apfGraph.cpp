@@ -127,8 +127,7 @@ void apfGraph::checkDims(int dim, int primary, int second) {
 void apfGraph::setupPrimary(int primary_dimension) {
   
   num_local_verts = countOwned(m,primary_dimension);
-  num_global_verts = num_local_verts;
-  //PCU_Max_Long(num_global_verts);
+  num_global_verts = PCU_Add_Long(num_local_verts);
   if (num_global_verts==0) {
     fprintf(stderr,"[ERROR] Mesh is empty, exiting\n");
     throw 3;
@@ -171,7 +170,7 @@ etype apfGraph::setupSecondary(int secondary_dimension) {
   etype type = addEdgeType();
   num_local_edges[type] = m->count(secondary_dimension);
   num_global_edges[type] = countOwned(m,secondary_dimension);
-  //PCU_Max_Long(num_global_edges[type]);
+  num_global_edges[type] = PCU_Add_Long(num_global_edges[type]);
 
   //Create edge array
   makeEdgeArray(type,num_local_edges[type]);
