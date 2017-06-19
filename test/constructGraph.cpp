@@ -190,7 +190,7 @@ void buildHyperGraph() {
   }
   assert(i==graph->numLocalVtxs());
   i=0;
-
+  
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = graph->begin(0);
   int k=0;
@@ -203,7 +203,7 @@ void buildHyperGraph() {
     for (lid_t j=0;j<deg;j++) {
       vtx = graph->iterate(pitr);
       if (PCU_Comm_Peers()>1||pin[k]<graph->numLocalVtxs())
-      assert(graph->localID(vtx)==pin[k++]);
+        assert(graph->localID(vtx)==pin[k++]);
       assert(graph->localID(vtx)<graph->numTotalVtxs());
       assert(graph->globalID(vtx)<graph->numGlobalVtxs());
       count++;

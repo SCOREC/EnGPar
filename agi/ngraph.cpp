@@ -1,5 +1,6 @@
 #include "ngraph.h"
 #include "HyperEdgeIterator.h"
+#include "PinIterator.h"
 #include <cstdlib>
 #include <stdint.h>
 #include <iostream>
@@ -417,15 +418,15 @@ lid_t  Ngraph::degree(GraphEdge* edge) const {
 }
 
 PinIterator* Ngraph::pins(GraphEdge* edge) const {
-  if (!isHyperGraph) {
-    return NULL;
-  }
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   id/=num_types;
-  lid_t index = id;//edge_list[type][id];
-  return reinterpret_cast<PinIterator*>(pin_list[type]+
-                                        pin_degree_list[type][index]);
+  if (!isHyperGraph) {
+    return new PinIterator(reinterpret_cast<lid_t*>(u(edge)),
+                           ((lid_t*)edge_list[type][id]+1));
+  }
+  return new PinIterator((pin_list[type]+pin_degree_list[type][id]),
+                         pin_list[type]+pin_degree_list[type][id+1]);
 }
 
 
@@ -466,11 +467,23 @@ GraphEdge* Ngraph::iterate(EdgeIterator*& itr) const {
   return (GraphEdge*)(index);
 }
 GraphVertex* Ngraph::iterate(PinIterator*& itr) const {
-  lid_t* e = reinterpret_cast<lid_t*>(itr);
-  uintptr_t id = *e+1;
-  GraphVertex* vtx = reinterpret_cast<GraphVertex*>((char*)id);
-  itr = reinterpret_cast<PinIterator*>(++e);
-  return vtx;
+  if (isHyperGraph) {
+    if (itr->loc==itr->end)
+      return NULL;
+    lid_t* e = itr->loc;
+    uintptr_t id = *e+1;
+    GraphVertex* vtx = reinterpret_cast<GraphVertex*>((char*)id);
+    itr->iterate();
+    return vtx;
+  }
+  else {
+    GraphVertex* vtx = reinterpret_cast<GraphVertex*>(itr->loc);
+    if (itr->loc==itr->end)
+      itr->end=NULL;
+    itr->loc=itr->end;
+
+    return vtx;
+  }
 }
 GraphVertex* Ngraph::iterate(GraphIterator*& itr) const {
   GraphVertex* vtx;
