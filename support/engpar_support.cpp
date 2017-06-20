@@ -18,6 +18,8 @@ void EnGPar_Initialize() {
 }
 
 void EnGPar_Finalize() {
+  EnGPar_Debug_Close();
+  EnGPar_Close_Log();
   if (handlingPCU &&PCU_Comm_Initialized())
     PCU_Comm_Free();
 }
@@ -81,4 +83,10 @@ void EnGPar_Log_Function(char* message) {
 }
 void EnGPar_End_Function() {
   depth--;
+}
+
+void EnGPar_Close_Log() {
+  if (logFD)
+    fclose(logFD);
+  logFD=NULL;
 }

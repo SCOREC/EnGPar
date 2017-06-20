@@ -221,6 +221,7 @@ void Ngraph::constructGhosts(std::unordered_map<gid_t,part_t>& owns) {
           }
         }
       }
+      destroy(eitr);
       num_global_edges[t] = PCU_Add_Long(nOwnedEdges);
       num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
 
@@ -371,6 +372,7 @@ void Ngraph::getResidence(GraphEdge* e, Peers& residence) const {
     vtx = iterate(pitr);
     residence.insert(owner(vtx));
   }
+  destroy(pitr);
 }
   
 lid_t Ngraph::localID(GraphVertex* vtx) const {
@@ -612,6 +614,7 @@ PartitionMap* Ngraph::getPartition() {
 }
 
 void Ngraph::setEdgeWeights(std::vector<wgt_t>& wgts, etype t) {
+  assert(!edge_weights[t]);
   if (wgts.size()==0) {
     edge_weights[t] = new wgt_t[num_local_edges[t]];
     for (gid_t i=0;i<num_local_edges[t];i++)

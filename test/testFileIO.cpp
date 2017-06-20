@@ -36,8 +36,6 @@ int main(int argc, char* argv[]) {
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
   agi::Ngraph* g = agi::createAPFGraph(m,3,2);
-  std::vector<agi::wgt_t> wgts;
-  g->setEdgeWeights(wgts,0);
   PCU_Barrier();
 
   g->saveToFile(argv[3]);
@@ -116,5 +114,9 @@ void testEdges(agi::Ngraph* g1,agi::Ngraph* g2) {
       assert(g1->owner(out1)==g2->owner(out2));
       assert(g1->globalID(out1)==g2->globalID(out2));
     }
+    g1->destroy(pitr1);
+    g2->destroy(pitr2);
   }
+  g1->destroy(itr1);
+  g2->destroy(itr2);
 }

@@ -47,12 +47,14 @@ namespace agi {
         if (g->owner(v)!=PCU_Comm_Self())
           owns[ps[i]] = g->owner(v);
       }
+      g->destroy(pitr);
       fwrite(&gid,sizeof(gid_t),1,f);
       fwrite(&w,sizeof(wgt_t),1,f);
       fwrite(&deg,sizeof(lid_t),1,f);
       fwrite(ps,sizeof(gid_t),deg,f);
+      delete [] ps;
     }
-    //g->destroy(eitr);
+    g->destroy(eitr);
 
     lid_t numOwners = owns.size();
     fwrite(&numOwners,sizeof(lid_t),1,f);

@@ -12,4 +12,6 @@ void EnGPar_Open_Log();
 bool EnGPar_Is_Log_Open();
 void EnGPar_Log_Function(char*);
 void EnGPar_End_Function();
+void EnGPar_Close_Log();
+
 #endif

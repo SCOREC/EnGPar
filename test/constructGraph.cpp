@@ -31,7 +31,6 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self()) 
     printf("All Tests Passed\n");
   
-
   EnGPar_Finalize();
   MPI_Finalize();
 }
@@ -238,6 +237,7 @@ void buildHyperGraph() {
 	ghost++;
       }
     }
+    graph->destroy(pitr);
     assert(ghost==ghost_degs[i]*(PCU_Comm_Peers()>1));
     assert(count==edge_degs[i]);
     i++;
@@ -454,6 +454,7 @@ void buildHyperGraphParts() {
 	ghost++;
       }
     }
+    graph->destroy(pitr);
     assert(ghost==ghost_degs[i]*(PCU_Comm_Peers()>1));
     assert(count==edge_degs[i]);
     i++;

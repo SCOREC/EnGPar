@@ -190,7 +190,6 @@ void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
     mitr = m->begin(seconds[i]);
     agi::GraphEdge* edge;
     while ((edge = g->iterate(eitr)) && (ent = m->iterate(mitr))) {
-      printf("%p\n",edge);
       assert(g->globalID(edge)==(gid_t)apf::getNumber(id_nums,ent,0,0));
     }
     m->end(mitr);
@@ -247,6 +246,7 @@ void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
               continue;
           tot_pins++;
         }
+	g->destroy(pitr);
       }
       g->destroy(eitr);
     }
@@ -283,11 +283,14 @@ void testGhosts(apf::Mesh* m,agi::Ngraph* g, int primary, int* seconds, int n) {
 	else
 	  ghost_pins++;
       }
+      g->destroy(pitr);
       //Get the number of adjacent mesh primaries
       apf::Adjacent adj;
       m->getAdjacent(ent,primary,adj);
       assert(owned_pins==adj.getSize());
       assert(owned_pins+ghost_pins == deg);
     }
+    m->end(mitr);
+    g->destroy(eitr);
   }
 }

@@ -36,7 +36,6 @@ class apfGraph : public Ngraph {
   // \cond INTERFACE
   apfGraph(apf::Mesh*, int primary_dimension, int secondary_dimension);
   apfGraph(apf::Mesh*, int primary_dimension, int* secondary_dimensions,int n);
-  void destroyData();
   ~apfGraph();
     
   //Utility

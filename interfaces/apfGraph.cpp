@@ -52,9 +52,6 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   connectToPins(primary_dimension,secondary_dimension,t);
   
   constructGhostVerts();
-
-  std::vector<wgt_t> wgts;
-  setEdgeWeights(wgts,0);
 }
 
 apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
@@ -75,36 +72,20 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
     etype t = setupSecondary(secondary_dimensions[i]);
     connectToEdges(primary_dimension,secondary_dimensions[i],t);
     connectToPins(primary_dimension,secondary_dimensions[i],t);
-    std::vector<wgt_t> wgts;
-    setEdgeWeights(wgts,t);
   }
   constructGhostVerts();
 }
 
-void apfGraph::destroyData() {
-  /*
-  printf("destroying\n");
-  if (global_nums) {
-    printf("nums\n");
+  
+apfGraph::~apfGraph() {
+  if (global_nums)
     apf::destroyGlobalNumbering(global_nums);
-  }
   for (int i=0;i<MAX_TYPES;++i)
-    if (edge_nums[i]) {
-      printf("edges\n");
+    if (edge_nums[i])
       apf::destroyGlobalNumbering(edge_nums[i]);
-    }
-  */
+  
 }
-
-  apfGraph::~apfGraph() {
-    if (global_nums)
-      apf::destroyGlobalNumbering(global_nums);
-    for (int i=0;i<MAX_TYPES;++i)
-      if (edge_nums[i])
-	apf::destroyGlobalNumbering(edge_nums[i]);
-	
-  }
-
+  
 void apfGraph::checkDims(int dim, int primary, int second) {
   //Error checking on primary and secondary dims
   if (primary>dim ||
