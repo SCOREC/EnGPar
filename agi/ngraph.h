@@ -206,6 +206,11 @@ public:
    * \param eitr the edge iterator
    */
   void destroy(EdgeIterator* eitr) const;
+  //Destroys iterator
+  /** \brief Cleans up the memory of an edge iterator
+   * \param eitr the edge iterator
+   */
+  void destroy(PinIterator* eitr) const;
   /** \brief Cleans up the memory of a graph iterator
    * \param gitr the graph iterator
    */

@@ -99,7 +99,22 @@ void buildGraph() {
     agi::GraphIterator* gitr = graph->adjacent(v);
     while ((other = graph->iterate(gitr))) {
       assert(vs.find(graph->globalID(other))!=vs.end());
+      agi::GraphEdge* edge = graph->edge(gitr);
+      assert(graph->degree(edge)==2);
+      agi::PinIterator* pitr = graph->pins(edge);
+      agi::GraphVertex* v1 = graph->u(edge);
+      agi::GraphVertex* v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(v)==graph->localID(v2));
+      v1 = graph->v(edge);
+      v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(other)==graph->localID(v2));
+
+      assert(!graph->iterate(pitr));
+      graph->destroy(pitr);
     }
+    graph->destroy(gitr);
   }
   agi::destroyGraph(graph);
 

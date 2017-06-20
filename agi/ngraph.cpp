@@ -153,16 +153,18 @@ void Ngraph::constructGraph(bool isHG,
   num_global_verts = PCU_Add_Long(num_local_verts);
 
   gid_t nOwnedEdges=num_local_edges[t];
-  EdgeIterator* eitr = begin(t);
-  GraphEdge* edge;
-  while ((edge = iterate(eitr))) {
-    Peers neighbors;
-    getResidence(edge,neighbors);
-    Peers::iterator itr;
-    for (itr = neighbors.begin();itr!=neighbors.end();itr++) {
-      if (*itr<PCU_Comm_Self()) {
-        --nOwnedEdges;
-        break;
+  if (isHyperGraph) {
+    EdgeIterator* eitr = begin(t);
+    GraphEdge* edge;
+    while ((edge = iterate(eitr))) {
+      Peers neighbors;
+      getResidence(edge,neighbors);
+      Peers::iterator itr;
+      for (itr = neighbors.begin();itr!=neighbors.end();itr++) {
+        if (*itr<PCU_Comm_Self()) {
+          --nOwnedEdges;
+          break;
+        }
       }
     }
   }
@@ -407,7 +409,7 @@ GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
 
 lid_t  Ngraph::degree(GraphEdge* edge) const {
   if (!isHyperGraph)
-    return 0;
+    return 2;
   if (edge==NULL)
     return 0;
   uintptr_t id = (uintptr_t)(edge)-1;
@@ -423,7 +425,7 @@ PinIterator* Ngraph::pins(GraphEdge* edge) const {
   id/=num_types;
   if (!isHyperGraph) {
     return new PinIterator(reinterpret_cast<lid_t*>(u(edge)),
-                           ((lid_t*)edge_list[type][id]+1));
+                           reinterpret_cast<lid_t*>((char*)(edge_list[type][id]+1)));
   }
   return new PinIterator((pin_list[type]+pin_degree_list[type][id]),
                          pin_list[type]+pin_degree_list[type][id+1]);
@@ -509,6 +511,9 @@ GraphEdge* Ngraph::edge(GraphIterator* itr) const {
 }
   
 void Ngraph::destroy(EdgeIterator* itr) const {
+  delete itr;
+}
+void Ngraph::destroy(PinIterator* itr) const {
   delete itr;
 }
 void Ngraph::destroy(GraphIterator* itr) const {
