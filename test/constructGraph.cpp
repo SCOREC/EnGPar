@@ -11,7 +11,7 @@ void buildHyperGraphParts();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-
+  EnGPar_Open_Log();
   buildGraph();
 
   PCU_Barrier();

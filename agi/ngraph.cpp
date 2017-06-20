@@ -53,6 +53,7 @@ void Ngraph::constructGraph(bool isHG,
       sprintf(message,"%sCreating traditional graph\n",message);
     EnGPar_Log_Function(message);
   }
+  
   constructVerts(isHG,verts,wgts);
   constructEdges(edge_ids,degs,pins_to_verts);
   constructGhosts(owns);
@@ -103,12 +104,13 @@ void Ngraph::constructVerts(bool isHG,
 etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
                              std::vector<lid_t>& degs,
                              std::vector<gid_t>& pins_to_verts) {
+  etype t = addEdgeType();
+
   if (EnGPar_Is_Log_Open()) {
     char message[45];
-    sprintf(message,"constructEdges\n");
+    sprintf(message,"constructEdges: %d\n",t);
     EnGPar_Log_Function(message);
   }
-  etype t = addEdgeType();
   degree_list[t] = new lid_t[num_local_verts+1];
   for (lid_t i=0;i<num_local_verts+1;i++)
     degree_list[t][i] = 0;
