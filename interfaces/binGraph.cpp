@@ -36,7 +36,9 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   else
     read_ranks(part_file,ranks);
   exchange_edges(m_read,read_edges,ranks,t);
+  free(read_edges);
   create_dist_csr(ranks,t);
+  free(ranks);
   std::vector<wgt_t> wgts;
   setEdgeWeights(wgts,0);
 }
@@ -165,13 +167,12 @@ etype binGraph::load_edges(char *filename, uint64_t*& read_edges,
   for (uint64_t i = 0; i < m_read*2; ++i)
     read_edges[i] = (uint64_t)temp_read[i];
   free(temp_read);
-
+  
   num_global_verts = 0;
   for (uint64_t i = 0; i < m_read*2; ++i)
     if (read_edges[i] > num_global_verts) {
       num_global_verts = read_edges[i];
     }
-
   MPI_Allreduce(MPI_IN_PLACE, &num_global_verts, 1, MPI_UINT64_T, MPI_MAX, PCU_Get_Comm());
  
   num_global_verts += 1;
@@ -255,6 +256,11 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
 
   MPI_Alltoallv(sendbuf, scounts, sdispls, MPI_UINT64_T,
                 edge_list[t], rcounts, rdispls, MPI_UINT64_T, PCU_Get_Comm());
+  free(scounts);
+  free(rcounts);
+  free(sdispls);
+  free(sdispls_cpy);
+  free(rdispls);
   free(sendbuf);
 
   return 0;
@@ -269,7 +275,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
     if (ranks[i] == PCU_Comm_Self())
       ++num_local_verts;
 
-  local_unmap = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
+  local_unmap = new gid_t[num_local_verts];
   uint64_t cur_label = 0;
   for (uint64_t i = 0; i < num_local_edges[t]*2; i++) {
     uint64_t out = edge_list[t][i];
@@ -286,9 +292,9 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
     else        
       edge_list[t][i] = vtx_mapping[out];
   }
-  uint64_t* tmp_edges = (uint64_t*)malloc(num_local_edges[t]*sizeof(uint64_t));
+  gid_t* tmp_edges = new gid_t[num_local_edges[t]];
   uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-  degree_list[t] = (uint64_t*)malloc((num_local_verts+1)*sizeof(uint64_t));
+  degree_list[t] = new lid_t[num_local_verts+1];
   for (uint64_t i = 0; i < num_local_verts+1; ++i)
     degree_list[t][i] = 0;
   for (uint64_t i = 0; i < num_local_verts; ++i)
@@ -300,6 +306,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
   for (uint64_t i = 0; i < num_local_edges[t]*2; i+=2)
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
+  free(temp_counts);
   free(edge_list[t]);
   edge_list[t] = tmp_edges;
   if (createGhost) {

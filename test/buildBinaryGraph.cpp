@@ -92,7 +92,7 @@ void testEdges(agi::Ngraph* g) {
       //assert(g->weight(edge)>0);
       num_edges++;
     }
-
+    g->destroy(eitr);
     int temp_count =0;
     eitr = g->edges(vtx,0);
     agi::GraphEdge* edge;
@@ -100,6 +100,7 @@ void testEdges(agi::Ngraph* g) {
       other = g->v(edge);
       temp_count++;
     }
+    g->destroy(eitr);
     assert(temp_count==deg);
   }
   assert(ghosts.size()==g->numGhostVtxs());
