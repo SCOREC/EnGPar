@@ -50,6 +50,7 @@ void traverseEdges(agi::Ngraph* g) {
 	assert(g->isEqual(u,g->u(e2)));
       }
     }
+    g->destroy(eitr2);
   }
   assert(numEdges==g->numLocalEdges());
   std::map<agi::GraphVertex*,agi::lid_t>::iterator itr;

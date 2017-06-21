@@ -551,6 +551,7 @@ GraphVertex* Ngraph::iterate(GraphIterator*& itr) const {
   GraphVertex* vtx;
   if (itr->isH) {
     if (itr->count >= degree(itr->edge)) {
+      destroy(itr->pitr);
       GraphEdge* edge = iterate(itr->eitr);
       if (!edge)
 	return NULL;

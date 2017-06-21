@@ -137,6 +137,7 @@ void compareTraversal(agi::Ngraph* g,agi::etype t) {
 	  assert(edges[i]==edge);
 	  i++;
 	}
+        g->destroy(pitr);
       }
       else {
 	assert(g->v(edge)==vtxs[i]);
