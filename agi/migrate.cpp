@@ -215,6 +215,7 @@ namespace agi {
 	    pin[deg++] = globalID(vtx);
 	    residence.insert(o);
 	  }
+          g->destroy(pitr);
 	}
 	else {
 	  id = localID(e);

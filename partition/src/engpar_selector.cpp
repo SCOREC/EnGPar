@@ -18,6 +18,7 @@ namespace engpar {
       else
 	peers.insert(g->owner(vtx));
     }
+    g->destroy(pitr);
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
@@ -35,6 +36,7 @@ namespace engpar {
 	agi::GraphEdge* e;
 	while ((e=g->iterate(eitr)))
 	  target_edges.insert(e);
+        g->destroy(eitr);
       }
     }
     std::set<agi::GraphEdge*>::iterator sitr;
@@ -81,6 +83,7 @@ namespace engpar {
       }
       if (isInterior)
 	edges.insert(e);
+      g->destroy(pitr);
     }
     g->destroy(eitr);
   }
@@ -100,6 +103,7 @@ namespace engpar {
       }
       if (isInterior)
 	tmpEdges.insert(e);
+      g->destroy(pitr);
     }
     g->destroy(eitr);
   }

@@ -16,7 +16,9 @@ namespace engpar {
 	  break;
 	}
       }
+      g->destroy(pitr);
     }
+    g->destroy(eitr);
     return q;
   }
 }
