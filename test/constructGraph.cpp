@@ -11,13 +11,12 @@ void buildHyperGraphParts();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  EnGPar_Debug_Open("oe");
   EnGPar_Open_Log();
   buildGraph();
 
   PCU_Barrier();
   
-  //buildHyperGraph();
+  buildHyperGraph();
 
   PCU_Barrier();
 
@@ -25,7 +24,7 @@ int main(int argc, char* argv[]) {
 
   PCU_Barrier();
 
-  //buildHyperGraphParts();
+  buildHyperGraphParts();
 
   PCU_Barrier();
 
@@ -303,21 +302,26 @@ void buildGraphParts() {
     edges2.push_back(i);
     pins2.push_back(svert+i);
     pins2.push_back(svert+(i+2)%4);
-    printf("%d %lu %lu\n",PCU_Comm_Self(),svert+i,svert+(i+2)%4);
+  }
+  if (PCU_Comm_Self()) {
+    degrees2.push_back(2);
+    edges2.push_back(4);
+    pins2.push_back(svert+1);
+    pins2.push_back(1);
+    
   }
   agi::etype t2 = graph->constructEdges(edges2,degrees2,pins2);
   graph->setEdgeWeights(weights,t2);
-  std::unordered_map<agi::gid_t,agi::part_t>::iterator itr;
   graph->constructGhosts(owners);
   
   assert(graph->numLocalVtxs()==local_verts);
   if (PCU_Comm_Peers()>1) {
-    assert(graph->numGhostVtxs()==2);
+    assert(graph->numGhostVtxs()==2+(PCU_Comm_Self()!=0));
   }
   else
     assert(graph->numGhostVtxs()==0);
   assert(graph->numLocalEdges(t)==local_verts*2);
-  assert(graph->numLocalEdges(t2) == local_verts);
+  assert(graph->numLocalEdges(t2) == local_verts+(PCU_Comm_Self()!=0));
   assert(graph->numEdgeTypes()==2);
   assert(!graph->isHyper());
 
@@ -326,6 +330,8 @@ void buildGraphParts() {
     agi::gid_t vert = (PCU_Comm_Self()*local_verts+global_verts+i)%global_verts;
     vs.insert(vert);
   }
+  if (PCU_Comm_Self())
+    vs.insert(1);
   agi::GraphVertex* v;
   agi::VertexIterator* vitr = graph->begin();
   while ((v = graph->iterate(vitr))) {
@@ -380,7 +386,7 @@ void buildGraphParts() {
 
 void buildHyperGraphParts() {
   if (!PCU_Comm_Self())
-    printf("Building HyperGraphParts\n");
+    printf("Building HyperGraph Parts\n");
   agi::Ngraph* graph  = new agi::Ngraph;
   agi::lid_t local_verts = 4;
   agi::gid_t start_vert = local_verts*PCU_Comm_Self();
