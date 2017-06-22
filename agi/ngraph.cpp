@@ -105,7 +105,6 @@ etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
                              std::vector<lid_t>& degs,
                              std::vector<gid_t>& pins_to_verts) {
   etype t = addEdgeType();
-
   if (EnGPar_Is_Log_Open()) {
     char message[45];
     sprintf(message,"constructEdges: %d\n",t);
@@ -121,6 +120,7 @@ etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
   pin_degree_list[t] = new lid_t[degs.size()+1];
   pin_degree_list[t][0]=0;
   pin_list[t] = new lid_t[pins_to_verts.size()];
+  lid_t new_ghosts=0;
   for (lid_t i=0;i<edge_ids.size();i++) {
     //set edge_weight
     gid_t gid = edge_ids[i];
@@ -141,6 +141,7 @@ etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
 	if (vitr==vtx_mapping.end()) {
 	  vtx_mapping[v]=num_local_verts+num_ghost_verts;
 	  pin_list[t][j] = num_local_verts+num_ghost_verts++;
+          new_ghosts++;
 	}
 	else {
 	  pin_list[t][j]=vitr->second;
@@ -157,10 +158,16 @@ etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
   
   std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
   edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
-  ghost_unmap=NULL;
-  owners=NULL;
-  if (num_ghost_verts>0) {
-    ghost_unmap = new lid_t[num_ghost_verts];
+  if (new_ghosts>0) {
+    if (ghost_unmap) {
+      gid_t* tmp_ghosts = new gid_t[num_ghost_verts];
+      for (lid_t i=0;i<num_ghost_verts-new_ghosts;i++)
+        tmp_ghosts[i]=ghost_unmap[i];
+      delete [] ghost_unmap;
+      ghost_unmap = tmp_ghosts;
+    }
+    else
+      ghost_unmap = new gid_t[num_ghost_verts];
   }
   
   for (lid_t i=0;i<edge_ids.size();i++) {
