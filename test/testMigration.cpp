@@ -4,6 +4,7 @@
 #include <set>
 agi::Ngraph* buildGraph();
 agi::Ngraph* buildHyperGraph();
+void buildGraphParts();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
@@ -42,7 +43,10 @@ int main(int argc, char* argv[]) {
   
   agi::destroyGraph(g);
   PCU_Barrier();
-  
+
+  buildGraphParts();
+
+  PCU_Barrier();
   if (!PCU_Comm_Self()) 
     printf("All Tests Passed\n");
   
@@ -154,4 +158,145 @@ agi::Ngraph* buildHyperGraph() {
   graph->setEdgeWeights(weights,0);
   return graph;
 
+}
+
+void buildGraphParts() {
+  if (!PCU_Comm_Self())
+    printf("Building Regular Graph Parts\n");
+  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::lid_t local_verts = 4;
+  agi::gid_t global_verts = 4*PCU_Comm_Peers();
+  std::vector<agi::gid_t> verts;
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  for (agi::gid_t i=0;i<local_verts;i++)
+    verts.push_back(local_verts*PCU_Comm_Self()+i);
+  std::vector<agi::wgt_t> weights;
+  graph->constructVerts(false,verts,weights);
+
+  for (agi::gid_t i=0;i<local_verts;i++) {
+    agi::gid_t e = local_verts*PCU_Comm_Self()+i;
+    edges.push_back(e*2);
+    degrees.push_back(2);
+    pins.push_back(e);
+    pins.push_back((e+1)%global_verts);
+    if (i==local_verts-1&&PCU_Comm_Peers()>1) {
+      owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
+      
+    }
+    else {
+      edges.push_back(e*2+1);
+      degrees.push_back(2);
+      pins.push_back((e+1)%global_verts);
+      owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+      pins.push_back(e);
+    }
+  }
+  if (PCU_Comm_Peers()>1) {
+    agi::gid_t e = (local_verts*PCU_Comm_Self()+global_verts-1)%global_verts;
+    edges.push_back(e*2);
+    degrees.push_back(2);
+    pins.push_back((e+1)%global_verts);
+    pins.push_back(e);
+  }
+  agi::etype t =graph->constructEdges(edges,degrees,pins);
+  graph->setEdgeWeights(weights,t);
+
+  std::vector<agi::gid_t> edges2;
+  std::vector<agi::lid_t> degrees2;
+  std::vector<agi::gid_t> pins2;
+  agi::lid_t svert = PCU_Comm_Self()*local_verts;
+  for (int i=0;i<4;i++) {
+    degrees2.push_back(2);
+    edges2.push_back(i);
+    pins2.push_back(svert+i);
+    pins2.push_back(svert+(i+2)%4);
+  }
+  if (PCU_Comm_Self()) {
+    degrees2.push_back(2);
+    edges2.push_back(4);
+    pins2.push_back(svert+1);
+    pins2.push_back(1);
+    
+  }
+  agi::etype t2 = graph->constructEdges(edges2,degrees2,pins2);
+  graph->setEdgeWeights(weights,t2);
+  graph->constructGhosts(owners);
+
+
+  //Create a migration and send nothing to test if the reconstructed graph
+  // is the same even with 2 edge types
+  graph->setOriginalOwners();
+  agi::Migration* plan = new agi::Migration;
+  graph->migrate(plan);  
+  
+  assert(graph->numLocalVtxs()==local_verts);
+  if (PCU_Comm_Peers()>1) {
+    assert(graph->numGhostVtxs()==2+(PCU_Comm_Self()!=0));
+  }
+  else
+    assert(graph->numGhostVtxs()==0);
+  assert(graph->numLocalEdges(t)==local_verts*2);
+  assert(graph->numLocalEdges(t2) == local_verts+(PCU_Comm_Self()!=0));
+  assert(graph->numEdgeTypes()==2);
+  assert(!graph->isHyper());
+
+  std::set<agi::gid_t> vs;
+  for (int i = -1 ; i<(int)local_verts+1;i++)  {
+    agi::gid_t vert = (PCU_Comm_Self()*local_verts+global_verts+i)%global_verts;
+    vs.insert(vert);
+  }
+  if (PCU_Comm_Self())
+    vs.insert(1);
+  agi::GraphVertex* v;
+  agi::VertexIterator* vitr = graph->begin();
+  while ((v = graph->iterate(vitr))) {
+    assert(vs.find(graph->globalID(v))!=vs.end());
+    assert(graph->localID(v)<graph->numTotalVtxs());
+    
+    if (graph->localID(v)>graph->numLocalVtxs())
+      assert(graph->owner(v)!=PCU_Comm_Self());
+    agi::GraphVertex* other;
+    agi::GraphIterator* gitr = graph->adjacent(v,t);
+    while ((other = graph->iterate(gitr))) {
+      assert(vs.find(graph->globalID(other))!=vs.end());
+      agi::GraphEdge* edge = graph->edge(gitr);
+      assert(graph->degree(edge)==2);
+      agi::PinIterator* pitr = graph->pins(edge);
+      agi::GraphVertex* v1 = graph->u(edge);
+      agi::GraphVertex* v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(v)==graph->localID(v2));
+      v1 = graph->v(edge);
+      v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(other)==graph->localID(v2));
+
+      assert(!graph->iterate(pitr));
+      graph->destroy(pitr);
+    }
+    graph->destroy(gitr);
+    gitr = graph->adjacent(v,t2);
+    while ((other = graph->iterate(gitr))) {
+      assert(vs.find(graph->globalID(other))!=vs.end());
+      agi::GraphEdge* edge = graph->edge(gitr);
+      assert(graph->degree(edge)==2);
+      agi::PinIterator* pitr = graph->pins(edge);
+      agi::GraphVertex* v1 = graph->u(edge);
+      agi::GraphVertex* v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(v)==graph->localID(v2));
+      v1 = graph->v(edge);
+      v2 = graph->iterate(pitr);
+      assert(graph->localID(v1)==graph->localID(v2));
+      assert(graph->localID(other)==graph->localID(v2));
+      
+      assert(!graph->iterate(pitr));
+      graph->destroy(pitr);
+    }
+    graph->destroy(gitr);
+  }
+  agi::destroyGraph(graph);
 }

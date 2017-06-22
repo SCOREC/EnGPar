@@ -2,6 +2,7 @@
 #define NGRAPH_H__
 #include <cstdlib>
 #include <vector>
+#include <unordered_set>
 #include <unordered_map>
 #include <map>
 #include <cassert>
@@ -431,6 +432,11 @@ public:
   void sendVertex(GraphVertex*, part_t);
   void recvVertex(std::vector<gid_t>&,std::vector<wgt_t>&,
                   std::vector<part_t>&);
+  void sendEdges(Migration*,std::unordered_set<GraphEdge*>&);
+  void recvEdges(std::unordered_set<gid_t>&,std::vector<gid_t>&,
+                 std::vector<wgt_t>&,std::vector<lid_t>&,
+                 std::vector<gid_t>&,std::unordered_map<gid_t,part_t>&,
+                 etype);
   // \endcond
 };
 /** \brief Cleans up the memory of the graph
