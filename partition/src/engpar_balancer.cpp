@@ -75,6 +75,7 @@ namespace engpar {
     
     time[0] = PCU_Time()-time[0];
     int numMigrate = plan->size();
+    numMigrate = PCU_Add_Int(numMigrate);
     if (verbosity>=2) {
       int* counts = new int[PCU_Comm_Peers()];
       for (int i=0;i<PCU_Comm_Peers();i++)
@@ -86,10 +87,11 @@ namespace engpar {
 	if (counts[i]>0)
 	  printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);
     }
+
     time[1] = PCU_Time();
-    input->g->migrate(plan);
+    if (numMigrate>0)
+      input->g->migrate(plan);
     time[1] = PCU_Time()-time[1];
-    numMigrate = PCU_Add_Int(numMigrate);
     PCU_Max_Doubles(time,2);
     if (!PCU_Comm_Self()) {
       printf("Step took %f seconds\n",time[0]);
@@ -97,6 +99,8 @@ namespace engpar {
       times[0]+=time[0];
       times[1]+=time[1];
     }
+    if (numMigrate==0)
+      return false;
 
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
     //Check for completition of criteria

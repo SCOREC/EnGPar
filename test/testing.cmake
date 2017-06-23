@@ -120,6 +120,12 @@ mpi_test(balanceTorus 4
   "${MESHES}/torus/torus.dmg"
   "${MESHES}/torus/4imb/torus.smb")
 
+mpi_test(balanceTorusVtxFaceElm 4
+  ./balance
+  "${MESHES}/torus/torus.dmg"
+  "${MESHES}/torus/4imb/torus.smb"
+  yes)
+
 mpi_test(balanceTree 2
   ./balance
   "${GRAPHS}/tree.ebin")

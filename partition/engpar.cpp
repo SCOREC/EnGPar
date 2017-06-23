@@ -62,11 +62,15 @@ namespace engpar {
     //Vertex Imbalance
     agi::wgt_t my_local = getWeight(g,-1);
     agi::lid_t my_total = g->numTotalVtxs();
-    agi::wgt_t my_edges = getWeight(g,0);
     printMaxMinAvgImb(my_local,"Local Vertices");
     printMaxMinAvgImb(my_total,"Total Vertices");
     //Edge type imbalance
-    printMaxMinAvgImb(my_edges,"Local Edges");
+    for (agi::etype t = 0;t<g->numEdgeTypes();t++) {
+      agi::wgt_t my_edges = getWeight(g,t);
+      char edge_name[15];
+      sprintf(edge_name,"Local Edges %d",t);
+      printMaxMinAvgImb(my_edges,edge_name);
+    }
   
   }
 }

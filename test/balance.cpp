@@ -17,7 +17,7 @@ int main(int argc, char* argv[]) {
   if ( argc!= 2 && argc != 3&& argc!=4) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <graph>\n", argv[0]);
-      printf("Usage: %s <model> <mesh> [verbosity]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> [multi-edgetypes]\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
@@ -33,7 +33,12 @@ int main(int argc, char* argv[]) {
     apf::writeVtkFiles("pre", m);
 
     //Construct graph
-    g = agi::createAPFGraph(m,3,0);
+    if (argc==4) {
+      int edges[2] = {0,2};
+      g = agi::createAPFGraph(m,3,edges,2);
+    }
+    else
+      g=agi::createAPFGraph(m,3,0);
   }
   else
     g= agi::createBinGraph(argv[1]);
@@ -43,12 +48,17 @@ int main(int argc, char* argv[]) {
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
   input->tolerances.push_back(1.1);
+  if (argc==4) {
+    input->priorities.push_back(1);
+    input->tolerances.push_back(1.1);
+  }
   input->priorities.push_back(-1);
   input->tolerances.push_back(1.1);
+
   input->step_factor=.2;
   
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input,argc==4);
+  agi::Balancer* balancer = engpar::makeBalancer(input);
   balancer->balance(1.1);
 
   engpar::evaluatePartition(g);
