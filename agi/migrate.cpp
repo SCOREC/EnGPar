@@ -30,8 +30,10 @@ namespace agi {
       PCU_COMM_UNPACK(gid);
       PCU_COMM_UNPACK(own);
       lid_t lid = vtx_mapping[gid];
-      assert(lid>=num_local_verts);
-      owners[lid-num_local_verts]=own;
+      if (lid>=num_local_verts) {
+        assert(lid>=num_local_verts);
+        owners[lid-num_local_verts]=own;
+      }
     }
   }
   /*
@@ -293,7 +295,7 @@ namespace agi {
                 pins[t],ghost_owners,t);
     }
     delete [] addedEdges;
-
+    
     //Construct the migrated graph
     constructVerts(isHyperGraph,ownedVerts,vertWeights);
     for (int i=0;i<nt;i++) {
@@ -302,7 +304,6 @@ namespace agi {
     }
     constructGhosts(ghost_owners);
     setOriginalOwners(old_owners);
-
     
     delete [] affectedEdges;
     delete [] ownedEdges;

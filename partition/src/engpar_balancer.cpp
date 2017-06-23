@@ -35,16 +35,23 @@ namespace engpar {
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
     Weights* targetWeights = makeWeights(input, sides,target_dimension);
     if (verbosity)
-      printf("%d: %s\n",PCU_Comm_Self(), targetWeights->print("Weights").c_str());
-    
-    Weights** completedWs= new Weights*[completed_dimensions.size()];
-    for (unsigned int i=0;i<completed_dimensions.size();i++) {
-      completedWs[i] = makeWeights(input,sides,completed_dimensions[i]);
+      printf("%d: %s\n",PCU_Comm_Self(),
+             targetWeights->print("Weights").c_str());
+    Weights** completedWs = NULL;
+    if (completed_dimensions.size()>0) {
+      completedWs= new Weights*[completed_dimensions.size()];
+      for (unsigned int i=0;i<completed_dimensions.size();i++) {
+        completedWs[i] = makeWeights(input,sides,completed_dimensions[i]);
+      }
     }
-    
     Targets* targets = makeTargets(input,sides,targetWeights,
                                    completedWs,completed_weights);
     delete sides;
+    if (completedWs) {
+      for (unsigned int i=0;i<completed_dimensions.size();i++)
+        delete completedWs[i];
+      delete [] completedWs;
+    }
     delete targetWeights;
         
     if (verbosity)
@@ -124,14 +131,15 @@ namespace engpar {
 
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
-    
     unsigned int index=0;
     target_dimension = input->priorities[index];
     double tol=1.1;
     if (input->tolerances.size()>index)
       tol = input->tolerances[index];
-    if (1 == PCU_Comm_Peers()) return;
-
+    if (1 == PCU_Comm_Peers()) {
+      printf("EnGPar ran in serial, nothing to do exiting...\n");
+      return;
+    }
     int step = 0;
     int inner_steps=0;
     double time = PCU_Time();
@@ -159,7 +167,7 @@ namespace engpar {
 	target_dimension=input->priorities[index];
         if (input->tolerances.size()>index)
           tol = input->tolerances[index];
-      }
+      }      
     }
     time = PCU_Time()-time;
     time = PCU_Max_Double(time);

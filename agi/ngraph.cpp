@@ -412,6 +412,8 @@ lid_t Ngraph::localID(GraphEdge* edge) const {
 }
 
 gid_t Ngraph::globalID(GraphEdge* edge) const {
+  if (!isHyperGraph)
+    return localID(edge);
   uintptr_t id = (uintptr_t)(edge)-1;
   etype type = id%num_types;
   return edge_unmap[type][id/num_types];

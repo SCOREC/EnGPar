@@ -120,6 +120,10 @@ mpi_test(balanceTorus 4
   "${MESHES}/torus/torus.dmg"
   "${MESHES}/torus/4imb/torus.smb")
 
+mpi_test(balanceTree 2
+  ./balance
+  "${GRAPHS}/tree.ebin")
+
 if (ENABLE_ZOLTAN)
 
 endif()

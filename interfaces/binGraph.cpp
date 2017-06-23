@@ -15,7 +15,7 @@ namespace agi {
 
 Ngraph* createBinGraph(char* graph_file,char* part_file) {
   if (EnGPar_Is_Log_Open()) {
-    char message[50];
+    char message[256];
     sprintf(message,"createBinGraph %s\n",graph_file);
     EnGPar_Log_Function(message);
     EnGPar_End_Function();
@@ -138,7 +138,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   num_global_edges[SPLIT_TYPE] = PCU_Add_Long(num_local_edges[SPLIT_TYPE]);
 }
 
-  //TODO: optimize these operations using PCU
+//TODO: optimize these operations using PCU
 //Private Functions
 etype binGraph::load_edges(char *filename, uint64_t*& read_edges,
     uint64_t& m_read) {  
@@ -276,6 +276,9 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
       ++num_local_verts;
 
   local_unmap = new gid_t[num_local_verts];
+  local_weights = new wgt_t[num_local_verts];
+  for (lid_t i=0;i<num_local_verts;i++)
+    local_weights[i] = 1;
   uint64_t cur_label = 0;
   for (uint64_t i = 0; i < num_local_edges[t]*2; i++) {
     uint64_t out = edge_list[t][i];
