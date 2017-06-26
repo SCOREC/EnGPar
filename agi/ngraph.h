@@ -7,8 +7,6 @@
 #include <map>
 #include <cassert>
 #include "agi.h"
-#include "EdgeIterator.h"
-#include "GraphIterator.h"
 
 
 /** \file ngraph.h
@@ -19,6 +17,9 @@ class GraphVertex;
 class GraphEdge;
 class VertexIterator;
 class PinIterator;
+class EdgeIterator;
+class GraphIterator;
+
 /** \class Ngraph
     \brief An abstract graph used to represent the data passed into EnGPar
  

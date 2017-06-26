@@ -1,6 +1,6 @@
 #ifndef __EDGE_ITERATOR__H__
 #define __EDGE_ITERATOR__H__
-#include "agi.h"
+#include "../agi.h"
 #include <stdint.h>
 namespace agi {
 

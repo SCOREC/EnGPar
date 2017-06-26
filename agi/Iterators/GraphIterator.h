@@ -1,6 +1,6 @@
 #ifndef __GRAPH_ITERATOR__H__
 #define __GRAPH_ITERATOR__H__
-#include "agi.h"
+#include "../agi.h"
 
 namespace agi {
 
