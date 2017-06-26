@@ -2,6 +2,7 @@
 #include <PCU.h>
 #include <unordered_set>
 #include <vector>
+#include <engpar_support.h>
 namespace agi {
   typedef std::unordered_set<GraphVertex*> VertexVector;
   //TODO: Make a vector by using a "tag" on the edges to detect added or not
@@ -169,7 +170,6 @@ namespace agi {
         id = globalID(e);
         pin = new gid_t[degree(e)];
         pin_owners = new part_t[degree(e)];
-	  
         agi::PinIterator* pitr = this->pins(e);
         agi::GraphVertex* vtx;
         for (lid_t i=0;i<degree(e);i++) {
@@ -218,38 +218,38 @@ namespace agi {
   }
 
   void Ngraph::recvEdges(std::unordered_set<gid_t>& addedEdges,
-                 std::vector<gid_t>& ownedEdges, std::vector<wgt_t>& edgeWeights,
-                 std::vector<lid_t>& degrees, std::vector<gid_t>& pins,
-                 std::unordered_map<gid_t,part_t>& ghost_owners,
-                 etype t) {
-      while (PCU_Comm_Receive()) {
-	gid_t id;
-	wgt_t eweight;
-	lid_t deg;
-	PCU_COMM_UNPACK(id);
-	PCU_COMM_UNPACK(eweight);
-	PCU_COMM_UNPACK(deg);
-	gid_t* pin = new gid_t[deg];
-	part_t* pin_owners = new part_t[deg];
-	PCU_Comm_Unpack(pin,deg*sizeof(gid_t));
-	PCU_Comm_Unpack(pin_owners,deg*sizeof(part_t));
-	if (isHyperGraph) {
-	  if (addedEdges.find(id)!=addedEdges.end())
-	    continue;
-	}
-	addedEdges.insert(id);
-	edge_mapping[t][id]=0;
-	ownedEdges.push_back(id);
-	edgeWeights.push_back(eweight);
-	degrees.push_back(deg);
-	for (lid_t i=0;i<deg;i++) {
-	  pins.push_back(pin[i]);
-	  if (pin_owners[i]!=PCU_Comm_Self())
-	    ghost_owners[pin[i]]=pin_owners[i];
-	}
-	delete [] pin;
-	delete [] pin_owners;
+                         std::vector<gid_t>& ownedEdges, std::vector<wgt_t>& edgeWeights,
+                         std::vector<lid_t>& degrees, std::vector<gid_t>& pins,
+                         std::unordered_map<gid_t,part_t>& ghost_owners,
+                         etype t) {
+    while (PCU_Comm_Receive()) {
+      gid_t id;
+      wgt_t eweight;
+      lid_t deg;
+      PCU_COMM_UNPACK(id);
+      PCU_COMM_UNPACK(eweight);
+      PCU_COMM_UNPACK(deg);
+      gid_t* pin = new gid_t[deg];
+      part_t* pin_owners = new part_t[deg];
+      PCU_Comm_Unpack(pin,deg*sizeof(gid_t));
+      PCU_Comm_Unpack(pin_owners,deg*sizeof(part_t));
+      if (isHyperGraph) {
+        if (addedEdges.find(id)!=addedEdges.end())
+          continue;
       }
+      addedEdges.insert(id);
+      edge_mapping[t][id]=0;
+      ownedEdges.push_back(id);
+      edgeWeights.push_back(eweight);
+      degrees.push_back(deg);
+      for (lid_t i=0;i<deg;i++) {
+        pins.push_back(pin[i]);
+        if (pin_owners[i]!=PCU_Comm_Self())
+          ghost_owners[pin[i]]=pin_owners[i];
+      }
+      delete [] pin;
+      delete [] pin_owners;
+    }
 
   }
   void Ngraph::migrate(Migration* plan) {
@@ -311,6 +311,34 @@ namespace agi {
     delete [] degrees;
     delete [] pins;
     delete plan;
+  }
+
+  PartitionMap* Ngraph::getPartition() {
+    if (EnGPar_Is_Log_Open()) {
+      char message[20];
+      sprintf(message,"getPartition\n");
+      EnGPar_Log_Function(message);
+    }
+
+    PCU_Comm_Begin();
+    VertexIterator* itr = begin();
+    GraphVertex* vtx;
+    while ((vtx = iterate(itr))) {
+      gid_t v = globalID(vtx);
+      PCU_COMM_PACK(originalOwner(vtx),v);
+    }
+    PCU_Comm_Send();
+    PartitionMap* map = new PartitionMap;
+    while (PCU_Comm_Receive()) {
+      gid_t v;
+      PCU_COMM_UNPACK(v);
+      map->insert(std::make_pair(v,PCU_Comm_Sender()));
+    }
+    if (EnGPar_Is_Log_Open()) {
+      EnGPar_End_Function();
+    }
+    PCU_Barrier();
+    return map;
   }
 
 

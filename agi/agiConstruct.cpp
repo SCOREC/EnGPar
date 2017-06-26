@@ -292,4 +292,20 @@ namespace agi {
     }  
 
   }
+
+  void destroyGraph(Ngraph* g) {
+  if (EnGPar_Is_Log_Open()) {
+    char message[25];
+    sprintf(message,"destroyGraph\n");
+    EnGPar_Log_Function(message);
+  }
+
+  delete g;
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }  
+
+}
+
+
 }

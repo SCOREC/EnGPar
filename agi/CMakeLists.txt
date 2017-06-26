@@ -5,8 +5,9 @@ include_directories(
   ../support
   )
 set(AGI_SOURCES
-  ngraph.cpp
   agiConstruct.cpp
+  agiVertex.cpp
+  agiEdge.cpp
   agiIterate.cpp
   agiBalancer.cpp
   agiMigrate.cpp
