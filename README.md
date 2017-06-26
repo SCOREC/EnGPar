@@ -17,6 +17,35 @@ EnGPar is a set of C/C++ libraries for partitioning relational data structures u
 * Testing: After building the code, the test directory will have several tests and standalone executables that use the
 different functionalities of EnGPar.
 
+### End-user Build ###
+
+Edit `minimal_config.sh` and set the path to the PUMI install directory via the
+`SCOREC_PREFIX` variable.
+
+```
+mkdir build
+../minimal_config.sh
+make
+```
+
+### Developer Build ###
+
+Setup the test mesh and graph repos via submodules
+```
+git submodule init
+git submodule update
+```
+
+Edit `config.sh` and set the path to the PUMI install directory via the
+`SCOREC_PREFIX` variable.
+
+```
+mkdir build
+../config.sh
+make
+ctest
+```
+
 ### Website ### 
 
 http://scorec.github.io/EnGPar/

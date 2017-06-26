@@ -7,7 +7,7 @@ cmake .. \
     -DSCOREC_PREFIX=/path/to/core/install \
     -DENABLE_KOKKOS=OFF \
     -DKOKKOS_PREFIX=/path/to/kokkos_install \
-    -DIS_TESTING=OFF \
-    -DMESHES=/path/to/meshes/ \
-    -DGRAPHS=/path/to/graphs/
+    -DIS_TESTING=ON \
+    -DMESHES=$PWD/../pumi-meshes \
+    -DGRAPHS=$PWD/../EnGPar-graphs \
 
