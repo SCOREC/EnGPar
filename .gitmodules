@@ -1,0 +1,6 @@
+[submodule "pumi-meshes"]
+	path = pumi-meshes
+	url = https://github.com/SCOREC/pumi-meshes.git
+[submodule "EnGPar-graphs"]
+	path = EnGPar-graphs
+	url = https://github.com/SCOREC/EnGPar-graphs.git
