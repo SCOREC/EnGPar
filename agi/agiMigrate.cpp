@@ -351,11 +351,11 @@ namespace agi {
 
     PCU_Max_Doubles(times,2);
     PCU_Max_Doubles(mig,4);
-    if (!PCU_Comm_Self()) {
-      printf("Create Vars %f, getAffected %f, addVerts %f, addEdges %f\n",
-             mig[0],mig[1],mig[2],mig[3]);
-      printf("Time to migrate %f, Time to construct %f\n",times[0],times[1]);
-    }
+    // if (!PCU_Comm_Self()) {
+    //   printf("Create Vars %f, getAffected %f, addVerts %f, addEdges %f\n",
+    //          mig[0],mig[1],mig[2],mig[3]);
+    //   printf("Time to migrate %f, Time to construct %f\n",times[0],times[1]);
+    // }
     
     delete [] affectedEdges;
     delete [] ownedEdges;

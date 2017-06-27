@@ -31,10 +31,10 @@ namespace engpar {
     double time[2];
     time[0] = PCU_Time();
     Sides* sides = makeSides(input);
-    if (verbosity)
+    if (verbosity>=2)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
     Weights* targetWeights = makeWeights(input, sides,target_dimension);
-    if (verbosity)
+    if (verbosity>=2)
       printf("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
     Weights** completedWs = NULL;
@@ -54,7 +54,7 @@ namespace engpar {
     }
     delete targetWeights;
         
-    if (verbosity)
+    if (verbosity>=2)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq = createIterationQueue(input->g);
     Selector* selector = makeSelector(input,pq,&completed_dimensions,
@@ -64,9 +64,16 @@ namespace engpar {
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       planW += selector->select(targets,plan,planW,cavSize,target_dimension);
     }
+    
     if (completed_dimensions.size()>0) {
-      //Midd* midd = selector->trim(targets,plan);
-      //selector->cancel(plan,midd);
+      int sizes[2];
+      sizes[0] = plan->size();
+      Midd* midd = selector->trim(targets,plan);
+      selector->cancel(plan,midd);
+      sizes[1]=plan->size();
+      PCU_Add_Ints(sizes,2);
+      if (!PCU_Comm_Self())
+        printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
     }
 
     delete pq;
@@ -76,7 +83,7 @@ namespace engpar {
     time[0] = PCU_Time()-time[0];
     int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
-    if (verbosity>=2) {
+    if (verbosity>=3) {
       int* counts = new int[PCU_Comm_Peers()];
       for (int i=0;i<PCU_Comm_Peers();i++)
 	counts[i] = 0;

@@ -72,7 +72,7 @@ namespace engpar {
   }
   void Selector::insertInteriorEdges(agi::GraphVertex* vtx, agi::part_t dest,
                                      EdgeSet& edges, int dim) {
-    agi::EdgeIterator* eitr = g->begin(dim);
+    agi::EdgeIterator* eitr = g->edges(vtx,dim);
     agi::GraphEdge* e;
     while ((e = g->iterate(eitr))) {
       bool isInterior=true;
@@ -90,7 +90,7 @@ namespace engpar {
   void Selector::tempInsertInteriorEdges(agi::GraphVertex* vtx, agi::part_t dest,
                                          EdgeSet& tmpEdges, int dim,
                                          const EdgeSet& edges) {
-    agi::EdgeIterator* eitr = g->begin(dim);
+    agi::EdgeIterator* eitr = g->edges(vtx,dim);
     agi::GraphEdge* e;
     while ((e = g->iterate(eitr))) {
       if (edges.find(e)!=edges.end())
@@ -157,7 +157,6 @@ namespace engpar {
     for (sitr = peerEdges[0].begin();sitr!=peerEdges[0].end();sitr++) {
       const int dest = sitr->first;
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-
 	double w = weight(peerEdges[i][dest]);
 	PCU_COMM_PACK(dest, w);
       }
@@ -166,15 +165,14 @@ namespace engpar {
     PCU_Comm_Send();
     MigrComm incoming;
     double w;
-    while (PCU_Comm_Listen()) {
+    while (PCU_Comm_Receive()) {
       Migr migr(PCU_Comm_Sender());
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
 	PCU_COMM_UNPACK(w);
 	migr.addWeight(w);
-        incoming.insert(migr);
       }
+      incoming.insert(migr);        
     }
-    
     Midd accept;
     Ws totW;
     Ws avail;
@@ -207,16 +205,15 @@ namespace engpar {
 	  accept[nbor][i] = 0;
       }
     }
-    
+
     PCU_Comm_Begin();
     Midd::iterator acc;
     for (acc=accept.begin();acc!=accept.end();acc++)
-      for (unsigned int i=0;i<completed_dimensions->size();i++)
+      for (unsigned int i=0;i<completed_dimensions->size();i++) 
 	PCU_COMM_PACK(acc->first, acc->second[i]);
-  
     PCU_Comm_Send();
     Midd* capacity = new Midd;
-    while (PCU_Comm_Listen()) {
+    while (PCU_Comm_Receive()) {
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
         PCU_COMM_UNPACK(w);
         (*capacity)[PCU_Comm_Sender()][i] = w;
@@ -227,8 +224,9 @@ namespace engpar {
 
   void Selector::combineSets(EdgeSet& edges,const EdgeSet& tempEdges) {
     EdgeSet::const_iterator itr;
-    for (itr=edges.begin();itr!=edges.end();itr++) 
+    for (itr=tempEdges.begin();itr!=tempEdges.end();itr++) 
       edges.insert(*itr);
+    
   }
 
   void Selector::cancel(agi::Migration*& plan, Midd* capacity) {
@@ -256,7 +254,7 @@ namespace engpar {
       }
       if (isSpace) {
         keep.push_back(PlanPair(v,dest));
-        for (unsigned int i=0;i<completed_dimensions->size();i++)
+        for (unsigned int i=0;i<completed_dimensions->size();i++) 
           combineSets(peerEdges[i][dest],tmpEdges[i]);
       }
       delete [] tmpEdges;
