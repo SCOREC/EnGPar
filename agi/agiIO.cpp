@@ -1,7 +1,8 @@
 #include "ngraph.h"
 #include <stdio.h>
 #include <PCU.h>
-
+#include <cstring>
+#include <sys/stat.h>
 namespace agi {
 
   /* File Format 
@@ -64,13 +65,31 @@ namespace agi {
       fwrite(&itr->second,sizeof(part_t),1,f);
     }
   }
-  
+
+  //Recursive mkdir function modified from here:
+  //http://nion.modprobe.de/blog/archives/357-Recursive-directory-creation.html
+  void mkdir_r(const char *dir) {
+    char tmp[256];
+    char *p = NULL;
+    size_t len;
+    snprintf(tmp, sizeof(tmp),"%s",dir);
+    len = strlen(tmp);
+    if(tmp[len - 1] == '/')
+      tmp[len - 1] = 0;
+    for(p = tmp + 1; *p; p++)
+      if(*p == '/') {
+        *p = 0;
+        mkdir(tmp, S_IRWXU);
+        *p = '/';
+      }
+  }
   void Ngraph::saveToFile(char* prefix) {
-    char filename[50];
+    char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
+    mkdir_r(filename);
     FILE* file = fopen(filename,"wb");
     if (!file) {
-      printf("Could not open file for saving: %s#.bgd",prefix);
+      printf("Could not open file for saving: %s#.bgd\n",prefix);
       throw 1;
     }
     writeHeader(file,this); 
@@ -133,7 +152,7 @@ namespace agi {
   }
 
   void Ngraph::loadFromFile(char* prefix) {
-    char filename[50];
+    char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
     FILE* file = fopen(filename,"rb");
     if (!file) {
