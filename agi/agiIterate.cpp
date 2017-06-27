@@ -55,7 +55,6 @@ namespace agi {
       if (itr->loc==itr->end)
         itr->end=NULL;
       itr->loc=itr->end;
-
       return vtx;
     }
   }
