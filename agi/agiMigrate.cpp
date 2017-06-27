@@ -106,14 +106,15 @@ namespace agi {
       g->destroy(pitr);
       if (!end) {
         //Add the Edge
-        ownedEdges.push_back(g->globalID(e));
+        gid_t gid = g->globalID(e);
+        ownedEdges.push_back(gid);
         edgeWeights.push_back(g->weight(e));
         degrees.push_back(g->degree(e));
-        addedEdges.insert(g->globalID(e));
+        addedEdges.insert(gid);
         pitr=g->pins(e);
         while ((end=g->iterate(pitr))) {
           gid_t other_gid = g->globalID(end);
-          pins.push_back(g->globalID(end));
+          pins.push_back(other_gid);
           part_t owner = g->owner(end);
           if (plan->find(end)!=plan->end())
             owner = plan->find(end)->second;
@@ -124,46 +125,6 @@ namespace agi {
       }
     }
     g->destroy(itr);
-    /*    
-    VertexIterator* itr = g->begin();
-    GraphVertex* v;
-    while ((v = g->iterate(itr))) {
-      if (plan->find(v)!=plan->end())
-        continue;
-      GraphVertex* other;
-      GraphIterator* gitr = g->adjacent(v,t);
-      GraphEdge* e,*old = NULL;
-      while ((other = g->iterate(gitr))) {
-        e=g->edge(gitr);
-        if (addedEdges.find(g->globalID(e))!=addedEdges.end())
-          continue;
-        if (old==NULL||e!=old) {
-          if (old&&g->isHyper())
-            addedEdges.insert(g->globalID(old));
-          if (g->isHyper()) {
-            ownedEdges.push_back(g->globalID(e));
-            edgeWeights.push_back(g->weight(e));
-            degrees.push_back(g->degree(e));
-          }
-          else {
-            ownedEdges.push_back(g->localID(e));
-            edgeWeights.push_back(g->weight(e));
-            pins.push_back(g->globalID(v));
-            degrees.push_back(2);
-          }
-        }
-        old=e;
-        gid_t other_gid = g->globalID(other);
-        pins.push_back(other_gid);
-        part_t owner = g->owner(other);
-        if (plan->find(other)!=plan->end())
-          owner = plan->find(other)->second;
-        if (owner!=PCU_Comm_Self()) 
-          ghost_owners[other_gid] = owner;
-      }
-      addedEdges.insert(g->globalID(old));
-    }
-    */
   }
   
   void Ngraph::sendVertex(GraphVertex* vtx, part_t toSend) {
