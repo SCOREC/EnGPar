@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
   }
 
   //Load mesh
-  agi::Ngraph* g;
-  apf::Mesh2* m;
+  agi::Ngraph* g= NULL;
+  apf::Mesh2* m= NULL;
   double step_factor;
   if (argc>3) {
     gmi_register_mesh();

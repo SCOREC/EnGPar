@@ -22,8 +22,8 @@ int main(int argc, char* argv[]) {
     EnGPar_Finalize();
     assert(false);
   }
-  apf::Mesh2* m;
-  agi::Ngraph* g;
+  apf::Mesh2* m=NULL;
+  agi::Ngraph* g=NULL;
   if (argc>2) {
     //Load mesh
     gmi_register_mesh();

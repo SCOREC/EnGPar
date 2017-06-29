@@ -29,7 +29,7 @@ void EnGPar_Debug_Open(std::string s) {
   char file[80];
   sprintf(file,"debug/debug%d.txt",PCU_Comm_Self());
 
-  struct stat st = {0};
+  struct stat st;
   if (stat("debug", &st) == -1) {
     mkdir("debug", 0700);
   }

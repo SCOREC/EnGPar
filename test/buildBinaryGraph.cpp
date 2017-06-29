@@ -67,7 +67,6 @@ void testVertices(agi::Ngraph* g) {
   while ((vtx = g->iterate(gitr))) {
     i++;
     //assert(g->weight(vtx)==1.0);
-    assert(g->degree(vtx,0)>=0);
     assert(i<=g->numLocalVtxs());
   }
   assert(i==g->numLocalVtxs());

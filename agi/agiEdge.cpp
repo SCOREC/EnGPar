@@ -83,6 +83,7 @@ namespace agi {
   lid_t  Ngraph::degree(GraphEdge* edge) const {
     if (!isHyperGraph)
       return 2;
+    //This check is used for GraphIterator
     if (edge==NULL)
       return 0;
     uintptr_t id = (uintptr_t)(edge)-1;

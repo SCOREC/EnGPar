@@ -197,7 +197,7 @@ void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   }
 }
 
-void testVertices(apf::Mesh* m,agi::Ngraph* g) {
+void testVertices(apf::Mesh*,agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Iterating over vertices\n");
   //Test iterating through vertices
