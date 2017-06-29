@@ -241,12 +241,12 @@ void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
           out = g->iterate(pitr);
           if (g->owner(out)!=PCU_Comm_Self()) {
             ghost_pins++;
-	  }
+          }
           if (g->isEqual(out,vtx))
               continue;
           tot_pins++;
         }
-	g->destroy(pitr);
+        g->destroy(pitr);
       }
       g->destroy(eitr);
     }
@@ -275,13 +275,13 @@ void testGhosts(apf::Mesh* m,agi::Ngraph* g, int primary, int* seconds, int n) {
       agi::lid_t deg = g->degree(edge);
       agi::lid_t owned_pins=0,ghost_pins=0;
       for (agi::lid_t i=0;i<deg;i++) {
-	pin = g->iterate(pitr);
-	//Get the owner of the graph vertex
-	agi::part_t owner = g->owner(pin);
-	if (PCU_Comm_Self()==owner)
-	  owned_pins++;
-	else
-	  ghost_pins++;
+        pin = g->iterate(pitr);
+        //Get the owner of the graph vertex
+        agi::part_t owner = g->owner(pin);
+        if (PCU_Comm_Self()==owner)
+          owned_pins++;
+        else
+          ghost_pins++;
       }
       g->destroy(pitr);
       //Get the number of adjacent mesh primaries

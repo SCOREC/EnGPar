@@ -19,8 +19,8 @@ int main(int argc, char* argv[]) {
     while ((other=g->iterate(gitr))) {
       int owner = g->owner(other);
       if (owner>PCU_Comm_Self()) {
-	plan->insert(std::make_pair(v,owner));
-	break;
+        plan->insert(std::make_pair(v,owner));
+        break;
       }
     }
   }
@@ -79,7 +79,7 @@ agi::Ngraph* buildGraph() {
     pins.push_back((e+1)%global_verts);
     if (PCU_Comm_Peers()>1&&i==local_verts-1) {
       owners.insert(std::make_pair((e+1)%global_verts,
-				   (PCU_Comm_Self()+1)%PCU_Comm_Peers()));
+                                   (PCU_Comm_Self()+1)%PCU_Comm_Peers()));
     }
     else {
       edges.push_back(e*2+1);
@@ -148,7 +148,7 @@ agi::Ngraph* buildHyperGraph() {
       gid_t v = (verts[i]+global_verts-2)%global_verts;
       pins.push_back(v);
       if (v<start_vert||v>end_vert)
-	ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+        ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
 
     }
 

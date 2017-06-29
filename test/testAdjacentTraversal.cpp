@@ -91,7 +91,7 @@ void testAdjacent(agi::Ngraph* g,agi::etype t) {
       edge = g->edge(gitr);
       assert(edge);
       if (g->isEqual(vtx,other))
-	num_pins++;
+        num_pins++;
       num_edges++;      
     }
     g->destroy(gitr);
@@ -130,18 +130,18 @@ void compareTraversal(agi::Ngraph* g,agi::etype t) {
     while ((edge = g->iterate(eitr))) {
       assert(edges[i]==edge);
       if (g->isHyper()) {
-	agi::PinIterator* pitr = g->pins(edge);
-	for (agi::lid_t j=0;j<g->degree(edge);j++) {
-	  other = g->iterate(pitr);
-	  assert(g->isEqual(other,vtxs[i]));
-	  assert(edges[i]==edge);
-	  i++;
-	}
+        agi::PinIterator* pitr = g->pins(edge);
+        for (agi::lid_t j=0;j<g->degree(edge);j++) {
+          other = g->iterate(pitr);
+          assert(g->isEqual(other,vtxs[i]));
+          assert(edges[i]==edge);
+          i++;
+        }
         g->destroy(pitr);
       }
       else {
-	assert(g->v(edge)==vtxs[i]);
-	i++;
+        assert(g->v(edge)==vtxs[i]);
+        i++;
       }
     }
     g->destroy(eitr);

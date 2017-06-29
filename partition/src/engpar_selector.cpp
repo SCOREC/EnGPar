@@ -5,37 +5,37 @@
 namespace engpar {
   
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
-		 Cavity& cav, Peers& peers) {
+                 Cavity& cav, Peers& peers) {
     agi::PinIterator* pitr = g->pins(edge);
     agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
     for (agi::lid_t i =0;i<deg;i++) {
       vtx = g->iterate(pitr);
       if (g->owner(vtx)==PCU_Comm_Self()) {
-	if(plan->find(vtx)==plan->end())
-	  cav.push_back(vtx);
+        if(plan->find(vtx)==plan->end())
+          cav.push_back(vtx);
       }
       else
-	peers.insert(g->owner(vtx));
+        peers.insert(g->owner(vtx));
     }
     g->destroy(pitr);
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
-		  part_t peer, agi::Migration* plan,
-		  int target_dimension) {
+                  part_t peer, agi::Migration* plan,
+                  int target_dimension) {
     Cavity::iterator itr;
     wgt_t w=0.0;
     std::set<agi::GraphEdge*> target_edges;
     for (itr = cav.begin();itr!=cav.end();itr++) {
       plan->insert(std::make_pair(*itr,peer));
       if (target_dimension==-1)
-	w+= g->weight(*itr);
+        w+= g->weight(*itr);
       else {
-	agi::EdgeIterator* eitr = g->edges(*itr,target_dimension);
-	agi::GraphEdge* e;
-	while ((e=g->iterate(eitr)))
-	  target_edges.insert(e);
+        agi::EdgeIterator* eitr = g->edges(*itr,target_dimension);
+        agi::GraphEdge* e;
+        while ((e=g->iterate(eitr)))
+          target_edges.insert(e);
         g->destroy(eitr);
       }
     }
@@ -46,7 +46,7 @@ namespace engpar {
   }
 
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
-			 wgt_t planW, unsigned int cavSize,int target_dimension) {
+                         wgt_t planW, unsigned int cavSize,int target_dimension) {
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
       //Create Cavity and peers
@@ -56,15 +56,15 @@ namespace engpar {
       //For each peer of cavity
       Peers::iterator itr;
       for (itr = peers.begin();itr!=peers.end();itr++) {
-	part_t peer = *itr;
-	if (targets->has(peer) &&
-	    sending[*itr]<targets->get(peer) &&
-	    cav.size()< cavSize) {
-	  //  addCavity to plan
-	  wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
-	  planW+=w;
-	  sending[peer]+=w;
-	}
+        part_t peer = *itr;
+        if (targets->has(peer) &&
+            sending[*itr]<targets->get(peer) &&
+            cav.size()< cavSize) {
+          //  addCavity to plan
+          wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+          planW+=w;
+          sending[peer]+=w;
+        }
       }
     }
     return planW;
@@ -78,11 +78,11 @@ namespace engpar {
       bool isInterior=true;
       agi::PinIterator* pitr = g->pins(e);
       for (agi::lid_t i=0;i<g->degree(e);i++) {
-	if (g->owner(g->iterate(pitr))==dest)
-	  isInterior=false;
+        if (g->owner(g->iterate(pitr))==dest)
+          isInterior=false;
       }
       if (isInterior)
-	edges.insert(e);
+        edges.insert(e);
       g->destroy(pitr);
     }
     g->destroy(eitr);
@@ -94,15 +94,15 @@ namespace engpar {
     agi::GraphEdge* e;
     while ((e = g->iterate(eitr))) {
       if (edges.find(e)!=edges.end())
-	continue;
+        continue;
       bool isInterior=true;
       agi::PinIterator* pitr = g->pins(e);
       for (agi::lid_t i=0;i<g->degree(e);i++) {
-	if (g->owner(g->iterate(pitr))==dest)
-	  isInterior=false;
+        if (g->owner(g->iterate(pitr))==dest)
+          isInterior=false;
       }
       if (isInterior)
-	tmpEdges.insert(e);
+        tmpEdges.insert(e);
       g->destroy(pitr);
     }
     g->destroy(eitr);
@@ -128,9 +128,9 @@ namespace engpar {
     //sort by part first completed edge type weights
     bool operator()(const Migr& a, const Migr& b) const {
       if( a.ws[0] < b.ws[0] )
-	return true;
+        return true;
       else
-	return false;
+        return false;
     }
   };
   typedef std::set<Migr,CompareMigr> MigrComm;
@@ -147,8 +147,8 @@ namespace engpar {
       agi::GraphVertex* vtx = itr->first;
       const int dest = itr->second;
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-	insertInteriorEdges(vtx, dest, peerEdges[i][dest],
-			    completed_dimensions->at(i));
+        insertInteriorEdges(vtx, dest, peerEdges[i][dest],
+                            completed_dimensions->at(i));
       }
     }
     //send vtx and edge weight
@@ -157,8 +157,8 @@ namespace engpar {
     for (sitr = peerEdges[0].begin();sitr!=peerEdges[0].end();sitr++) {
       const int dest = sitr->first;
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-	double w = weight(peerEdges[i][dest]);
-	PCU_COMM_PACK(dest, w);
+        double w = weight(peerEdges[i][dest]);
+        PCU_COMM_PACK(dest, w);
       }
     }
     delete [] peerEdges;
@@ -168,8 +168,8 @@ namespace engpar {
     while (PCU_Comm_Receive()) {
       Migr migr(PCU_Comm_Sender());
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-	PCU_COMM_UNPACK(w);
-	migr.addWeight(w);
+        PCU_COMM_UNPACK(w);
+        migr.addWeight(w);
       }
       incoming.insert(migr);        
     }
@@ -181,28 +181,28 @@ namespace engpar {
       totW[i] = getWeight(g,completed_dimensions->at(i));
       avail[i] = completed_weights->at(i) - totW[i];
       if (avail[i]<0)
-	isAvail=false;
+        isAvail=false;
     }
 
     MigrComm::iterator in;
     for (in=incoming.begin();in!=incoming.end();in++) {
       const int nbor = (*in).id;
       if(isAvail) {
-	bool hasSpace= true;
-	for (unsigned int i=0;i<completed_dimensions->size();i++)
-	  if ((*in).ws[i] > avail[i])
-	    hasSpace=false;
-	if( hasSpace ) {
-	  for (unsigned int i=0;i<completed_dimensions->size();i++) 
-	    isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
-	  
-	} else {
-	  for (unsigned int i=0;i<completed_dimensions->size();i++)
-	    isAvail = (avail[i] -=accept[nbor][i] = avail[i])>0;
-	}
+        bool hasSpace= true;
+        for (unsigned int i=0;i<completed_dimensions->size();i++)
+          if ((*in).ws[i] > avail[i])
+            hasSpace=false;
+        if( hasSpace ) {
+          for (unsigned int i=0;i<completed_dimensions->size();i++) 
+            isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
+          
+        } else {
+          for (unsigned int i=0;i<completed_dimensions->size();i++)
+            isAvail = (avail[i] -=accept[nbor][i] = avail[i])>0;
+        }
       } else {
-	for (unsigned int i=0;i<completed_dimensions->size();i++)
-	  accept[nbor][i] = 0;
+        for (unsigned int i=0;i<completed_dimensions->size();i++)
+          accept[nbor][i] = 0;
       }
     }
 
@@ -210,7 +210,7 @@ namespace engpar {
     Midd::iterator acc;
     for (acc=accept.begin();acc!=accept.end();acc++)
       for (unsigned int i=0;i<completed_dimensions->size();i++) 
-	PCU_COMM_PACK(acc->first, acc->second[i]);
+        PCU_COMM_PACK(acc->first, acc->second[i]);
     PCU_Comm_Send();
     Midd* capacity = new Midd;
     while (PCU_Comm_Receive()) {

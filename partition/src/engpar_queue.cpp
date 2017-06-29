@@ -10,11 +10,11 @@ namespace engpar {
       agi::PinIterator* pitr = g->pins(edge);
       agi::lid_t degree = g->degree(edge);
       for (agi::lid_t i=0;i<degree;i++) {
-	agi::GraphVertex* pin = g->iterate(pitr);
-	if (g->owner(pin)!=PCU_Comm_Self()) {
-	  q->push_back(edge);
-	  break;
-	}
+        agi::GraphVertex* pin = g->iterate(pitr);
+        if (g->owner(pin)!=PCU_Comm_Self()) {
+          q->push_back(edge);
+          break;
+        }
       }
       g->destroy(pitr);
     }

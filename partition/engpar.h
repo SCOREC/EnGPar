@@ -13,7 +13,7 @@ namespace engpar {
   wgt_t getWeight(agi::Ngraph*,int);
   //Balancers:
   agi::Balancer* makeVtxBalancer(agi::Ngraph*, double stepFactor=0.1,
-					int verbosity=0);
+                                        int verbosity=0);
   agi::Balancer* makeBalancer(Input*,int verbosity=0);
 
   double EnGPar_Get_Imbalance(wgt_t);

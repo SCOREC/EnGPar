@@ -173,7 +173,7 @@ void buildHyperGraph() {
       gid_t v = (verts[i]+global_verts-2)%global_verts;
       pins.push_back(v);
       if (v<start_vert||v>end_vert)
-	ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+        ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
 
     }
 
@@ -232,9 +232,9 @@ void buildHyperGraph() {
       assert(graph->globalID(vtx)<graph->numGlobalVtxs());
       count++;
       if (graph->localID(vtx)>=graph->numLocalVtxs()) {
-	assert(PCU_Comm_Peers()>1);
-	assert(graph->owner(vtx)!=PCU_Comm_Self());
-	ghost++;
+        assert(PCU_Comm_Peers()>1);
+        assert(graph->owner(vtx)!=PCU_Comm_Self());
+        ghost++;
       }
     }
     graph->destroy(pitr);
@@ -428,7 +428,7 @@ void buildHyperGraphParts() {
       gid_t v = (verts[i]+global_verts-2)%global_verts;
       pins.push_back(v);
       if (v<start_vert||v>end_vert)
-	ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+        ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
 
     }
 
@@ -489,9 +489,9 @@ void buildHyperGraphParts() {
       assert(graph->globalID(vtx)<graph->numGlobalVtxs());
       count++;
       if (graph->localID(vtx)>=graph->numLocalVtxs()) {
-	assert(PCU_Comm_Peers()>1);
-	assert(graph->owner(vtx)!=PCU_Comm_Self());
-	ghost++;
+        assert(PCU_Comm_Peers()>1);
+        assert(graph->owner(vtx)!=PCU_Comm_Self());
+        ghost++;
       }
     }
     graph->destroy(pitr);

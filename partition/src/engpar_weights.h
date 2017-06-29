@@ -17,12 +17,12 @@ namespace engpar {
       PCU_Comm_Begin();
       Sides::iterator itr;
       for (itr=s->begin();itr!=s->end();itr++) 
-	PCU_COMM_PACK(itr->first,myWeight());
+        PCU_COMM_PACK(itr->first,myWeight());
       PCU_Comm_Send();
       while (PCU_Comm_Listen()) {
-	double otherWeight;
-	PCU_COMM_UNPACK(otherWeight);
-	set(PCU_Comm_Sender(),otherWeight);
+        double otherWeight;
+        PCU_COMM_UNPACK(otherWeight);
+        set(PCU_Comm_Sender(),otherWeight);
       }
     }
     const wgt_t& myWeight() const {return my_weight;}

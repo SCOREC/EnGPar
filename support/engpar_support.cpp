@@ -48,9 +48,9 @@ void EnGPar_Debug_Open(std::string s) {
       old_stderr = stderr;
       stderr = stdout;
       if (!stderr) {
-	stderr = old_stderr;
-	fprintf(stderr,"Failed to open debug files\n");
-	return;
+        stderr = old_stderr;
+        fprintf(stderr,"Failed to open debug files\n");
+        return;
       }
     }
   }

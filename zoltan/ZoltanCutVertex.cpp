@@ -57,9 +57,9 @@ namespace zagi {
   }
   void ZoltanCutVertex::run() {
     int ret = Zoltan_LB_Partition(ztn,&changes,&gidSz,&lidSz,&num_imported, 
-				  &import_gids,&import_lids, &import_procs,
-				  &import_to_part,&num_exported,&export_gids,
-				  &export_lids,&export_procs,&export_to_part);
+                                  &import_gids,&import_lids, &import_procs,
+                                  &import_to_part,&num_exported,&export_gids,
+                                  &export_lids,&export_procs,&export_to_part);
     
     if( ZOLTAN_OK != ret ) {
       fprintf(stderr, "ERROR Zoltan partitioning failed\n");

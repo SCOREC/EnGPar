@@ -40,12 +40,12 @@ public:
    * \param owns mapping from global_id to owner for each ghosted vertex
    */
   void constructGraph(bool isHG,
-		      std::vector<gid_t>& verts,
-		      std::vector<wgt_t>& weights,
-		      std::vector<gid_t>& edge_ids,
-		      std::vector<lid_t>& degs,
-		      std::vector<gid_t>& pins_to_verts,
-		      std::unordered_map<gid_t,part_t>& owns);
+                      std::vector<gid_t>& verts,
+                      std::vector<wgt_t>& weights,
+                      std::vector<gid_t>& edge_ids,
+                      std::vector<lid_t>& degs,
+                      std::vector<gid_t>& pins_to_verts,
+                      std::unordered_map<gid_t,part_t>& owns);
   /** \brief Constructs the vertices of the Ngraph
    * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
@@ -54,8 +54,8 @@ public:
    * Must be called before constructEdges and should only be called once
    */
   void constructVerts(bool isHG,
-		      std::vector<gid_t>& verts,
-		      std::vector<wgt_t>& weights);
+                      std::vector<gid_t>& verts,
+                      std::vector<wgt_t>& weights);
   /** \brief Constructs an edge type and returns the id of the type
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
@@ -65,8 +65,8 @@ public:
    * Must be called after constructVerts and should be called once per edge type
    */
   etype constructEdges(std::vector<gid_t>& edge_ids,
-		      std::vector<lid_t>& degs,
-		      std::vector<gid_t>& pins_to_verts);
+                      std::vector<lid_t>& degs,
+                      std::vector<gid_t>& pins_to_verts);
   /** \brief Constructs the ghost information for all non local vertices connected by edges
    * \param owns mapping from global_id to owner for each ghosted vertex
    *
@@ -449,8 +449,8 @@ void destroyGraph(Ngraph* g);
 
 #ifdef KOKKOS_ENABLED
 #include <Kokkos_Core.hpp>
-#define KOKKOS_FOR_VERTS(g,v)						\
-  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {	\
+#define KOKKOS_FOR_VERTS(g,v)                                           \
+  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {   \
       agi::GraphVertex* v = reinterpret_cast<agi::GraphVertex*>((char*)(i+1));
       
 #define KOKKOS_END_FOR() });

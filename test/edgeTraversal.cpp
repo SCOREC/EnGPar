@@ -46,8 +46,8 @@ void traverseEdges(agi::Ngraph* g) {
     agi::GraphEdge* e2 = NULL;
     while ((e2 = g->iterate(eitr2))) {
       if (e2==edge) {
-	assert(g->isEqual(v,g->v(e2)));
-	assert(g->isEqual(u,g->u(e2)));
+        assert(g->isEqual(v,g->v(e2)));
+        assert(g->isEqual(u,g->u(e2)));
       }
     }
     g->destroy(eitr2);

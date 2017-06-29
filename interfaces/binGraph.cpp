@@ -318,20 +318,20 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
     for (uint64_t i = 0; i < num_local_edges[t]; ++i) {
       uint64_t out = edge_list[t][i];
       if (vtx_mapping.find(out) ==vtx_mapping.end()) {
-	vtx_mapping[out] = cur_label;
-	edge_list[t][i] = cur_label++;
-	nonlocal_vids.push_back(out);
+        vtx_mapping[out] = cur_label;
+        edge_list[t][i] = cur_label++;
+        nonlocal_vids.push_back(out);
       }
       else        
-	edge_list[t][i] = vtx_mapping[out];
+        edge_list[t][i] = vtx_mapping[out];
     }
     num_ghost_verts = cur_label - num_local_verts;
     if (num_ghost_verts>0) {
       ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
       owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
       for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
-	ghost_unmap[i] = nonlocal_vids[i];
-	owners[i] = ranks[nonlocal_vids[i]];
+        ghost_unmap[i] = nonlocal_vids[i];
+        owners[i] = ranks[nonlocal_vids[i]];
       }
     }
   }
