@@ -9,9 +9,11 @@ set(AGI_SOURCES
   agiVertex.cpp
   agiEdge.cpp
   agiIterate.cpp
+  agiTag.cpp
   agiBalancer.cpp
   agiMigrate.cpp
   agiIO.cpp
+
   )
 
 set(AGI_HEADERS

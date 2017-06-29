@@ -19,7 +19,7 @@ class VertexIterator;
 class PinIterator;
 class EdgeIterator;
 class GraphIterator;
-
+class GraphTag;
 /** \class Ngraph
     \brief An abstract graph used to represent the data passed into EnGPar
  
@@ -182,7 +182,7 @@ public:
    */
   GraphIterator* adjacent(GraphVertex* vtx, etype t=0) const;
 
-  /** \brief Returns the degree of an edge [HG only]
+  /** \brief Returns the degree of an edge
    * \param edge the graph edge
    * \return the number of pins to vertices from this edge
    */
@@ -192,6 +192,41 @@ public:
    * \return an iterator that can loop over each vertex connected to this hyperedge
    */
   PinIterator* pins(GraphEdge* edge) const;
+
+
+  //Tagging
+  /** \brief Creates and returns a tag of integers over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createIntTag(etype t=VTX_TYPE);
+  /** \brief Creates and returns a tag of doubles over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createDoubleTag(etype t=VTX_TYPE);
+  /** \brief Creates and returns a tag of longs over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createLongTag(etype t=VTX_TYPE);
+  /** \brief Destroys a tag created earlier
+   * /param t The tag to be deleted
+   */
+  void destroyTag(GraphTag* t);
+  int getIntTag(GraphTag*,GraphVertex*);
+  int getIntTag(GraphTag*,GraphEdge*);
+  double getDoubleTag(GraphTag*,GraphVertex*);
+  double getDoubleTag(GraphTag*,GraphEdge*);
+  long getLongTag(GraphTag*,GraphVertex*);
+  long getLongTag(GraphTag*,GraphEdge*);
+  void setIntTag(GraphTag*,GraphVertex*,int);
+  void setIntTag(GraphTag*,GraphEdge*,int);
+  void setDoubleTag(GraphTag*,GraphVertex*,double);
+  void setDoubleTag(GraphTag*,GraphEdge*,double);
+  void setLongTag(GraphTag*,GraphVertex*,long);
+  void setLongTag(GraphTag*,GraphEdge*,long);
+  
   
   //Iterator Traversal
   /** \brief Creates an iterator over all vertices

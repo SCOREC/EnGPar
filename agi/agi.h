@@ -26,12 +26,10 @@ namespace agi {
 
 //Definitions for edge types
 //static size of edge types
-#define MAX_TYPES 10 
-typedef int etype; 
+#define MAX_TYPES 7
+typedef int etype;
+#define VTX_TYPE -1
 //predefined edge type for split vtx
-#define SPLIT_TYPE 9 
-
-
- 
+#define SPLIT_TYPE MAX_TYPES-1 
 }
 #endif
