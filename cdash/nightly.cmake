@@ -1,5 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
+
 SET(CTEST_DO_SUBMIT ON)
 SET(CTEST_TEST_TYPE Nightly)
 
@@ -26,7 +27,7 @@ endif()
 configure_file(${CTEST_SCRIPT_DIRECTORY}/CTestConfig.cmake
                ${CTEST_SOURCE_DIRECTORY}/CTestConfig.cmake COPYONLY)
 
-set(CTEST_NIGHTLY_START_TIME "20:00:00 EST")
+set(CTEST_NIGHTLY_START_TIME "2:00:00 EST")
 set(CTEST_BUILD_FLAGS -j8)
 
 set(CTEST_DROP_METHOD "http")
@@ -62,8 +63,7 @@ macro(build_subproject subproject_name config_opts)
   set_property(GLOBAL PROPERTY SubProject ${subproject_name})
   set_property(GLOBAL PROPERTY Label ${subproject_name})
 
-  setup_repo(${subproject_name} "https://github.com/SCOREC/EnGPar.git")
-  setup_repo(EnGPar "https://github.com/SCOREC/EnGPar.git")
+  setup_repo(${subproject_name} "git@github.com:SCOREC/EnGPar.git")
 
   if(NOT EXISTS "${CTEST_BINARY_DIRECTORY}/${subproject_name}")
     file(MAKE_DIRECTORY ${CTEST_BINARY_DIRECTORY}/${subproject_name})
@@ -104,14 +104,15 @@ macro(setup_repo repo_name repo_url)
 endmacro(setup_repo)
 
 
-set(flags "-O2 -g -Wall")
+
+set(flags "-O2 -g -Wall -Wextra")
 SET(CONFIGURE_OPTIONS
   "-DCMAKE_C_COMPILER=mpicc"
   "-DCMAKE_CXX_COMPILER=mpicxx"
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
-  "-DSCOREC_PREFIX=$PUMI_INSTALL_DIR"
+  "-DSCOREC_PREFIX=/usr/local/pumi/core/"
   "-DIS_TESTING=ON"
   "-DMESHES=/users/diamog/meshes"
   "-DGRAPHS=/users/diamog/graphs"
