@@ -83,6 +83,8 @@ namespace agi {
   lid_t  Ngraph::degree(GraphEdge* edge) const {
     if (!isHyperGraph)
       return 2;
+    if (edge==NULL)
+      return 0;
     uintptr_t id = (uintptr_t)(edge)-1;
     etype type = id%num_types;
     id/=num_types;
@@ -95,8 +97,7 @@ namespace agi {
     id/=num_types;
     if (!isHyperGraph) {
       return new PinIterator(reinterpret_cast<lid_t*>(u(edge)),
-                             reinterpret_cast<lid_t*>((char*)(edge_list[type]
-                                                              [id]+1)));
+                   reinterpret_cast<lid_t*>((char*)(edge_list[type][id]+1)));
     }
     return new PinIterator((pin_list[type]+pin_degree_list[type][id]),
                            pin_list[type]+pin_degree_list[type][id+1]);
