@@ -1,3 +1,5 @@
+#!/bin/bash -x
+
 module load cmake/latest
 module load pumi
 
@@ -8,6 +10,5 @@ cd /lore/diamog/cdash
 rm -rf build/
 
 #run nightly test script
-ctest -VV -D Nightly -S /lore/diamog/cdash/repos/EnGPar/cdash/nightly.cmake #&> cmake_log.txt
-
+ctest -VV -D Nightly -S /lore/diamog/cdash/repos/EnGPar/cdash/nightly.cmake &> /lore/diamog/cdash/repos/EnGPar/cdash/cmake_log.txt
 
