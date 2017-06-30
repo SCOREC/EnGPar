@@ -1,5 +1,6 @@
 #!/bin/bash -x
 
+source /usr/local/etc/bash_profile
 module load cmake/latest
 module load pumi
 
