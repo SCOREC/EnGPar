@@ -479,6 +479,9 @@ public:
  * \param g the graph
  */
 void destroyGraph(Ngraph* g);
+
+bool checkValidity(Ngraph* g);
+ 
 } //namespace
 
 

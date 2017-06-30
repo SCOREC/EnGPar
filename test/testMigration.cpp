@@ -26,8 +26,11 @@ int main(int argc, char* argv[]) {
     }
   }
   g->setOriginalOwners();
+  if (!PCU_Comm_Self())
+    printf("Migrating traditional graph\n");
   g->migrate(plan);
-
+  
+  agi::checkValidity(g);
   agi::destroyGraph(g);
   
   PCU_Barrier();
@@ -40,8 +43,10 @@ int main(int argc, char* argv[]) {
   v = g->iterate(itr);
   (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
   g->setOriginalOwners();
+  if (!PCU_Comm_Self())
+    printf("Migrating hypergraph\n");
   g->migrate(plan);
-  
+  agi::checkValidity(g);
   agi::destroyGraph(g);
   PCU_Barrier();
 

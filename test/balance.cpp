@@ -65,6 +65,9 @@ int main(int argc, char* argv[]) {
   //Destroy balancer
   delete balancer;
 
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+  
   //Migration of original data structure
   //Only implemented for mesh
   if (argc>2) {

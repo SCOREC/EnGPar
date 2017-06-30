@@ -13,7 +13,7 @@ set(AGI_SOURCES
   agiBalancer.cpp
   agiMigrate.cpp
   agiIO.cpp
-
+  agiValid.cpp
   )
 
 set(AGI_HEADERS

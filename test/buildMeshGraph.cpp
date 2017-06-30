@@ -83,8 +83,8 @@ int main(int argc, char* argv[]) {
   agi::Ngraph* g = agi::createAPFGraph(m,primary,second);
   int secondaries1[1] = {second};
   testGraph(m,g,primary,secondaries1,1);
-  
-  //g->destroyData();
+
+  agi::checkValidity(g);
   agi::destroyGraph(g);
 
   PCU_Barrier();
@@ -98,7 +98,7 @@ int main(int argc, char* argv[]) {
   MPI_Barrier(MPI_COMM_WORLD);
   testGraph(m,g2,primary,secondaries,2);
 
-  //g2->destroyData();
+  agi::checkValidity(g2);
   agi::destroyGraph(g2);
 
   m->destroyNative();

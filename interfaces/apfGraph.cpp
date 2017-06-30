@@ -214,6 +214,7 @@ void apfGraph::connectToEdges(int primary_dimension,
   //create the adjacency info from vertices to edges
   edge_list[type] = new lid_t[edgs.size()];
   std::copy(edgs.begin(),edgs.end(),edge_list[type]);
+  num_global_pins[type] = PCU_Add_Long(edgs.size());
 }
 
 

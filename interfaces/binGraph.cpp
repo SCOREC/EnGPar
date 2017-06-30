@@ -43,11 +43,6 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   setEdgeWeights(wgts,0);
 }
 
-  void phi() {
-    if (!PCU_Comm_Self()) {
-      printf("hi\n");
-    }
-  }
 void binGraph::destroyData() {
   //cleanup any additional memory
 }
@@ -75,6 +70,8 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
 
   num_local_edges[0] = recv_edges.size()/2;
   num_global_edges[0] = PCU_Add_Long(num_local_edges[0]);
+  num_local_pins[0] = 2*num_local_edges[0];
+  num_global_pins[0] = 2*num_global_edges[0];
   
   if (edge_list[0])
     delete edge_list[0];
@@ -148,7 +145,7 @@ etype binGraph::load_edges(char *filename, uint64_t*& read_edges,
   fseek(infp, 0L, SEEK_SET);
   etype t = addEdgeType();
   num_global_edges[t] = file_size/(2*sizeof(uint32_t));
-  
+  num_global_pins[t] = 2*num_global_edges[t];
   uint64_t read_offset_start = PCU_Comm_Self()*2*sizeof(uint32_t)*
     (num_global_edges[t] / (uint64_t)PCU_Comm_Peers());
   uint64_t read_offset_end = (PCU_Comm_Self()+1)*2*sizeof(uint32_t)*
@@ -243,6 +240,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   uint64_t* sendbuf = (uint64_t*)malloc(total_send*sizeof(uint64_t));
   edge_list[t] = (uint64_t*)malloc(total_recv*sizeof(uint64_t));
   num_local_edges[t] = total_recv / 2;
+  num_local_pins[t] = 2*num_local_edges[t];
 
   for (uint64_t i = 0; i < m_read*2; i+=2)
   {

@@ -27,11 +27,14 @@ int main(int argc, char* argv[]) {
     g = agi::createBinGraph(argv[1]);
   else
     g = agi::createBinGraph(argv[1],argv[2]);
-
+  
   //Test different members of graph
   testSizes(g);
   testVertices(g);
   testEdges(g);
+
+  //Check validity
+  agi::checkValidity(g);
   
   //Destroy the graph
   g->destroyData();

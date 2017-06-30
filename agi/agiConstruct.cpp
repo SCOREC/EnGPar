@@ -206,9 +206,10 @@ namespace agi {
       owners[v] = owns[ghost_unmap[v]];
     }
   
-    if (isHyperGraph) {
-      for (etype t = 0;t<num_types;t++)  {
+    for (etype t = 0;t<num_types;t++)  {
+      if (isHyperGraph) {
         gid_t nOwnedEdges=num_local_edges[t];
+        gid_t nOwnedPins = num_local_pins[t];
         EdgeIterator* eitr = begin(t);
         GraphEdge* edge;
         while ((edge = iterate(eitr))) {
@@ -218,14 +219,19 @@ namespace agi {
           for (itr = neighbors.begin();itr!=neighbors.end();itr++) {
             if (*itr<PCU_Comm_Self()) {
               --nOwnedEdges;
+              nOwnedPins-=degree(edge);
               break;
             }
           }
         }
         destroy(eitr);
         num_global_edges[t] = PCU_Add_Long(nOwnedEdges);
-        num_global_pins[t] = PCU_Add_Long(num_local_pins[t]);
-
+        num_global_pins[t] = PCU_Add_Long(nOwnedPins);
+      
+      }
+      else {
+        num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
+        num_global_pins[t] = 2*num_global_edges[t];
       }
     }
     if (EnGPar_Is_Log_Open()) {
