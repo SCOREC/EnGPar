@@ -86,13 +86,13 @@ namespace engpar {
     if (verbosity>=3) {
       int* counts = new int[PCU_Comm_Peers()];
       for (int i=0;i<PCU_Comm_Peers();i++)
-	counts[i] = 0;
+        counts[i] = 0;
       agi::Migration::iterator itr;
       for (itr = plan->begin();itr!=plan->end();itr++)
-	counts[itr->second]++;
+        counts[itr->second]++;
       for (int i=0;i<PCU_Comm_Peers();i++)
-	if (counts[i]>0)
-	  printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);
+        if (counts[i]>0)
+          printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);
     }
 
     time[1] = PCU_Time();
@@ -163,19 +163,19 @@ namespace engpar {
         maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
         completed_weights.push_back(maxW);
         
-	targetTime = PCU_Time()-targetTime;
-	targetTime = PCU_Max_Double(targetTime);
-	if (!PCU_Comm_Self()) {
-	  printf("Completed criteria type %d in %f seconds\n",target_dimension,
-		 targetTime);
-	}
-	targetTime=PCU_Time();
+        targetTime = PCU_Time()-targetTime;
+        targetTime = PCU_Max_Double(targetTime);
+        if (!PCU_Comm_Self()) {
+          printf("Completed criteria type %d in %f seconds\n",target_dimension,
+                 targetTime);
+        }
+        targetTime=PCU_Time();
         
         index++;
-	if (index==input->priorities.size())
-	  break;
+        if (index==input->priorities.size())
+          break;
         inner_steps=0;
-	target_dimension=input->priorities[index];
+        target_dimension=input->priorities[index];
         if (input->tolerances.size()>index)
           tol = input->tolerances[index];
       }      
@@ -184,13 +184,13 @@ namespace engpar {
     time = PCU_Max_Double(time);
     if (!PCU_Comm_Self()) {
       if (step==input->maxIterations)
-	printf("EnGPar ran to completion in %d iterations in %f seconds\n",
-	       input->maxIterations, time);
+        printf("EnGPar ran to completion in %d iterations in %f seconds\n",
+               input->maxIterations, time);
       else
-	printf("EnGPar converged in %d iterations in %f seconds\n",step,
-	       time);
+        printf("EnGPar converged in %d iterations in %f seconds\n",step,
+               time);
       if (verbosity)
-	printf("Migration took %f%% of the total time\n",times[1]/time*100);
+        printf("Migration took %f%% of the total time\n",times[1]/time*100);
     }
     if (EnGPar_Is_Log_Open())
       EnGPar_End_Function();

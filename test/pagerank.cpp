@@ -126,8 +126,8 @@ void do_pagerank(agi::binGraph* g) {
       lid_t lid = g->localID(vtx);
       lid_t deg = g->degree(vtx);
       for (lid_t i =0;i<deg;i++) {
-	edge = g->iterate(eitr);
-	pageranks_next[g->localID(g->v(edge))]+=pageranks[lid];
+        edge = g->iterate(eitr);
+        pageranks_next[g->localID(g->v(edge))]+=pageranks[lid];
       }
       g->destroy(eitr);
     }
@@ -140,10 +140,10 @@ void do_pagerank(agi::binGraph* g) {
       agi::gid_t gid = g->globalID(vtx);
       lid_t deg = g->degree(vtx) + extra_edges[gid];
       if (deg>0)
-	pageranks_next[lid] /= deg;
+        pageranks_next[lid] /= deg;
       else {
-	pageranks_next[lid] /= g->numGlobalVtxs();
-	sum_noouts_next +=pageranks[lid];
+        pageranks_next[lid] /= g->numGlobalVtxs();
+        sum_noouts_next +=pageranks[lid];
       }
     }
     eitr=g->begin(SPLIT_TYPE);

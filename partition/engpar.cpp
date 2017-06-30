@@ -8,13 +8,13 @@ namespace engpar {
       agi::GraphVertex* vtx;
       agi::VertexIterator* vitr = g->begin();
       while ((vtx = g->iterate(vitr))) 
-	w+=g->weight(vtx);
+        w+=g->weight(vtx);
     }
     else {
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = g->begin(dimension);
       while ((edge = g->iterate(eitr))) 
-	w+=g->weight(edge);
+        w+=g->weight(edge);
       
     }
     return w;
@@ -41,7 +41,7 @@ namespace engpar {
     imb = max*1.0/avg;
     if (!PCU_Comm_Self())
       printf("%s <max, min, avg, imb> = <%lu %lu %f %f>\n",
-	     prefix.c_str(),max,min,avg,imb);
+             prefix.c_str(),max,min,avg,imb);
   }
   void printMaxMinAvgImb(agi::wgt_t my_val,std::string prefix) {
     agi::wgt_t max,min,total;
@@ -54,7 +54,7 @@ namespace engpar {
     imb = max*1.0/avg;
     if (!PCU_Comm_Self())
       printf("%s <max, min, avg, imb> = <%f %f %f %f>\n",
-	     prefix.c_str(),max,min,avg,imb);
+             prefix.c_str(),max,min,avg,imb);
   }
 
   void evaluatePartition(agi::Ngraph* g) {

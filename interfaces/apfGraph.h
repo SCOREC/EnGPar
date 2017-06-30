@@ -20,7 +20,7 @@ Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimensi
  * \param num_dimensions the number of edge types to be used (should be the size of secondary_dimensions
  */
 Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int* secondary_dimensions,
-	       int num_dimensions);
+               int num_dimensions);
 /** \brief An extension of the N-Graph for SCOREC meshes
 
  */

@@ -100,18 +100,20 @@ namespace agi {
 
   bool readHeader(FILE* f) {
     bool isHG;
-    fread(&isHG,sizeof(bool),1,f);
+    size_t s = fread(&isHG,sizeof(bool),1,f);
+    assert(s==1);
     return isHG;
   }
   void readVertices(FILE* f, std::vector<gid_t>& verts,
                     std::vector<wgt_t>& weights) {
     lid_t nv;
-    fread(&nv,sizeof(lid_t),1,f);
+    size_t s = fread(&nv,sizeof(lid_t),1,f);
+    assert(s == 1);
     for (lid_t i=0;i<nv;i++) {
       gid_t gid;
       wgt_t w;
-      fread(&gid,sizeof(gid_t),1,f);
-      fread(&w,sizeof(wgt_t),1,f);
+      s = fread(&gid,sizeof(gid_t),1,f);
+      s = fread(&w,sizeof(wgt_t),1,f);
       verts.push_back(gid);
       weights.push_back(w);
     }
@@ -119,21 +121,22 @@ namespace agi {
   void readEdges(FILE* f,std::vector<gid_t>& edges, std::vector<wgt_t>& eWeights,
                  std::vector<lid_t>& degs, std::vector<gid_t>& pins2v) {
     gid_t ne;
-    fread(&ne,sizeof(gid_t),1,f);
+    size_t s = fread(&ne,sizeof(gid_t),1,f);
+    assert( s ==1);
     for (gid_t i=0;i<ne;i++) {
       gid_t gid;
       wgt_t w;
       lid_t deg=0;
       
-      fread(&gid,sizeof(gid_t),1,f);
-      fread(&w,sizeof(wgt_t),1,f);
+      s = fread(&gid,sizeof(gid_t),1,f);
+      s = fread(&w,sizeof(wgt_t),1,f);
       edges.push_back(gid);
       eWeights.push_back(w);
-      fread(&deg,sizeof(lid_t),1,f);
+      s = fread(&deg,sizeof(lid_t),1,f);
       degs.push_back(deg);
       gid_t pin;
       for (lid_t j=0;j<deg;j++) {
-        fread(&pin,sizeof(gid_t),1,f);
+        s = fread(&pin,sizeof(gid_t),1,f);
         pins2v.push_back(pin);
       }
     }
@@ -141,12 +144,13 @@ namespace agi {
   }
   void readGhosts(FILE* f, std::unordered_map<gid_t,part_t>& owns) {
     lid_t num_gs;
-    fread(&num_gs,sizeof(lid_t),1,f);
+    size_t s = fread(&num_gs,sizeof(lid_t),1,f);
+    assert(s == 1);
     gid_t v;
     part_t o;
     for (lid_t i =0;i<num_gs;i++) {
-      fread(&v,sizeof(gid_t),1,f);
-      fread(&o,sizeof(part_t),1,f);
+      s = fread(&v,sizeof(gid_t),1,f);
+      s = fread(&o,sizeof(part_t),1,f);
       owns[v] = o;
     }
   }

@@ -10,7 +10,7 @@ namespace zagi {
   }
 
   void obj_list(void* data,int num_gid_entries, int num_lid_entries,ZOLTAN_ID_PTR global_ids,
-		ZOLTAN_ID_PTR local_ids, int wgt_dim,float* wgts,int* ierr) {
+                ZOLTAN_ID_PTR local_ids, int wgt_dim,float* wgts,int* ierr) {
     agi::Ngraph*  g = static_cast<agi::Ngraph*>(data);
 
     wgt_dim=0;
@@ -31,7 +31,7 @@ namespace zagi {
   }
 
   void hg_data(void* data,int num_gid_entries, int num_vtx_edge,int num_pins,int format, 
-	       ZOLTAN_ID_PTR vtxedge_GID, int* vtxedge_ptr,ZOLTAN_ID_PTR pin_GID,int* ierr) {
+               ZOLTAN_ID_PTR vtxedge_GID, int* vtxedge_ptr,ZOLTAN_ID_PTR pin_GID,int* ierr) {
     agi::Ngraph*  g = static_cast<agi::Ngraph*>(data);
     agi::VertexIterator* itr = g->begin();
     agi::GraphVertex* vtx;
@@ -42,12 +42,12 @@ namespace zagi {
       vtxedge_GID[i] = g->globalID(vtx);
       agi::lid_t deg = g->degree(vtx);
       if (i<g->numLocalVtxs())
-	vtxedge_ptr[i+1] = vtxedge_ptr[i]+deg;
+        vtxedge_ptr[i+1] = vtxedge_ptr[i]+deg;
       for (agi::lid_t j=0;j<deg;j++) {
-	pin_GID[vtxedge_ptr[i]+j]=vtxedge_ptr[i]+j;
-	assert(vtxedge_ptr[i]+j<num_pins);
-	assert(vtxedge_ptr[i]+j<vtxedge_ptr[i+1]);
-	++k;
+        pin_GID[vtxedge_ptr[i]+j]=vtxedge_ptr[i]+j;
+        assert(vtxedge_ptr[i]+j<num_pins);
+        assert(vtxedge_ptr[i]+j<vtxedge_ptr[i+1]);
+        ++k;
       }
       ++i;
     }
@@ -61,7 +61,7 @@ namespace zagi {
   }
 
   void hg_ew(void* data,int num_gid_entries,int num_lid_entries,int num_edges, int edge_weight_dim,
-	     ZOLTAN_ID_PTR edge_GID,ZOLTAN_ID_PTR edge_LID,float* edge_weights,int* ierr) {
+             ZOLTAN_ID_PTR edge_GID,ZOLTAN_ID_PTR edge_LID,float* edge_weights,int* ierr) {
     agi::Ngraph*  g = static_cast<agi::Ngraph*>(data);
     agi::VertexIterator* itr = g->begin();
     agi::GraphVertex* vtx;

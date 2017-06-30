@@ -35,13 +35,14 @@ set(ALL_LIBS
   )
 
 function(make_exe exename srcname)
-  add_executable(${exename} ${srcname})
+  add_executable(${exename} ${srcname} buildGraphs.cpp)
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_exe)
 
 make_exe(constructGraph constructGraph.cpp)
 make_exe(testFileIO testFileIO.cpp)
 make_exe(testMigration testMigration.cpp)
+make_exe(testTags testTags.cpp)
 make_exe(buildMeshGraph buildMeshGraph.cpp)
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)

@@ -19,7 +19,7 @@ class VertexIterator;
 class PinIterator;
 class EdgeIterator;
 class GraphIterator;
-
+class GraphTag;
 /** \class Ngraph
     \brief An abstract graph used to represent the data passed into EnGPar
  
@@ -40,12 +40,12 @@ public:
    * \param owns mapping from global_id to owner for each ghosted vertex
    */
   void constructGraph(bool isHG,
-		      std::vector<gid_t>& verts,
-		      std::vector<wgt_t>& weights,
-		      std::vector<gid_t>& edge_ids,
-		      std::vector<lid_t>& degs,
-		      std::vector<gid_t>& pins_to_verts,
-		      std::unordered_map<gid_t,part_t>& owns);
+                      std::vector<gid_t>& verts,
+                      std::vector<wgt_t>& weights,
+                      std::vector<gid_t>& edge_ids,
+                      std::vector<lid_t>& degs,
+                      std::vector<gid_t>& pins_to_verts,
+                      std::unordered_map<gid_t,part_t>& owns);
   /** \brief Constructs the vertices of the Ngraph
    * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
@@ -54,8 +54,8 @@ public:
    * Must be called before constructEdges and should only be called once
    */
   void constructVerts(bool isHG,
-		      std::vector<gid_t>& verts,
-		      std::vector<wgt_t>& weights);
+                      std::vector<gid_t>& verts,
+                      std::vector<wgt_t>& weights);
   /** \brief Constructs an edge type and returns the id of the type
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
@@ -65,8 +65,8 @@ public:
    * Must be called after constructVerts and should be called once per edge type
    */
   etype constructEdges(std::vector<gid_t>& edge_ids,
-		      std::vector<lid_t>& degs,
-		      std::vector<gid_t>& pins_to_verts);
+                      std::vector<lid_t>& degs,
+                      std::vector<gid_t>& pins_to_verts);
   /** \brief Constructs the ghost information for all non local vertices connected by edges
    * \param owns mapping from global_id to owner for each ghosted vertex
    *
@@ -182,7 +182,7 @@ public:
    */
   GraphIterator* adjacent(GraphVertex* vtx, etype t=0) const;
 
-  /** \brief Returns the degree of an edge [HG only]
+  /** \brief Returns the degree of an edge
    * \param edge the graph edge
    * \return the number of pins to vertices from this edge
    */
@@ -192,6 +192,41 @@ public:
    * \return an iterator that can loop over each vertex connected to this hyperedge
    */
   PinIterator* pins(GraphEdge* edge) const;
+
+
+  //Tagging
+  /** \brief Creates and returns a tag of integers over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createIntTag(etype t=VTX_TYPE);
+  /** \brief Creates and returns a tag of doubles over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createDoubleTag(etype t=VTX_TYPE);
+  /** \brief Creates and returns a tag of longs over a type of entity
+   * \param t the entity type (nothing defaults to vertices)
+   * \return The tag to the data
+   */
+  GraphTag* createLongTag(etype t=VTX_TYPE);
+  /** \brief Destroys a tag created earlier
+   * /param t The tag to be deleted
+   */
+  void destroyTag(GraphTag* t);
+  int getIntTag(GraphTag*,GraphVertex*);
+  int getIntTag(GraphTag*,GraphEdge*);
+  double getDoubleTag(GraphTag*,GraphVertex*);
+  double getDoubleTag(GraphTag*,GraphEdge*);
+  long getLongTag(GraphTag*,GraphVertex*);
+  long getLongTag(GraphTag*,GraphEdge*);
+  void setIntTag(GraphTag*,GraphVertex*,int);
+  void setIntTag(GraphTag*,GraphEdge*,int);
+  void setDoubleTag(GraphTag*,GraphVertex*,double);
+  void setDoubleTag(GraphTag*,GraphEdge*,double);
+  void setLongTag(GraphTag*,GraphVertex*,long);
+  void setLongTag(GraphTag*,GraphEdge*,long);
+  
   
   //Iterator Traversal
   /** \brief Creates an iterator over all vertices
@@ -449,8 +484,8 @@ void destroyGraph(Ngraph* g);
 
 #ifdef KOKKOS_ENABLED
 #include <Kokkos_Core.hpp>
-#define KOKKOS_FOR_VERTS(g,v)						\
-  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {	\
+#define KOKKOS_FOR_VERTS(g,v)                                           \
+  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {   \
       agi::GraphVertex* v = reinterpret_cast<agi::GraphVertex*>((char*)(i+1));
       
 #define KOKKOS_END_FOR() });

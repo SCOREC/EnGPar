@@ -31,9 +31,9 @@ namespace engpar {
     typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
     typedef std::map<int,EdgeSet> PeerEdgeSet;
     void insertInteriorEdges(agi::GraphVertex*,agi::part_t,
-				       EdgeSet&,int);
+                                       EdgeSet&,int);
     void tempInsertInteriorEdges(agi::GraphVertex*,agi::part_t,
-					   EdgeSet&,int,const EdgeSet&);
+                                           EdgeSet&,int,const EdgeSet&);
     double weight(const EdgeSet&);
     void combineSets(EdgeSet&,const EdgeSet&);
 

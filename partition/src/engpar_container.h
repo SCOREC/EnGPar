@@ -20,9 +20,9 @@ namespace engpar {
     typedef std::pair<const int, T> Item;
     const Item* iterate(iterator& itr) {
       if( itr == d.end() ) 
-	return NULL;
+        return NULL;
       else
-	return &(*itr++);
+        return &(*itr++);
     }
     iterator end() {
       return d.end();
@@ -40,7 +40,7 @@ namespace engpar {
     void set(int key, T value) {
       iterator old = d.find(key);
       if (old!=d.end())
-	my_total-=old->second;;
+        my_total-=old->second;;
       my_total+=value;
       d[key] = value;
     }
@@ -56,7 +56,7 @@ namespace engpar {
       const Item* i;
       iterator itr = begin();
       while( (i = iterate(itr)) ) 
-	s << "  "<<i->first << " -> " << i->second << "\n";
+        s << "  "<<i->first << " -> " << i->second << "\n";
       return s.str();
     }
   protected:
