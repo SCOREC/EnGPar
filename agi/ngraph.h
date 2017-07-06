@@ -10,7 +10,8 @@
 
 
 /** \file ngraph.h
-    \brief The N-Graph interface */
+    \brief The N-Graph interface 
+*/
 namespace agi {
 
 class GraphVertex;
@@ -21,14 +22,18 @@ class EdgeIterator;
 class GraphIterator;
 class GraphTag;
 /** \class Ngraph
-    \brief An abstract graph used to represent the data passed into EnGPar
- 
-    Extending this class allows the user to fill the data structures with the user's data. Both regular graph and hypergraph designs are supported.
-    Alternatively one can run the construct functions to build a graph without the use of an interface class.
+ *  \brief An abstract graph used to represent the data passed into EnGPar
+ *   \nosubgrouping
+ *
+ *  Extending this class allows the user to fill the data structures with the user's data. Both regular graph and hypergraph designs are supported.
+ *  Alternatively one can run the construct functions to build a graph without the use of an interface class.
 */
 class Ngraph {
   
 public:
+  
+  /** \name Construction */
+  ///@{
   friend Ngraph* createEmptyGraph();
   /** \brief Constructs the vertices of the Ngraph
    * \param isHG true if the given construction is for a hypergraph
@@ -76,27 +81,28 @@ public:
                       std::vector<lid_t>& degs,
                       std::vector<gid_t>& pins_to_verts,
                       std::unordered_map<gid_t,part_t>& owns);
-
   // \cond
   virtual ~Ngraph();
   // \endcond
 
-  /** \brief Saves the graph connectivity information to <prefix>_#.bgd
+  /** \brief Saves the graph connectivity information to prefix_#.bgd
    * \param prefix The prefix for the name of the file(s)
    *
    * One file is made per process
    */
   void saveToFile(char* prefix);
   //TODO: put checks for number of files = number of processes
-  /** \brief Loads the graph connectivity information from <prefix>_#.bgd
+  /** \brief Loads the graph connectivity information from prefix_#.bgd
    * \param prefix The prefix of the name of the file(s)
    *
    * There should be one file per process
    */
   void loadFromFile(char* prefix);
+  ///@}
 
-  
-  //Global Part Information
+
+  /** \name Global Information */
+  ///@{
   /** \brief Returns the number of vertices in the graph across all processes */
   gid_t numGlobalVtxs() const {return num_global_verts;}
   /** \brief Returns the number of edges in the graph across all processors
@@ -105,8 +111,11 @@ public:
   /** \brief Returns the number of pins in the graph across all processors [HG only]
    * \param t the edge type index */
   gid_t numGlobalPins(etype t=0) const {return num_global_pins[t];}
-  
-  //Local Part Information
+  /** \brief Returns whether the graph is in hypergraph mode or not*/
+  bool isHyper() const {return isHyperGraph;}
+  ///@}
+  /** \name Local Information */
+  ///@{
   /** \brief Returns the number of vertices on this process */
   lid_t numLocalVtxs() const {return num_local_verts;}
   /** \brief Returns the number of ghost vertices on this process */
@@ -121,11 +130,10 @@ public:
   /** \brief Returns the number of pins on this process [HG only]
    * \param t the edge type index */
   lid_t numLocalPins(etype t=0) const {return num_local_pins[t];}
-  /** \brief Returns whether the graph is in hypergraph mode or not*/
-  bool isHyper() const {return isHyperGraph;}
+  ///@}
   
-  //Vertex Operations
-
+  /** \name Vertex Operations */
+  ///@{
   /** \brief Returns the weight of a vertex 
    * \param vtx the graph vertex
    * \return the weight
@@ -165,8 +173,9 @@ public:
   // \cond HACK
   GraphVertex* find(GraphVertex* vtx) const;
   // \endcond
-  
-  //Edge Operations
+  ///@}
+  /** \name Edge Operations */
+  ///@{
   /** \brief Returns the weight of a edge.
    * \param edge The graph edge
    * \return The weight
@@ -200,9 +209,10 @@ public:
    * \param t the edge type of the weights
    */
   void setEdgeWeights(std::vector<wgt_t>& wgts, etype t);
-
+  ///@}
   
-  //Adjacency Operations
+  /** \name Adjacency Operations */
+  ///@{
   /** \brief Retuns the degree of a vertex
    * \param vtx the graph vertex
    * \param t the edge type
@@ -233,9 +243,10 @@ public:
    * \return an iterator that can loop over each vertex connected to this hyperedge
    */
   PinIterator* pins(GraphEdge* edge) const;
+  ///@}
 
-
-  //Tagging
+  /** \name Tag Data */
+  ///@{
   /** \brief Creates and returns a tag of integers over a type of entity
    * \param t the entity type (nothing defaults to vertices)
    * \return The tag to the data
@@ -327,9 +338,10 @@ public:
    * \param val The value to be assigned to the edge for the given tag
    */
   void setLongTag(GraphTag* tag,GraphEdge* e,long val);
+  ///@}
   
-  
-  //Iterator Traversal
+  /** \name Iterator Traversal*/
+  ///@{
   /** \brief Creates an iterator over all vertices
    * \return an iterator over all vertices in the graph
    */
@@ -381,8 +393,9 @@ public:
    * \param gitr the graph iterator
    */
   void destroy(GraphIterator* gitr) const;
-
-  //Utility
+  ///@}
+  /** \name Utility */
+  ///@{
   /** \brief Tests if two vertices are equal
      \param vtx1 the first vertex
      \param vtx2 the second vertex
@@ -393,26 +406,32 @@ public:
      \param edge2 the second edge
   */
   bool isEqual(GraphEdge* edge1,GraphEdge* edge2) const;
-  /** \brief A method to provide a migration plan of the vertices
-   * \param plan a map from graph vertex to part id
+  ///@}
+
+  /** \name Partition/Migration */
+  ///@{
+  /** \brief Retrieves a migration plan for use on the original data
+   * \return a map from global id to part id
    */
   virtual PartitionMap* getPartition();
 
   // \cond
   void migrate(Migration* plan);
   // \endcond
-
+  ///@}
   
 
  protected:
+  // \cond 
   Ngraph();
   Ngraph(const Ngraph&) {throw std::runtime_error("Copying Ngraph not supported");}
   Ngraph& operator=(const Ngraph&) {
     throw std::runtime_error("Assignment of Ngraph not supported");
   }
   void destroyData();
+  // \endcond
 
-  // \cond DEV
+  // \cond  
   /** \brief Adds an edge type to the graph
    * \return the new edge type id
    */
@@ -430,9 +449,6 @@ public:
    * \param t the type of the edge
    */
   void setEdge(lid_t l,gid_t g,wgt_t w,etype t);
-  // \endcond
-  
-  // \cond DEV
   //TODO: Try to compress global id
   /** \brief A flag for if the hypergraph functionality is turned on
    */
@@ -553,7 +569,11 @@ public:
 
   /** \brief A mapping from global id to local id for edges of each type
    */
+
   map_t edge_mapping[MAX_TYPES];
+
+  // \endcond
+  // \cond DEV
   /** \brief A mapping from local id to global id for edges of each type
    *
    * size = num_local_edges
@@ -561,7 +581,8 @@ public:
   gid_t* edge_unmap[MAX_TYPES];  
 
   // \endcond
-  // \cond
+  
+  // \cond PRIVATE
  private:
   void updateGhostOwners(Migration*);
   void sendVertex(GraphVertex*, part_t);

@@ -1,0 +1,12 @@
+/** \mainpage SCOREC graph-based partitioning interface
+
+Welcome to the EnGPar documentation
+
+If you are looking to use EnGPar for partitioning, then you can get started with agi::Ngraph
+which is the structure that is needed to use the partitioning tools as well as engpar.h
+for the partitioning APIs.
+
+If you are partitioning an apf::Mesh then you can also look at agi::apfGraph which is an interface
+from apf::Mesh and agi::Ngraph.
+
+*/
