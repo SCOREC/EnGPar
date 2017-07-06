@@ -24,28 +24,12 @@ class GraphTag;
     \brief An abstract graph used to represent the data passed into EnGPar
  
     Extending this class allows the user to fill the data structures with the user's data. Both regular graph and hypergraph designs are supported.
+    Alternatively one can run the construct functions to build a graph without the use of an interface class.
 */
 class Ngraph {
   
 public:
-  Ngraph();
-  /** \brief Constructs the Ngraph given a set of information
-   * \param isHG true if the given construction is for a hypergraph
-   * \param verts list of global ids of vertices that this part owns
-   * \param weights list of the weights of each vertex
-   * \param edge_ids list of global ids of edges that this part has
-   * \param degs list of degrees of each edge (always 2 if 
-   *        constructing a traiditional graph)
-   * \param pins_to_verts list of the vertices the edges are connected to
-   * \param owns mapping from global_id to owner for each ghosted vertex
-   */
-  void constructGraph(bool isHG,
-                      std::vector<gid_t>& verts,
-                      std::vector<wgt_t>& weights,
-                      std::vector<gid_t>& edge_ids,
-                      std::vector<lid_t>& degs,
-                      std::vector<gid_t>& pins_to_verts,
-                      std::unordered_map<gid_t,part_t>& owns);
+  friend Ngraph* createEmptyGraph();
   /** \brief Constructs the vertices of the Ngraph
    * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
@@ -73,11 +57,43 @@ public:
    * Must be called after all edge types have been constructed 
    */
   void constructGhosts(std::unordered_map<gid_t,part_t>& owns);
+  /** \brief Constructs the Ngraph given a set of information
+   * \param isHG true if the given construction is for a hypergraph
+   * \param verts list of global ids of vertices that this part owns
+   * \param weights list of the weights of each vertex
+   * \param edge_ids list of global ids of edges that this part has
+   * \param degs list of degrees of each edge (always 2 if 
+   *        constructing a traiditional graph)
+   * \param pins_to_verts list of the vertices the edges are connected to
+   * \param owns mapping from global_id to owner for each ghosted vertex
+   *
+   * This function is equivalent to calling constructVerts,constructEdges, and constructGhosts.
+   */
+  void constructGraph(bool isHG,
+                      std::vector<gid_t>& verts,
+                      std::vector<wgt_t>& weights,
+                      std::vector<gid_t>& edge_ids,
+                      std::vector<lid_t>& degs,
+                      std::vector<gid_t>& pins_to_verts,
+                      std::unordered_map<gid_t,part_t>& owns);
 
-  virtual ~Ngraph();
   // \cond
-  void destroyData();
+  virtual ~Ngraph();
   // \endcond
+
+  /** \brief Saves the graph connectivity information to <prefix>_#.bgd
+   * \param prefix The prefix for the name of the file(s)
+   *
+   * One file is made per process
+   */
+  void saveToFile(char* prefix);
+  //TODO: put checks for number of files = number of processes
+  /** \brief Loads the graph connectivity information from <prefix>_#.bgd
+   * \param prefix The prefix of the name of the file(s)
+   *
+   * There should be one file per process
+   */
+  void loadFromFile(char* prefix);
 
   
   //Global Part Information
@@ -109,6 +125,7 @@ public:
   bool isHyper() const {return isHyperGraph;}
   
   //Vertex Operations
+
   /** \brief Returns the weight of a vertex 
    * \param vtx the graph vertex
    * \return the weight
@@ -129,25 +146,43 @@ public:
   void setOriginalOwners();
   void setOriginalOwners(std::vector<part_t>&);
   // \endcond
+  /** \brief Determines the parts that the given edge resides on
+   * \param e the edge 
+   * \param residence The part ids that the edge resides on
+   */
   void getResidence(GraphEdge* e,Peers& residence) const;
-  
 
-  lid_t localID(GraphVertex*) const;
-  gid_t globalID(GraphVertex*) const;
+  /** \brief Returns the local id of the vertex
+   * \param vtx The vertex
+   * \return The local id of the vertex.
+   */
+  lid_t localID(GraphVertex* vtx) const;
+  /** \brief Returns the global id of the vertex.
+   * \param vtx The vertex
+   * \return The global id of the vertex.
+   */
+  gid_t globalID(GraphVertex* vtx) const;
   // \cond HACK
   GraphVertex* find(GraphVertex* vtx) const;
   // \endcond
   
   //Edge Operations
-    /** \brief Returns the weight of a edge 
-   * \param edge the graph edge
-   * \return the weight
+  /** \brief Returns the weight of a edge.
+   * \param edge The graph edge
+   * \return The weight
    */
   double weight(GraphEdge* edge) const;
-  
-  lid_t localID(GraphEdge*) const;
-  gid_t globalID(GraphEdge*) const;
-  // \cond HACK
+  /** \brief Returns the local id of the edge.
+   * \param e The edge
+   * \return The local id of the edge.
+   */  
+  lid_t localID(GraphEdge* e) const;
+  /** \brief Returns the global id of the edge.
+   * \param e The edge
+   * \return The global id of the edge.
+   */  
+  gid_t globalID(GraphEdge* e) const;
+  // \cond
   lid_t u(lid_t,etype t =0) const;
   // \endcond
   /** \brief Returns the source of an edge [Not HG]
@@ -160,6 +195,12 @@ public:
    * \return the destination vertex
    */
   GraphVertex* v(GraphEdge* edge) const;
+  /** \brief Sets the weights of the edges of a specific type
+   * \param wgts the edge weights
+   * \param t the edge type of the weights
+   */
+  void setEdgeWeights(std::vector<wgt_t>& wgts, etype t);
+
   
   //Adjacency Operations
   /** \brief Retuns the degree of a vertex
@@ -214,18 +255,78 @@ public:
    * /param t The tag to be deleted
    */
   void destroyTag(GraphTag* t);
-  int getIntTag(GraphTag*,GraphVertex*);
-  int getIntTag(GraphTag*,GraphEdge*);
-  double getDoubleTag(GraphTag*,GraphVertex*);
-  double getDoubleTag(GraphTag*,GraphEdge*);
-  long getLongTag(GraphTag*,GraphVertex*);
-  long getLongTag(GraphTag*,GraphEdge*);
-  void setIntTag(GraphTag*,GraphVertex*,int);
-  void setIntTag(GraphTag*,GraphEdge*,int);
-  void setDoubleTag(GraphTag*,GraphVertex*,double);
-  void setDoubleTag(GraphTag*,GraphEdge*,double);
-  void setLongTag(GraphTag*,GraphVertex*,long);
-  void setLongTag(GraphTag*,GraphEdge*,long);
+  /** \brief Retrieves an integer value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \return The value of the vertex for this tag 
+   */
+  int getIntTag(GraphTag* tag,GraphVertex* v);
+  /** \brief Retrieves an integer value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \return The value of the edge for this tag 
+   */
+  int getIntTag(GraphTag* tag,GraphEdge* e);
+  /** \brief Retrieves a double value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \return The value of the vertex for this tag 
+   */
+  double getDoubleTag(GraphTag* tag,GraphVertex* v);
+  /** \brief Retrieves a double value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \return The value of the edge for this tag 
+   */
+  double getDoubleTag(GraphTag* tag,GraphEdge* e);
+  /** \brief Retrieves a long value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \return The value of the vertex for this tag 
+   */
+  long getLongTag(GraphTag* tag,GraphVertex* v);
+  /** \brief Retrieves a long value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \return The value of the edge for this tag 
+   */
+  long getLongTag(GraphTag* tag,GraphEdge* e);
+  /** \brief Sets an integer value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \param val The value to be assigned to the vertex for the given tag
+   */
+  void setIntTag(GraphTag* tag,GraphVertex* v,int val);
+  /** \brief Sets an integer value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \param val The value to be assigned to the edge for the given tag
+   */
+  void setIntTag(GraphTag* tag,GraphEdge* e,int val);
+  /** \brief Sets a double value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \param val The value to be assigned to the vertex for the given tag
+   */
+  void setDoubleTag(GraphTag* tag,GraphVertex* v,double val);
+  /** \brief Sets a double value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \param val The value to be assigned to the edge for the given tag
+   */
+  void setDoubleTag(GraphTag* tag,GraphEdge* e,double val);
+  /** \brief Sets a long value of a tag for a vertex.
+   * \param tag The tag.
+   * \param v The vertex.
+   * \param val The value to be assigned to the vertex for the given tag
+   */
+  void setLongTag(GraphTag* tag,GraphVertex* v,long val);
+  /** \brief Sets a long value of a tag for a edge.
+   * \param tag The tag.
+   * \param e The edge.
+   * \param val The value to be assigned to the edge for the given tag
+   */
+  void setLongTag(GraphTag* tag,GraphEdge* e,long val);
   
   
   //Iterator Traversal
@@ -233,7 +334,7 @@ public:
    * \return an iterator over all vertices in the graph
    */
   VertexIterator* begin() const;
-  // \cond HACK
+  // \cond 
   GraphVertex* findGID(gid_t gid) const;
   // \endcond
   /** \brief Creates an iterator over all edges of a given type
@@ -296,21 +397,22 @@ public:
    * \param plan a map from graph vertex to part id
    */
   virtual PartitionMap* getPartition();
-  // \cond
-  /** \brief Sets the weights of the edges of a specific type
-   * \param wgts the edge weights
-   * \param t the edge type of the weights
-   */
-  void setEdgeWeights(std::vector<wgt_t>& wgts, etype t);
 
+  // \cond
   void migrate(Migration* plan);
   // \endcond
 
-
-  void saveToFile(char* prefix);
-  void loadFromFile(char* prefix);
   
+
  protected:
+  Ngraph();
+  Ngraph(const Ngraph&) {throw std::runtime_error("Copying Ngraph not supported");}
+  Ngraph& operator=(const Ngraph&) {
+    throw std::runtime_error("Assignment of Ngraph not supported");
+  }
+  void destroyData();
+
+  // \cond DEV
   /** \brief Adds an edge type to the graph
    * \return the new edge type id
    */
@@ -328,11 +430,8 @@ public:
    * \param t the type of the edge
    */
   void setEdge(lid_t l,gid_t g,wgt_t w,etype t);
-
-  /*
-  void create_csr(int num_verts, int num_edges, int* srcs,
-                  int* dsts, int* wgts);
-  */
+  // \endcond
+  
   // \cond DEV
   //TODO: Try to compress global id
   /** \brief A flag for if the hypergraph functionality is turned on
@@ -475,14 +574,23 @@ public:
                  etype);
   // \endcond
 };
+/** \brief Creates an empty graph for construction and loading
+ */
+Ngraph* createEmptyGraph();
+ 
 /** \brief Cleans up the memory of the graph
  * \param g the graph
  */
 void destroyGraph(Ngraph* g);
 
+/** \brief Runs a validity check over the entire graph
+ *
+ */
 bool checkValidity(Ngraph* g);
+
  
 } //namespace
+
 
 
 #ifdef KOKKOS_ENABLED

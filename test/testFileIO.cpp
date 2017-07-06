@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
 
   g->saveToFile(argv[3]);
-  agi::Ngraph* gLoad = new agi::Ngraph;
+  agi::Ngraph* gLoad = agi::createEmptyGraph();
   gLoad->loadFromFile(argv[3]);
   
   testGraphs(g,gLoad);

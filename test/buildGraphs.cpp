@@ -1,11 +1,12 @@
 #include "buildGraphs.h"
 #include <set>
 #include <PCU.h>
+#include <ngraph.h>
 
 //Builds a ring of vertices
 //  where each part gets 4 continuous vertices
 agi::Ngraph* buildGraph() {
-  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::Ngraph* graph  = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;
   agi::gid_t global_verts = 4*PCU_Comm_Peers();
   std::vector<agi::gid_t> verts;
@@ -49,7 +50,7 @@ agi::Ngraph* buildGraph() {
 }
 
 agi::Ngraph* buildHyperGraph() {
-  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::Ngraph* graph  = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;
   agi::gid_t start_vert = local_verts*PCU_Comm_Self();
   agi::gid_t end_vert = local_verts*(PCU_Comm_Self()+1)-1;
@@ -102,7 +103,7 @@ agi::Ngraph* buildHyperGraph() {
 }
 
 agi::Ngraph* buildGraphParts() {
-  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::Ngraph* graph  = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;
   agi::gid_t global_verts = 4*PCU_Comm_Peers();
   std::vector<agi::gid_t> verts;
@@ -167,7 +168,7 @@ agi::Ngraph* buildGraphParts() {
 }
 
 agi::Ngraph* buildHyperGraphParts() {
-  agi::Ngraph* graph  = new agi::Ngraph;
+  agi::Ngraph* graph  = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;
   agi::gid_t start_vert = local_verts*PCU_Comm_Self();
   agi::gid_t end_vert = local_verts*(PCU_Comm_Self()+1)-1;

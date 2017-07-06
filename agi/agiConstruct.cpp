@@ -3,6 +3,9 @@
 #include <cstring>
 namespace agi {
 
+  Ngraph* createEmptyGraph() {
+    return new Ngraph;
+  }
   Ngraph::Ngraph() {
     isHyperGraph=false;
     num_global_verts=0;

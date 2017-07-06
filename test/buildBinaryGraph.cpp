@@ -37,7 +37,6 @@ int main(int argc, char* argv[]) {
   agi::checkValidity(g);
   
   //Destroy the graph
-  g->destroyData();
   destroyGraph(g);
   
   PCU_Barrier();
