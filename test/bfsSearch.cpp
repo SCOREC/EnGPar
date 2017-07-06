@@ -29,7 +29,7 @@ void bfsTraditional(agi::Ngraph* g, agi::etype t=0){
       //and adds the current vertex to visited
       agi::GraphIterator* neighbor = g->adjacent(curVtx,t);
       agi::GraphVertex* neighborVtx;
-      while( neighborVtx = g->iterate(neighbor) ){
+      while(( neighborVtx = g->iterate(neighbor)) ){
         nextVtxVector.push_back(neighborVtx);
       }
       visited.insert(curVtx);
