@@ -39,7 +39,14 @@ set(VALGRIND_ARGS "" CACHE string
   "the command line arguments to VALGRIND")
 
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
-find_package(SCOREC 2.1.0 REQUIRED CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
+
+option(ENABLE_PUMI "Build with PUMI interface" OFF)
+
+if (ENABLE_PUMI)
+  find_package(SCOREC 2.1.0 REQUIRED CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
+else()
+  find_package(SCOREC 2.1.0 REQUIRED COMPONENTS pcu CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
+endif()
 
 if (ENABLE_KOKKOS)
   find_package(Kokkos MODULE REQUIRED)
