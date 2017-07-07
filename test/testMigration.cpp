@@ -54,11 +54,12 @@ int main(int argc, char* argv[]) {
 
   PCU_Barrier();
   if (!PCU_Comm_Self()) 
-    printf("All Tests Passed\n");
-  
+    printf("All Tests Passed\n"); 
 
   EnGPar_Finalize();
   MPI_Finalize();
+
+  return 0;
 
 }
 void migrateGraphParts() {
