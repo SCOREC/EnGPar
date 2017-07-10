@@ -139,7 +139,10 @@ void apfGraph::setupPrimary(int primary_dimension) {
       continue;
     gid_t gid = apf::getNumber(global_nums,ent,0);
     local_weights[lid]=1;
-    local_coords[lid] = getLinearCentroid(m,ent);
+    apf::Vector3 vec = getLinearCentroid(m,ent);
+    local_coords[lid][0] = vec.x;
+    local_coords[lid][1] = vec.y;
+    local_coords[lid][2] = vec.z;
     vtx_mapping[gid]=lid;
     local_unmap[lid++] = gid;
   }

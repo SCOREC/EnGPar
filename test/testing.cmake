@@ -78,14 +78,12 @@ mpi_test(buildParallelBinaryGraph 4
 
 mpi_test(testAdjacentSerial 1
   ./testAdjacentTraversal
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi11/cube.smb"
+  "${GRAPHS}/cube/cube"
   "${GRAPHS}/ring.ebin")
 
 mpi_test(testAdjacentParallel 2
   ./testAdjacentTraversal
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi670/2/cube.smb"
+  "${GRAPHS}/cube/4/"
   "${GRAPHS}/tree.ebin")
 
 mpi_test(testEdgeRing 1
@@ -98,33 +96,32 @@ mpi_test(testEdgeTree 2
 
 #Diffusive Load Balancing Tests
 
-mpi_test(vtxBalanceCube 2
+mpi_test(vtxBalanceCube 4
   ./vtxBalance
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi670/2/cube.smb"
+  "${GRAPHS}/cube/4/"
   .1)
 
 mpi_test(vtxBalanceTorus 4
   ./vtxBalance
-  "${MESHES}/torus/torus.dmg"
-  "${MESHES}/torus/4imb/torus.smb"
+  "${GRAPHS}/torus/4/"
+  .15)
+
+mpi_test(vtxBalanceRing 2
+  ./vtxBalance
+  "${GRAPHS}/ring.ebin"
   .1)
 
-mpi_test(balanceCube 2
+mpi_test(balanceCube 4
   ./balance
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi670/2/cube.smb")
+  "${GRAPHS}/cube/4/")
 
 mpi_test(balanceTorus 4
   ./balance
-  "${MESHES}/torus/torus.dmg"
-  "${MESHES}/torus/4imb/torus.smb")
+  "${GRAPHS}/torus/4/")
 
 mpi_test(balanceTorusVtxFaceElm 4
   ./balance
-  "${MESHES}/torus/torus.dmg"
-  "${MESHES}/torus/4imb/torus.smb"
-  yes)
+  "${GRAPHS}/torus/4/")
 
 mpi_test(balanceTree 2
   ./balance

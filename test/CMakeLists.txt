@@ -48,17 +48,20 @@ function(make_exe exename srcname)
 endfunction(make_exe)
 
 make_exe(constructGraph constructGraph.cpp)
+make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
+make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(testMigration testMigration.cpp)
 make_exe(testTags testTags.cpp)
 make_exe(splitCommunicator splitCommunicator.cpp)
+
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
-make_exe(testEdgeTraversal edgeTraversal.cpp)
+
+make_exe(vtxBalance vtxBalance.cpp)
+make_exe(balance balance.cpp)
+
 if (ENABLE_PUMI)
   make_exe(testFileIO testFileIO.cpp)
-  make_exe(vtxBalance vtxBalance.cpp)
   make_exe(buildMeshGraph buildMeshGraph.cpp)
-  make_exe(balance balance.cpp)
-  make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
 endif()
 
 if (ZOLTAN_FOUND)

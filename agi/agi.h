@@ -14,7 +14,7 @@ namespace agi {
   typedef uint64_t lid_t;
   typedef double wgt_t;
   typedef int32_t part_t;
-  typedef apf::Vector3 coord_t;
+  typedef double coord_t[3];
 
   typedef std::set<part_t> Peers;
   

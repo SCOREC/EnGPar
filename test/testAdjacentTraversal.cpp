@@ -1,10 +1,5 @@
-#include <apfGraph.h>
-#include <apfMesh2.h>
 #include <cassert>
-#include <gmi_mesh.h>
-#include <apfMDS.h>
 #include <binGraph.h>
-#include <apf.h>
 #include <vector>
 #include <engpar_support.h>
 
@@ -14,19 +9,17 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
-  if ( argc != 4) {
+  if ( argc != 3) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh> <graph>\n", argv[0]);
+      printf("Usage: %s <bgd_prefix> <graph>\n", argv[0]);
     EnGPar_Finalize();
     assert(false);
   }
 
-  //Load in PUMI mesh
-  gmi_register_mesh();
-  apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
-
   //Construct Ngraph with edges over mesh faces
-  agi::Ngraph* g = agi::createAPFGraph(m,3,2);
+  agi::Ngraph* g = agi::createEmptyGraph();
+  g->loadFromFile(argv[1]);
+  //  agi::Ngraph* g = agi::createAPFGraph(m,3,2);
 
   //run the adjacency test
   testAdjacent(g);
@@ -35,25 +28,8 @@ int main(int argc, char* argv[]) {
   //Destroy Ngraph
   agi::destroyGraph(g);
 
-  //Construct Ngraph with edges over mesh vertices
-  int secondaries[2] = {0,1};
-  g = agi::createAPFGraph(m,3,secondaries,2);
-
-  //run the adjacency test
-  for (int i=0;i<2;i++) {
-    testAdjacent(g,secondaries[i]);
-    compareTraversal(g,secondaries[i]);
-  }
-  
-  //Destroy Ngraph
-  agi::destroyGraph(g);
-
-  //Destroy Mesh
-  m->destroyNative();
-  apf::destroyMesh(m);
-
   //Construct a ngraph from traditional graph
-  g = agi::createBinGraph(argv[3]);
+  g = agi::createBinGraph(argv[2]);
 
   //run the adjacency test
   testAdjacent(g);
@@ -70,11 +46,6 @@ int main(int argc, char* argv[]) {
   MPI_Finalize();
 }
 
-bool phi(char* word) {
-  if (!PCU_Comm_Self())
-    printf("hi %s\n", word);
-  return true;
-}
 void testAdjacent(agi::Ngraph* g,agi::etype t) {
   if (!PCU_Comm_Self())
     printf("Beginning Traversal\n");
