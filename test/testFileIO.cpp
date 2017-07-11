@@ -12,30 +12,42 @@
 
 void testSizes(agi::Ngraph*,agi::Ngraph*);
 void testVertices(agi::Ngraph*,agi::Ngraph*);
-void testEdges(agi::Ngraph*,agi::Ngraph*);
+void testEdges(agi::Ngraph*,agi::Ngraph*,agi::etype);
 
 void testGraphs(agi::Ngraph* g1,agi::Ngraph* g2) {
   
   testSizes(g1,g2);
-  testVertices(g1,g2);  
-  testEdges(g1,g2);  
+  testVertices(g1,g2);
+  assert(g1->numEdgeTypes()==g2->numEdgeTypes());
+  for (agi::etype t=0;t<g1->numEdgeTypes();t++)
+    testEdges(g1,g2,t);  
 }
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   PCU_Comm_Init();
   EnGPar_Initialize();
-  if ( argc != 4 ) {
+  if ( argc < 4 ) {
+    printf("%d\n",argc);
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh> <save prefix>\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <save prefix> [edge_types...]\n", argv[0]);
     EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
   }
-
+  
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
-  agi::Ngraph* g = agi::createAPFGraph(m,3,2);
+  agi::Ngraph* g;
+  if (argc==4)
+    g = agi::createAPFGraph(m,3,2);
+  else {
+    int* edges = new int[argc-4];
+    for (int i=4;i<argc;i++) {
+      edges[i-4] = atoi(argv[i]);
+    }
+    g = agi::createAPFGraph(m,3,edges,argc-4);
+  }
   PCU_Barrier();
 
   g->saveToFile(argv[3]);
@@ -87,16 +99,13 @@ void testVertices(agi::Ngraph* g1,agi::Ngraph* g2) {
   assert(i==g1->numLocalVtxs());
 
 }
-void testEdges(agi::Ngraph* g1,agi::Ngraph* g2) {
+void testEdges(agi::Ngraph* g1,agi::Ngraph* g2,agi::etype t) {
   if (!PCU_Comm_Self())
     printf("Iterating over edges & pins\n");
-
-
-  
   //Test iterating through edges & pins on vertices
-  agi::EdgeIterator* itr1 = g1->begin(0);
+  agi::EdgeIterator* itr1 = g1->begin(t);
   agi::GraphEdge* edge1=NULL;
-  agi::EdgeIterator* itr2 = g2->begin(0);
+  agi::EdgeIterator* itr2 = g2->begin(t);
   agi::GraphEdge* edge2=NULL;
   while ((edge1 = g1->iterate(itr1))&&(edge2 = g2->iterate(itr2))) {
     assert(g1->globalID(edge1)==g2->globalID(edge2));
