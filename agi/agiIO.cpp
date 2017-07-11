@@ -30,12 +30,13 @@ namespace agi {
       fwrite(&w,sizeof(wgt_t),1,f);
     }
   }
-  void writeEdges(FILE* f,Ngraph* g) {
-    gid_t numEdges = g->numLocalEdges();
+  void writeEdges(FILE* f,Ngraph* g,etype t,
+                  std::unordered_map<gid_t,part_t>& owns) {
+    fwrite(&t,sizeof(etype),1,f);
+    gid_t numEdges = g->numLocalEdges(t);
     fwrite(&numEdges,sizeof(gid_t),1,f);
-    agi::EdgeIterator* eitr = g->begin(0);
+    agi::EdgeIterator* eitr = g->begin(t);
     agi::GraphEdge* edge;
-    std::unordered_map<gid_t,part_t> owns;
     while ((edge = g->iterate(eitr))) {
       gid_t gid = g->globalID(edge);
       wgt_t w = g->weight(edge);
@@ -56,10 +57,12 @@ namespace agi {
       delete [] ps;
     }
     g->destroy(eitr);
-
+  }
+  void writeGhosts(FILE* f, const std::unordered_map<gid_t,part_t>& owns) {
     lid_t numOwners = owns.size();
     fwrite(&numOwners,sizeof(lid_t),1,f);
-    std::unordered_map<gid_t,part_t>::iterator itr;
+
+    std::unordered_map<gid_t,part_t>::const_iterator itr;
     for (itr=owns.begin();itr!=owns.end();itr++) {
       fwrite(&itr->first,sizeof(gid_t),1,f);
       fwrite(&itr->second,sizeof(part_t),1,f);
@@ -93,8 +96,13 @@ namespace agi {
       throw 1;
     }
     writeHeader(file,this); 
-    writeVertices(file,this); 
-    writeEdges(file,this); 
+    writeVertices(file,this);
+    int nt = numEdgeTypes();
+    fwrite(&nt,sizeof(int),1,file);
+    std::unordered_map<gid_t,part_t> owns;
+    for (etype t=0;t<nt;t++)
+      writeEdges(file,this,t,owns);
+    writeGhosts(file,owns);
     fclose(file);
   }
 
@@ -119,9 +127,10 @@ namespace agi {
     }
   }
   void readEdges(FILE* f,std::vector<gid_t>& edges, std::vector<wgt_t>& eWeights,
-                 std::vector<lid_t>& degs, std::vector<gid_t>& pins2v) {
+                 std::vector<lid_t>& degs, std::vector<gid_t>& pins2v, etype& t){
+    size_t s = fread(&t,sizeof(etype),1,f);
     gid_t ne;
-    size_t s = fread(&ne,sizeof(gid_t),1,f);
+    s = fread(&ne,sizeof(gid_t),1,f);
     assert( s ==1);
     for (gid_t i=0;i<ne;i++) {
       gid_t gid;
@@ -168,17 +177,22 @@ namespace agi {
     std::vector<gid_t> verts;
     std::vector<wgt_t> weights;
     readVertices(file,verts,weights);
-    
-    std::vector<gid_t> es;
-    std::vector<wgt_t> eWeights;
-    std::vector<lid_t> degs;
-    std::vector<gid_t> pins2v;
+    constructVerts(isHG,verts,weights);
+    int nt;
+    size_t s = fread(&nt,sizeof(int),1,file);
+    assert(s==1);
     std::unordered_map<gid_t,part_t> owns;
-    readEdges(file,es,eWeights,degs,pins2v);
+    for (etype t=0;t<nt;t++) {
+      std::vector<gid_t> es;
+      std::vector<wgt_t> eWeights;
+      std::vector<lid_t> degs;
+      std::vector<gid_t> pins2v;
+      readEdges(file,es,eWeights,degs,pins2v,t);
+      constructEdges(es,degs,pins2v);
+      setEdgeWeights(eWeights,t);
+    }
     readGhosts(file,owns);
-    constructGraph(isHG,verts,weights,es,degs,pins2v,owns);
-    setEdgeWeights(eWeights,0);
-    
+    constructGhosts(owns);
     fclose(file);
   }
 }
