@@ -23,61 +23,62 @@ mpi_test(testMigration2 2
 mpi_test(testMigration4 4
   ./testMigration)
 
-mpi_test(buildSerialMeshGraph32 1
-  ./buildMeshGraph
-  ${MESHES}/cube/cube.dmg
-  ${MESHES}/cube/pumi11/cube.smb
-  3
-  2)
+IF(ENABLE_PUMI)
+  mpi_test(buildSerialMeshGraph32 1
+    ./buildMeshGraph
+    ${MESHES}/cube/cube.dmg
+    ${MESHES}/cube/pumi11/cube.smb
+    3
+    2)
 
-mpi_test(buildSerialMeshGraph31 1
-  ./buildMeshGraph
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi11/cube.smb"
-  3
-  1)
+  mpi_test(buildSerialMeshGraph31 1
+    ./buildMeshGraph
+    "${MESHES}/cube/cube.dmg"
+    "${MESHES}/cube/pumi11/cube.smb"
+    3
+    1)
 
-mpi_test(buildParallelMeshGraph32 2
-  ./buildMeshGraph
-  "${MESHES}/cube/cube.dmg"
-  "${MESHES}/cube/pumi670/2/cube.smb"
-  3
-  2)
+  mpi_test(buildParallelMeshGraph32 2
+    ./buildMeshGraph
+    "${MESHES}/cube/cube.dmg"
+    "${MESHES}/cube/pumi670/2/cube.smb"
+    3
+    2)
 
-mpi_test(buildParallelMeshGraph30 4
-  ./buildMeshGraph
-  "${MESHES}/torus/torus.dmg"
-  "${MESHES}/torus/4imb/torus.smb"
-  3
-  0)
+  mpi_test(buildParallelMeshGraph30 4
+    ./buildMeshGraph
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb"
+    3
+    0)
 
-mpi_test(testFileIOSerial 1
-  ./testFileIO
-  ${MESHES}/cube/cube.dmg
-  ${MESHES}/cube/pumi670/cube.smb
-  ${GRAPHS}/cube/cube)
+  mpi_test(testFileIOSerial 1
+    ./testFileIO
+    ${MESHES}/cube/cube.dmg
+    ${MESHES}/cube/pumi670/cube.smb
+    ${GRAPHS}/cube/cube)
 
-mpi_test(testFileIOParallel 4
-  ./testFileIO
-  ${MESHES}/cube/cube.dmg
-  ${MESHES}/cube/pumi670/4/cube.smb
-  ${GRAPHS}/cube/4/)
+  mpi_test(testFileIOParallel 4
+    ./testFileIO
+    ${MESHES}/cube/cube.dmg
+    ${MESHES}/cube/pumi670/4/cube.smb
+    ${GRAPHS}/cube/4/)
 
-mpi_test(testFileIOParallelTorus 4
-  ./testFileIO
-  ${MESHES}/torus/torus.dmg
-  ${MESHES}/torus/4imb/torus.smb
-  ${GRAPHS}/torus/4/
-  0)
+  mpi_test(testFileIOParallelTorus 4
+    ./testFileIO
+    ${MESHES}/torus/torus.dmg
+    ${MESHES}/torus/4imb/torus.smb
+    ${GRAPHS}/torus/4/
+    0)
 
-mpi_test(testFileIOParallelTorus01 4
-  ./testFileIO
-  ${MESHES}/torus/torus.dmg
-  ${MESHES}/torus/4imb/torus.smb
-  ${GRAPHS}/torus/4_01/
-  0
-  1)
-
+  mpi_test(testFileIOParallelTorus01 4
+    ./testFileIO
+    ${MESHES}/torus/torus.dmg
+    ${MESHES}/torus/4imb/torus.smb
+    ${GRAPHS}/torus/4_01/
+    0
+    1)
+ENDIF()
 mpi_test(buildSerialBinaryRing 1
   ./buildBinaryGraph
   "${GRAPHS}/ring.ebin")
