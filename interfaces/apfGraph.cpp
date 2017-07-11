@@ -134,22 +134,20 @@ void apfGraph::setupPrimary(int primary_dimension) {
   lid_t lid=0;
   local_unmap = new gid_t[num_local_verts];
   while ((ent = m->iterate(itr))) {
-    //Set vertex weights
     if (!m->isOwned(ent))
       continue;
     gid_t gid = apf::getNumber(global_nums,ent,0);
     local_weights[lid]=1;
     apf::Vector3 vec = getLinearCentroid(m,ent);
-    local_coords[lid][0] = vec.x;
-    local_coords[lid][1] = vec.y;
-    local_coords[lid][2] = vec.z;
+    local_coords[lid][0] = vec.x();
+    local_coords[lid][1] = vec.y();
+    local_coords[lid][2] = vec.z();
     vtx_mapping[gid]=lid;
     local_unmap[lid++] = gid;
   }
   m->end(itr);
 }
 
-  //TODO: discuss removing trivial edges (edges that only connect to one vertex)
 etype apfGraph::setupSecondary(int secondary_dimension) {
   etype type = addEdgeType();
   num_local_edges[type] = m->count(secondary_dimension);
