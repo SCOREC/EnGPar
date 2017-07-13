@@ -112,6 +112,7 @@ SET(CONFIGURE_OPTIONS
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
   "-DIS_TESTING=ON"
   "-DMESHES=/users/diamog/meshes"
