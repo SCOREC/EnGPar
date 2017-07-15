@@ -23,6 +23,7 @@ include_directories(
   )
 
 set(ALL_LIBS
+  ${ALL_LIBS}
   engpar_support
   agi
   interfaces
@@ -74,6 +75,10 @@ if (KOKKOS_FOUND)
   make_exe(kokkosHelloWorld kokkosHelloWorld.cpp)
   make_exe(kokkosFor kokkosFor.cpp)
   make_exe(bfsSearch bfsSearch.cpp)
+endif()
+
+if (ENGPAR_FORTRAN_INTERFACE)
+  make_exe(ftnTest ftnTest.f90)
 endif()
 
 #Ctest file

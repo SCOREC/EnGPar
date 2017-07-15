@@ -48,6 +48,14 @@ else()
   find_package(SCOREC 2.1.0 REQUIRED COMPONENTS pcu CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
 endif()
 
+option(ENGPAR_FORTRAN_INTERFACE "enable fortran interface" OFF)
+message(STATUS "ENGPAR_FORTRAN_INTERFACE: ${ENGPAR_FORTRAN_INTERFACE}")
+if(ENGPAR_FORTRAN_INTERFACE)
+  enable_language(Fortran)
+  set(CMAKE_Fortran_MODULE_DIRECTORY ${CMAKE_BINARY_DIR}/mod_files)
+  install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION include)
+endif()
+
 if (ENABLE_KOKKOS)
   find_package(Kokkos MODULE REQUIRED)
   add_definitions(-DKOKKOS_ENABLED)
@@ -66,7 +74,6 @@ macro(engpar_export_lib target headers)
   install(FILES ${headers} DESTINATION include)
 endmacro(engpar_export_lib)
 
-
 add_subdirectory(support)
 
 add_subdirectory(agi)
@@ -76,5 +83,9 @@ add_subdirectory(zoltan)
 add_subdirectory(partition)
 
 add_subdirectory(interfaces)
+
+if(ENGPAR_FORTRAN_INTERFACE)
+  add_subdirectory(ftn)
+endif()
 
 add_subdirectory(test)
