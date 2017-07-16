@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <map>
 #include <cassert>
+#include <stdexcept>
 #include "agi.h"
 
 

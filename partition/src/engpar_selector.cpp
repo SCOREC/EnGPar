@@ -174,12 +174,11 @@ namespace engpar {
       incoming.insert(migr);        
     }
     Midd accept;
-    Ws totW;
-    Ws avail;
+    Ws avail = new double[completed_dimensions->size()];
     bool isAvail=true;
     for (unsigned int i=0;i<completed_dimensions->size();i++) {
-      totW[i] = getWeight(g,completed_dimensions->at(i));
-      avail[i] = completed_weights->at(i) - totW[i];
+      double totW = getWeight(g,completed_dimensions->at(i));
+      avail[i] = completed_weights->at(i) - totW;
       if (avail[i]<0)
         isAvail=false;
     }
@@ -192,6 +191,8 @@ namespace engpar {
         for (unsigned int i=0;i<completed_dimensions->size();i++)
           if ((*in).ws[i] > avail[i])
             hasSpace=false;
+	if (accept.find(nbor)==accept.end())
+	  accept[nbor] = new double[completed_dimensions->size()];
         if( hasSpace ) {
           for (unsigned int i=0;i<completed_dimensions->size();i++) 
             isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
@@ -205,18 +206,24 @@ namespace engpar {
           accept[nbor][i] = 0;
       }
     }
-
+    delete [] avail;
     PCU_Comm_Begin();
-    Midd::iterator acc;
-    for (acc=accept.begin();acc!=accept.end();acc++)
+    Midd::iterator acc; 
+    for (acc=accept.begin();acc!=accept.end();acc++) {
       for (unsigned int i=0;i<completed_dimensions->size();i++) 
         PCU_COMM_PACK(acc->first, acc->second[i]);
+      delete [] acc->second;
+    }
     PCU_Comm_Send();
     Midd* capacity = new Midd;
     while (PCU_Comm_Receive()) {
+      int nbor = PCU_Comm_Sender();
+      if (capacity->find(nbor)==capacity->end())
+	capacity->insert(std::make_pair(nbor,
+					new double[completed_dimensions->size()]));
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
         PCU_COMM_UNPACK(w);
-        (*capacity)[PCU_Comm_Sender()][i] = w;
+        (*capacity)[nbor][i] = w;
       }
     }
     return capacity;
@@ -258,6 +265,10 @@ namespace engpar {
           combineSets(peerEdges[i][dest],tmpEdges[i]);
       }
       delete [] tmpEdges;
+    }
+    Midd::iterator acc; 
+    for (acc=capacity->begin();acc!=capacity->end();acc++) {
+      delete [] acc->second;
     }
     delete capacity;
     delete plan;

@@ -44,7 +44,7 @@ namespace agi {
   */
   void getAffected(Ngraph* g, Migration* plan, VertexVector& verts,
                    EdgeVector* edges) {
-    verts.reserve(plan->size());
+    //verts.reserve(plan->size());
     Migration::iterator itr;
     for (itr = plan->begin();itr!=plan->end();itr++) {
       GraphVertex* v = itr->first;
