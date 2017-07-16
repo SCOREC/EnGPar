@@ -3,7 +3,7 @@
 #include <set>
 #include <PCU.h>
 namespace engpar {
-  
+
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
                  Cavity& cav, Peers& peers) {
     agi::PinIterator* pitr = g->pins(edge);
@@ -129,8 +129,9 @@ namespace engpar {
     bool operator()(const Migr& a, const Migr& b) const {
       if( a.ws[0] < b.ws[0] )
         return true;
-      else
-        return false;
+      if (a.ws[0]==b.ws[0])
+        return a.id<b.id;
+      return false;
     }
   };
   typedef std::set<Migr,CompareMigr> MigrComm;
@@ -191,8 +192,7 @@ namespace engpar {
         for (unsigned int i=0;i<completed_dimensions->size();i++)
           if ((*in).ws[i] > avail[i])
             hasSpace=false;
-	if (accept.find(nbor)==accept.end())
-	  accept[nbor] = new double[completed_dimensions->size()];
+        accept[nbor] = new double[completed_dimensions->size()];
         if( hasSpace ) {
           for (unsigned int i=0;i<completed_dimensions->size();i++) 
             isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
@@ -202,10 +202,12 @@ namespace engpar {
             isAvail = (avail[i] -=accept[nbor][i] = avail[i])>0;
         }
       } else {
+        accept[nbor] = new double[completed_dimensions->size()];        
         for (unsigned int i=0;i<completed_dimensions->size();i++)
           accept[nbor][i] = 0;
       }
     }
+    PCU_Barrier();
     delete [] avail;
     PCU_Comm_Begin();
     Midd::iterator acc; 
@@ -218,9 +220,8 @@ namespace engpar {
     Midd* capacity = new Midd;
     while (PCU_Comm_Receive()) {
       int nbor = PCU_Comm_Sender();
-      if (capacity->find(nbor)==capacity->end())
-	capacity->insert(std::make_pair(nbor,
-					new double[completed_dimensions->size()]));
+      capacity->insert(std::make_pair(nbor,
+                                      new double[completed_dimensions->size()]));
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
         PCU_COMM_UNPACK(w);
         (*capacity)[nbor][i] = w;
@@ -235,6 +236,7 @@ namespace engpar {
       edges.insert(*itr);
     
   }
+  
 
   void Selector::cancel(agi::Migration*& plan, Midd* capacity) {
     typedef std::pair<agi::GraphVertex*, int> PlanPair;

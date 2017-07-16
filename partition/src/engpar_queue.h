@@ -3,4 +3,5 @@
 
 namespace engpar {
   Queue* createIterationQueue(agi::Ngraph* g);
+  Queue* createDistanceQueue(agi::Ngraph* g);
 }
