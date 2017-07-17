@@ -64,6 +64,7 @@ namespace engpar {
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       planW += selector->select(targets,plan,planW,cavSize,target_dimension);
     }
+    
     if (completed_dimensions.size()>0) {
       int sizes[2];
       sizes[0] = plan->size();
