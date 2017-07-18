@@ -2,5 +2,6 @@
 #include "../engpar.h"
 
 namespace engpar {
-  Queue* createIterationQueue(agi::Ngraph* g);
+  Queue* createIterationQueue(agi::Ngraph*);
+  Queue* createDistanceQueue(agi::Ngraph*);
 }

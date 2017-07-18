@@ -56,7 +56,13 @@ namespace engpar {
         
     if (verbosity>=2)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
-    Queue* pq = createIterationQueue(input->g);
+    Queue* pq;
+    if (input->useDistanceQueue) {
+      pq = createDistanceQueue(input->g);
+      return false;
+    }
+    else 
+      pq = createIterationQueue(input->g);
     Selector* selector = makeSelector(input,pq,&completed_dimensions,
                                       &completed_weights);
     agi::Migration* plan = new agi::Migration;
@@ -64,7 +70,6 @@ namespace engpar {
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       planW += selector->select(targets,plan,planW,cavSize,target_dimension);
     }
-    
     if (completed_dimensions.size()>0) {
       int sizes[2];
       sizes[0] = plan->size();

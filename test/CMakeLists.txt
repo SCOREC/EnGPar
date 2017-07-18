@@ -57,6 +57,7 @@ make_exe(splitCommunicator splitCommunicator.cpp)
 
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 
+make_exe(testDistanceQueue testDistanceQueue.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
 make_exe(balance balance.cpp)
 

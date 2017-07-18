@@ -111,6 +111,11 @@ mpi_test(testEdgeTree 2
 
 #Diffusive Load Balancing Tests
 
+mpi_test(testDistanceQueueSerial 1
+  ./testDistanceQueue)
+mpi_test(testDistanceQueueParallel 4
+  ./testDistanceQueue)
+
 mpi_test(vtxBalanceCube 4
   ./vtxBalance
   "${GRAPHS}/cube/4/"

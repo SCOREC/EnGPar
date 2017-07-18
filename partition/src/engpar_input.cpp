@@ -10,6 +10,7 @@ Input::Input(agi::Ngraph* g_) {
   sides_edge_type = 0;
   selection_edge_type = 0;
   countGhosts =false;
+  useDistanceQueue = false;
 }
 
 }

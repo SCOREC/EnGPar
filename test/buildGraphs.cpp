@@ -222,3 +222,39 @@ agi::Ngraph* buildHyperGraphParts() {
   return graph;
 }
 
+
+agi::Ngraph* buildHyperGraphLine() {
+  agi::Ngraph* g  = agi::createEmptyGraph();
+  agi::lid_t local_verts = 4;
+  std::vector<agi::gid_t> verts;
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  if (PCU_Comm_Self()) {
+    edges.push_back(local_verts*PCU_Comm_Self()-1);
+    degrees.push_back(2);
+    pins.push_back(local_verts*PCU_Comm_Self()-1);
+    pins.push_back(local_verts*PCU_Comm_Self());
+    owners[local_verts*PCU_Comm_Self()-1]=PCU_Comm_Self()-1;
+    printf("Ghost vertex: %lu\n",local_verts*PCU_Comm_Self()-1);
+  }
+  for (agi::gid_t i=0;i<local_verts;i++) {
+    int vert = local_verts*PCU_Comm_Self()+i;
+    verts.push_back(vert);
+    if (i==local_verts-1&&PCU_Comm_Self()==PCU_Comm_Peers()-1)
+      continue;
+    edges.push_back(vert);
+    degrees.push_back(2);
+    pins.push_back(vert);
+    pins.push_back(vert+1);
+    if (i==local_verts-1) {
+      owners[vert+1]=PCU_Comm_Self()+1;
+      printf("Ghost vertex: %d\n",vert+1);
+    }
+  }
+  std::vector<agi::wgt_t> weights;
+  g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
+  g->setEdgeWeights(weights,0);
+  return g;
+}

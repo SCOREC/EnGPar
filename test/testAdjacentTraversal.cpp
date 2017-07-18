@@ -19,7 +19,6 @@ int main(int argc, char* argv[]) {
   //Construct Ngraph with edges over mesh faces
   agi::Ngraph* g = agi::createEmptyGraph();
   g->loadFromFile(argv[1]);
-  //  agi::Ngraph* g = agi::createAPFGraph(m,3,2);
 
   //run the adjacency test
   testAdjacent(g);

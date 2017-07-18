@@ -57,6 +57,12 @@ namespace engpar {
      * defaults to false
      */
     bool countGhosts;
+
+    /** \brief If the distance based iteration queue should be used
+     *
+     * defaults to false (for now)
+     */
+    bool useDistanceQueue;
   };
     
 }
