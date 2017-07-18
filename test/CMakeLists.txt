@@ -82,6 +82,7 @@ endif()
 if (ENGPAR_FORTRAN_INTERFACE)
   make_exe(ftnTest ftnTest.f90)
   set_property(TARGET ftnTest PROPERTY LINKER_LANGUAGE Fortran)
+  set_source_files_properties(ftnTest.f90 PROPERTIES COMPILE_FLAGS -cpp)
 endif()
 
 #Ctest file
