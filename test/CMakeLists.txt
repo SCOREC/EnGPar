@@ -24,6 +24,7 @@ include_directories(
 
 set(ALL_LIBS
   ${ALL_LIBS}
+  engpar_ftn
   engpar_support
   agi
   interfaces
