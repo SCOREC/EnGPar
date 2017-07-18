@@ -4,9 +4,10 @@ program main
   include 'mpif.h'
 
   integer :: ierr
-  call MPI_INIT(ierr)
+  call mpi_init(ierr)
   call cengpar_initialize()
-  write (*,'(a)' ) 'Hello world!'
-
+  write (*,'(a)' ) 'Hello EnGPar!'
+  call cengpar_finalize()
+  call mpi_finalize(ierr)
   stop
 end
