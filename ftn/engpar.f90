@@ -13,6 +13,11 @@ module engpar
     use :: iso_c_binding
     integer(c_int), value :: comm
   end subroutine
+  function cengpar_createEmptyGraph() &
+             bind(C, NAME='cengpar_createEmptyGraph')
+    use :: iso_c_binding
+    type(c_ptr) cengpar_createEmptyGraph
+  end function
   end interface
 end module
 

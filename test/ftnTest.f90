@@ -13,6 +13,9 @@ program main
   call cengpar_setftncommunicator(MPI_COMM_WORLD)
   write (*,'(a)' ) 'Hello EnGPar!'
   write (*,* ) sizeof(gid)
+  write (*, '(a,z8)' ) 'ftn pre graph', graph
+  graph = cengpar_createEmptyGraph()
+  write (*, '(a,z8)' ) 'ftn pre graph', graph
   call cengpar_finalize()
   call mpi_finalize(ierr)
   stop
