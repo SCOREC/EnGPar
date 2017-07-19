@@ -1,6 +1,6 @@
 #include "cengpar.h"
 #include "engpar_support.h"
-#include "../agi/ngraph.h"
+#include "ngraph.h"
 
 void cengpar_initialize() {
   EnGPar_Initialize();

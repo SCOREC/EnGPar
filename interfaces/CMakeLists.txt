@@ -12,10 +12,12 @@ set(DEP_LIBS agi)
 
 set(INTERFACE_SOURCES
   binGraph.cpp
+  cengpar.cpp
   )
 
 set(INTERFACE_HEADERS
   binGraph.h
+  cengpar.h
   )
 
 if(ENABLE_PUMI)
