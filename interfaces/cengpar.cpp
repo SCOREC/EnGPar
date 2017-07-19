@@ -59,3 +59,8 @@ void cengpar_checkValidity(ngraph g) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   agi::checkValidity(ng);
 }
+
+void cengpar_destroyGraph(ngraph g) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  agi::destroyGraph(ng);
+}

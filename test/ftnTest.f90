@@ -33,6 +33,7 @@ program main
   call cengpar_constructEdges(graph, edges, degs, pins, nedges, npins)
   call cengpar_constructGhosts(graph, ghostverts, ghostowners, nghosts)
   call cengpar_checkValidity(graph);
+  call cengpar_destroyGraph(graph);
   call cengpar_finalize()
   call mpi_finalize(ierr)
   stop

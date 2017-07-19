@@ -51,5 +51,10 @@ module engpar
     use :: iso_c_binding
     type(c_ptr), value :: graph
   end subroutine
+  subroutine cengpar_destroyGraph(graph) &
+             bind(C, NAME='cengpar_destroyGraph')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+  end subroutine
   end interface
 end module

@@ -21,6 +21,7 @@ void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
 void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,
     int nghosts);
 void cengpar_checkValidity(ngraph g);
+void cengpar_destroyGraph(ngraph g);
 #ifdef __cplusplus
 }
 #endif
