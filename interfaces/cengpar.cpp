@@ -54,3 +54,8 @@ void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,
     ghosts[verts[i]] = owners[i];
   ng->constructGhosts(ghosts);
 }
+
+void cengpar_checkValidity(ngraph g) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  agi::checkValidity(ng);
+}

@@ -27,11 +27,12 @@ program main
   verts = (/ 0, 1 /)
   weights = (/ 1.0, 1.0 /)
   edges = (/ 0 /)
-  degs = (/ 1 /)
+  degs = (/ 2 /)
   pins = (/ 0, 1 /)
   call cengpar_constructVerts(graph, isHg, verts, weights, nverts)
   call cengpar_constructEdges(graph, edges, degs, pins, nedges, npins)
   call cengpar_constructGhosts(graph, ghostverts, ghostowners, nghosts)
+  call cengpar_checkValidity(graph);
   call cengpar_finalize()
   call mpi_finalize(ierr)
   stop

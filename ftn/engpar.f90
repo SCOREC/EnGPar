@@ -46,6 +46,10 @@ module engpar
     integer(AGI_PART_FT), intent(in), dimension(nghosts) :: owners
     integer(C_INT), intent(in), value :: nghosts
   end subroutine
+  subroutine cengpar_checkValidity(graph) &
+             bind(C, NAME='cengpar_checkValidity')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+  end subroutine
   end interface
 end module
-

@@ -20,6 +20,7 @@ void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
     agi::lid_t* degs, agi::gid_t* pins, int nedges, int npins);
 void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,
     int nghosts);
+void cengpar_checkValidity(ngraph g);
 #ifdef __cplusplus
 }
 #endif
