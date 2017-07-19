@@ -28,6 +28,16 @@ module engpar
     real(AGI_WGT_FT), intent(in), dimension(nverts) :: weights
     integer(C_INT), intent(in), value :: nverts
   end subroutine
+  subroutine cengpar_constructEdges(graph,edges,degs,pins,nedges,npins) &
+             bind(C, NAME='cengpar_constructEdges')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    integer(AGI_GID_FT), intent(in), dimension(nedges) :: edges
+    integer(AGI_LID_FT), intent(in), dimension(nedges) :: degs
+    integer(AGI_GID_FT), intent(in), dimension(npins) :: pins
+    integer(C_INT), intent(in), value :: nedges
+    integer(C_INT), intent(in), value :: npins
+  end subroutine
   end interface
 end module
 

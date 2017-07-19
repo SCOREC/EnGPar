@@ -31,3 +31,15 @@ void cengpar_constructVerts(ngraph g, bool isHg,
   std::vector<agi::wgt_t> w(weights, weights + nverts);
   ng->constructVerts(isHg,v,w);
 }
+
+void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
+    agi::lid_t* degs, agi::gid_t* pins, int nedges, int npins) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  fprintf(stderr, "ng %p\n", ng);
+  fprintf(stderr, "nedges %d\n", nedges);
+  fprintf(stderr, "npins %d\n", npins);
+  std::vector<agi::gid_t> e(edges, edges + nedges);
+  std::vector<agi::lid_t> d(degs, degs + nedges);
+  std::vector<agi::gid_t> p(pins, pins + npins);
+  ng->constructEdges(e,d,p);
+}
