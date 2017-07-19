@@ -6,6 +6,7 @@
 #include <stdint.h>
 #include <apfVector.h>
 #include <set>
+#include <unordered_map>
 #include "agi_types.h"
 //ID types
 //TODO: discuss what these should be?
