@@ -43,3 +43,14 @@ void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
   std::vector<agi::gid_t> p(pins, pins + npins);
   ng->constructEdges(e,d,p);
 }
+
+void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,
+    int nghosts) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  fprintf(stderr, "ng %p\n", ng);
+  fprintf(stderr, "nghosts %d\n", nghosts);
+  std::unordered_map<agi::gid_t,agi::part_t> ghosts;
+  for(int i=0; i<nghosts; i++)
+    ghosts[verts[i]] = owners[i];
+  ng->constructGhosts(ghosts);
+}

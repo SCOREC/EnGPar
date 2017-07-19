@@ -38,6 +38,14 @@ module engpar
     integer(C_INT), intent(in), value :: nedges
     integer(C_INT), intent(in), value :: npins
   end subroutine
+  subroutine cengpar_constructGhosts(graph,verts,owners,nghosts) &
+             bind(C, NAME='cengpar_constructGhosts')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    integer(AGI_GID_FT), intent(in), dimension(nghosts) :: verts
+    integer(AGI_PART_FT), intent(in), dimension(nghosts) :: owners
+    integer(C_INT), intent(in), value :: nghosts
+  end subroutine
   end interface
 end module
 
