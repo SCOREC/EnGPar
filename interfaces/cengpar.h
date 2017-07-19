@@ -22,6 +22,9 @@ void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,
     int nghosts);
 void cengpar_checkValidity(ngraph g);
 void cengpar_destroyGraph(ngraph g);
+
+void cengpar_balanceVertices(ngraph g, double tol, double stepfactor,
+    int verbosity);
 #ifdef __cplusplus
 }
 #endif

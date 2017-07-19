@@ -15,6 +15,8 @@ program main
   integer(AGI_PART_FT) :: ghostowners(nghosts)
   type(c_ptr) :: graph
   logical(C_BOOL) :: isHg = .false.
+  real(C_DOUBLE) :: tol, stepfactor
+  integer :: verbosity
   call mpi_init(ierr)
   call mpi_comm_rank(MPI_COMM_WORLD, self, ierr)
   call cengpar_initialize()
@@ -33,6 +35,10 @@ program main
   call cengpar_constructEdges(graph, edges, degs, pins, nedges, npins)
   call cengpar_constructGhosts(graph, ghostverts, ghostowners, nghosts)
   call cengpar_checkValidity(graph);
+  tol = 1.05
+  stepfactor = 0.1
+  verbosity = 1
+  call cengpar_balanceVertices(graph, tol, stepfactor, verbosity);
   call cengpar_destroyGraph(graph);
   call cengpar_finalize()
   call mpi_finalize(ierr)

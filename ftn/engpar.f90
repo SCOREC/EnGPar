@@ -56,5 +56,12 @@ module engpar
     use :: iso_c_binding
     type(c_ptr), value :: graph
   end subroutine
+  subroutine cengpar_balanceVertices(graph,tol,stepfactor,verbosity) &
+             bind(C, NAME='cengpar_balanceVertices')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    real(C_DOUBLE), intent(in), value :: tol, stepfactor
+    integer(C_INT), intent(in), value :: verbosity
+  end subroutine
   end interface
 end module

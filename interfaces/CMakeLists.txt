@@ -3,6 +3,7 @@ project(interfaces)
 
 
 set(INTERFACE_INCLUDE_DIRS
+  ../partition
   ../support
   ../agi
   )
