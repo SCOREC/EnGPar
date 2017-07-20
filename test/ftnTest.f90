@@ -11,7 +11,7 @@ program main
   integer(AGI_LID_FT) :: degs(nedges)
   real(AGI_WGT_FT) :: weights(nverts)
   integer(AGI_GID_FT) :: ghostverts(nghosts)
-  integer(AGI_PART_FT) :: ghostowners(nghosts)
+  integer(AGI_PART_FT) :: ghostowners(nghosts), parts(nverts)
   type(c_ptr) :: graph
   logical(C_BOOL) :: isHg = .false.
   real(C_DOUBLE) :: tol, stepfactor
@@ -34,6 +34,7 @@ program main
   stepfactor = 0.1
   verbosity = 1
   call cengpar_balanceVertices(graph, tol, stepfactor, verbosity);
+  call cengpar_getPartition(graph, verts, parts, nverts)
   call cengpar_destroyGraph(graph);
   call cengpar_finalize()
   call mpi_finalize(ierr)

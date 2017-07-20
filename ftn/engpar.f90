@@ -63,5 +63,13 @@ module engpar
     real(C_DOUBLE), intent(in), value :: tol, stepfactor
     integer(C_INT), intent(in), value :: verbosity
   end subroutine
+  subroutine cengpar_getPartition(graph,verts,parts,nverts) &
+             bind(C, NAME='cengpar_getPartition')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    integer(AGI_GID_FT), intent(in), dimension(nverts) :: verts
+    integer(AGI_PART_FT), intent(in), dimension(nverts) :: parts
+    integer(C_INT), intent(in), value :: nverts
+  end subroutine
   end interface
 end module

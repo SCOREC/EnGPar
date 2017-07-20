@@ -31,6 +31,9 @@ void cengpar_checkValidity(ngraph g);
 
 void cengpar_balanceVertices(ngraph g, double tol,
     double stepfactor, int verbosity);
+
+void cengpar_getPartition(ngraph g, agi::gid_t* verts,
+    agi::part_t* parts, int nverts);
 #ifdef __cplusplus
 }
 #endif
