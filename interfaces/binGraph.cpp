@@ -238,7 +238,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
   int32_t total_send = sdispls[PCU_Comm_Peers()-1] + scounts[PCU_Comm_Peers()-1];
   int32_t total_recv = rdispls[PCU_Comm_Peers()-1] + rcounts[PCU_Comm_Peers()-1];
   uint64_t* sendbuf = (uint64_t*)malloc(total_send*sizeof(uint64_t));
-  edge_list[t] = (uint64_t*)malloc(total_recv*sizeof(uint64_t));
+  edge_list[t] = (lid_t*)malloc(total_recv*sizeof(lid_t));
   num_local_edges[t] = total_recv / 2;
   num_local_pins[t] = 2*num_local_edges[t];
 
@@ -325,7 +325,7 @@ int binGraph::exchange_edges(uint64_t m_read, uint64_t* read_edges,
     }
     num_ghost_verts = cur_label - num_local_verts;
     if (num_ghost_verts>0) {
-      ghost_unmap = (uint64_t*)malloc(num_ghost_verts*sizeof(uint64_t));
+      ghost_unmap = (gid_t*)malloc(num_ghost_verts*sizeof(gid_t));
       owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
       for (uint64_t i = 0; i < nonlocal_vids.size(); ++i) {
         ghost_unmap[i] = nonlocal_vids[i];

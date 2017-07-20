@@ -6,14 +6,16 @@
 #include <stdint.h>
 #include <apfVector.h>
 #include <set>
+#include <unordered_map>
+#include "agi_types.h"
 //ID types
 //TODO: discuss what these should be?
 namespace agi {
   
-  typedef uint64_t gid_t;
-  typedef uint64_t lid_t;
-  typedef double wgt_t;
-  typedef int32_t part_t;
+  typedef AGI_GID_T gid_t;
+  typedef AGI_LID_T lid_t;
+  typedef AGI_WGT_T wgt_t;
+  typedef AGI_PART_T part_t;
   typedef double coord_t[3];
 
   typedef std::set<part_t> Peers;
