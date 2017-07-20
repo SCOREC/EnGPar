@@ -175,5 +175,5 @@ if (ENABLE_KOKKOS)
 endif()
 
 if(ENGPAR_FORTRAN_INTERFACE)
-  mpi_test(ftnTest 1 ./ftnTest)
+  mpi_test(ftnTest 2 ./ftnTest)
 endif()
