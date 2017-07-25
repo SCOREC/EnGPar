@@ -66,6 +66,7 @@ make_exe(vtxBalance vtxBalance.cpp)
 make_exe(balance balance.cpp)
 
 if (ENABLE_PUMI)
+  make_exe(render render.cpp)
   make_exe(testFileIO testFileIO.cpp)
   make_exe(buildMeshGraph buildMeshGraph.cpp)
 endif()

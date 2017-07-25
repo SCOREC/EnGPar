@@ -22,6 +22,17 @@ const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
   }
   return local_weights[index];
 }
+bool Ngraph::hasCoords() const {
+  return local_coords!=NULL;
+}
+
+void Ngraph::setCoords(coord_t* cs) {
+  local_coords = new coord_t[num_local_verts];
+  for (lid_t i=0;i<num_local_verts;i++)
+    for (int j=0;j<3;j++)
+      local_coords[i][j] = cs[i][j];
+}
+  
 const coord_t& Ngraph::coord(GraphVertex* vtx) const {
   uintptr_t index = (uintptr_t)(vtx)-1;
   if (index>=numTotalVtxs()){

@@ -87,7 +87,6 @@ namespace agi {
         local_weights[i] = wgts[i];
       else
         local_weights[i] = 1;
-      //set local coords
     }
 
     num_ghost_verts=0;

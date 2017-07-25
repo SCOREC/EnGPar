@@ -14,6 +14,7 @@ set(AGI_SOURCES
   agiMigrate.cpp
   agiIO.cpp
   agiValid.cpp
+  agiVTK.cpp
   )
 
 set(AGI_HEADERS

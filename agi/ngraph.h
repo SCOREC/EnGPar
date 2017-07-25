@@ -135,11 +135,19 @@ public:
    * \return the weight
    */
   const wgt_t& weight(GraphVertex* vtx) const;
+  /** \brief Returns true if coordinates are attached to the vertices.
+   * \return whether coordinates are provided or not.
+   */
+  bool hasCoords() const;
   /** \brief Returns the coordinates of a vertex
    * \param vtx the graph vertex
    * \return the coordinate
    */
   const coord_t& coord(GraphVertex* vtx) const;
+  /** \brief Set the coordinates of the vertices
+   * \param cs an array of 3-D coordinates of size numLocalVtxs()
+   */
+  void setCoords(coord_t* cs);
   /** \brief Returns the owner of a vertex
    * \param vtx the graph vertex
    * \return the part id of the owner
@@ -476,6 +484,7 @@ void destroyGraph(Ngraph* g);
  */
 bool checkValidity(Ngraph* g);
 
+ void writeVTK(Ngraph* g,const char* prefix,GraphTag* tag=NULL,etype t=NO_TYPE);
  
 } //namespace
 
