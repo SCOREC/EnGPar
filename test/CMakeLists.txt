@@ -54,6 +54,7 @@ make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(testMigration testMigration.cpp)
 make_exe(testTags testTags.cpp)
 make_exe(splitCommunicator splitCommunicator.cpp)
+make_exe(render render.cpp)
 
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 
