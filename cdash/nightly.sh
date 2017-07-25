@@ -20,7 +20,7 @@ buildDir=/lore/diamog/cdash/build/master/
 cd $buildDir
 make doc
 if [ -d "$PWD/doc/html" ]; then
-    docsdir=/net/web/engpar
-    rm -rf $docsdir
-    cp -r doc/html $docsdir
+    docsdir=/net/web/engpar/
+    rm -r $docsdir/*
+    cp -r doc/html/* $docsdir
 fi
