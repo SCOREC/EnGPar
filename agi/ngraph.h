@@ -476,7 +476,7 @@ void destroyGraph(Ngraph* g);
  */
 bool checkValidity(Ngraph* g);
 
-void writeVTK(Ngraph* g,const char* prefix);
+ void writeVTK(Ngraph* g,const char* prefix,GraphTag* tag=NULL,etype t=NO_TYPE);
  
 } //namespace
 

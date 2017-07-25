@@ -10,13 +10,10 @@ namespace agi {
     //Write the position of each vertex
     agi::GraphVertex* v;
     agi::VertexIterator* vitr = g->begin();
-    int i=0;
     while ((v=g->iterate(vitr))) {
       const coord_t& c = g->coord(v);
       fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
-      i++;
     }
-    printf("%d\n",i);
     //Write the position of each edge
     agi::GraphEdge* e;
     agi::EdgeIterator* eitr = g->begin(0);
@@ -30,7 +27,6 @@ namespace agi {
       g->destroy(pitr);
       c[0]/=g->degree(e);c[1]/=g->degree(e);c[2]/=g->degree(e);
       fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
-      i++;
     }
     g->destroy(eitr);
     fprintf(f,"\n</DataArray>\n</Points>\n");
@@ -58,7 +54,7 @@ namespace agi {
     
     fprintf(f,"\n</DataArray>\n</Cells>\n");
   }
-  void writePointData(Ngraph* g, FILE* f) {
+  void writePointData(Ngraph* g, FILE* f, GraphTag* tag,etype t) {
     fprintf(f,"<PointData>\n");
     fprintf(f,"<DataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\">\n");
     agi::GraphVertex* v;
@@ -66,17 +62,37 @@ namespace agi {
     while ((v=g->iterate(vitr))) {
       fprintf(f,"0\n");
     }
-    //Write the position of each edge
     agi::GraphEdge* e;
     agi::EdgeIterator* eitr = g->begin(0);
     while ((e=g->iterate(eitr))) {
       fprintf(f,"1\n");
     }
     g->destroy(eitr);
-    fprintf(f,"\n</DataArray>\n");
-    fprintf(f,"\n</PointData>\n");
+    fprintf(f,"</DataArray>\n");
+    if (tag!=NULL&&t!=NO_TYPE) {
+      fprintf(f,"<DataArray type=\"Int32\" Name=\"Tag\" NumberOfComponents=\"1\" format=\"ascii\">\n");
+      agi::GraphVertex* v;
+      agi::VertexIterator* vitr = g->begin();
+      while ((v=g->iterate(vitr))) {
+        if (t==VTX_TYPE)
+          fprintf(f,"%d\n",g->getIntTag(tag,v));
+        else
+          fprintf(f,"-1\n");
+      }
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->begin(0);
+      while ((e=g->iterate(eitr))) {
+        if (t==0)
+          fprintf(f,"%d\n",g->getIntTag(tag,e));
+        else
+          fprintf(f,"-1\n");
+      }
+      g->destroy(eitr);
+      fprintf(f,"</DataArray>\n");
+    }
+    fprintf(f,"</PointData>\n");
   }
-  void writeVTK(Ngraph* g, const char* prefix) {
+  void writeVTK(Ngraph* g, const char* prefix,GraphTag* tag,etype t) {
     char filename[256];
     sprintf(filename,"%s.vtu",prefix);
     FILE* f = fopen(filename,"w");
@@ -84,10 +100,9 @@ namespace agi {
     fprintf(f,"<UnstructuredGrid>\n");
     fprintf(f,"<Piece NumberOfPoints=\"%lu\" NumberOfCells=\"%lu\">\n",
             g->numLocalVtxs()+g->numLocalEdges(),g->numLocalPins());
-    //writeCellData
     writePoints(g,f);
     writeCells(g,f);
-    writePointData(g,f);
+    writePointData(g,f,tag,t);
     fprintf(f,"</Piece>\n");
     fprintf(f,"</UnstructuredGrid>\n");
     fprintf(f,"</VTKFile>\n");

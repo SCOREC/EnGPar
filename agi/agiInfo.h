@@ -4,7 +4,7 @@ namespace agi {
   /*This class allows creating an array on each process to store
     some kind of data on either vertices or edges in the graph
 
-    Note: Currently there is not error checking for passing in something
+    Note: Currently there is no error checking for passing in something
           that doesnt correspond to this tag or if looking at garbage
    */
   class Info {

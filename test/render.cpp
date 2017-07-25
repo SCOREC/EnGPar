@@ -36,13 +36,23 @@ int main(int argc, char* argv[]) {
     g = agi::createEmptyGraph();
     g->loadFromFile(argv[1]);
   }
-
+  
   //Ensure the graph is valid
   agi::checkValidity(g);
 
+  //Make some tag over edges
+  agi::GraphTag* tag = g->createIntTag(0);
+  agi::GraphEdge* e;
+  agi::EdgeIterator* eitr = g->begin(0);
+  int i=0;
+  while ((e=g->iterate(eitr))) {
+    g->setIntTag(tag,e,i++);
+  }
+  g->destroy(eitr);
+
   //Write the vtk files
   std::string filename = "cake";
-  agi::writeVTK(g,filename.c_str());
+  agi::writeVTK(g,filename.c_str(),tag,0);
   
   //Destroy graph
   agi::destroyGraph(g);
