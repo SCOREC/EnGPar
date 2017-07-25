@@ -95,6 +95,11 @@ void testVertices(agi::Ngraph* g1,agi::Ngraph* g2) {
     assert(g1->weight(vtx1)==g2->weight(vtx2));
     assert(g1->degree(vtx1,0)==g2->degree(vtx2,0));
     assert(i<=g1->numLocalVtxs());
+    if (g1->hasCoords()) {
+      assert(g2->hasCoords());
+      for (int i=0;i<3;i++)
+        assert(fabs(g1->coord(vtx1)[i]-g2->coord(vtx2)[i])<.0001);
+    }
   }
   assert(i==g1->numLocalVtxs());
 

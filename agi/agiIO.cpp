@@ -29,6 +29,21 @@ namespace agi {
       fwrite(&gid,sizeof(gid_t),1,f);
       fwrite(&w,sizeof(wgt_t),1,f);
     }
+    //Write the coordinates if they exist
+    if (g->hasCoords()) {
+      int one = 1;
+      fwrite(&one,sizeof(int),1,f);
+      agi::VertexIterator* itr = g->begin();
+      agi::GraphVertex* vtx;
+      while ((vtx = g->iterate(itr))) {
+        const coord_t& c = g->coord(vtx);
+        fwrite(c,sizeof(double),3,f);
+      }
+    }
+    else {
+      int zero = 0;
+      fwrite(&zero,sizeof(int),1,f);
+    }
   }
   void writeEdges(FILE* f,Ngraph* g,etype t,
                   std::unordered_map<gid_t,part_t>& owns) {
@@ -113,7 +128,7 @@ namespace agi {
     return isHG;
   }
   void readVertices(FILE* f, std::vector<gid_t>& verts,
-                    std::vector<wgt_t>& weights) {
+                    std::vector<wgt_t>& weights,coord_t*& cs) {
     lid_t nv;
     size_t s = fread(&nv,sizeof(lid_t),1,f);
     assert(s == 1);
@@ -125,6 +140,15 @@ namespace agi {
       verts.push_back(gid);
       weights.push_back(w);
     }
+    int hasC;
+    s = fread(&hasC,sizeof(int),1,f);
+    if (hasC==1) {
+      cs = new coord_t[nv];
+      for (lid_t i=0;i<nv;i++) {
+        s = fread(cs+i,sizeof(double),3,f);
+      }
+    }
+    
   }
   void readEdges(FILE* f,std::vector<gid_t>& edges, std::vector<wgt_t>& eWeights,
                  std::vector<lid_t>& degs, std::vector<gid_t>& pins2v, etype& t){
@@ -176,8 +200,11 @@ namespace agi {
     if (isHG) {}
     std::vector<gid_t> verts;
     std::vector<wgt_t> weights;
-    readVertices(file,verts,weights);
+    coord_t* cs = NULL;
+    readVertices(file,verts,weights,cs);
     constructVerts(isHG,verts,weights);
+    if (cs!=NULL)
+      setCoords(cs);
     int nt;
     size_t s = fread(&nt,sizeof(int),1,file);
     assert(s==1);
