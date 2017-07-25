@@ -54,7 +54,6 @@ make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(testMigration testMigration.cpp)
 make_exe(testTags testTags.cpp)
 make_exe(splitCommunicator splitCommunicator.cpp)
-make_exe(render render.cpp)
 
 make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 
@@ -63,6 +62,7 @@ make_exe(vtxBalance vtxBalance.cpp)
 make_exe(balance balance.cpp)
 
 if (ENABLE_PUMI)
+  make_exe(render render.cpp)
   make_exe(testFileIO testFileIO.cpp)
   make_exe(buildMeshGraph buildMeshGraph.cpp)
 endif()
