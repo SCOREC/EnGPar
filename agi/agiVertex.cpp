@@ -11,7 +11,7 @@
 namespace agi {
 
 const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
-  uintptr_t index = (uintptr_t)(vtx)-1;
+  lid_t index = (lid_t)(vtx)-1;
   if (index>=numTotalVtxs()){
     printf("[ERROR] invalid vertex given to weight(vtx)\n");
     throw 1;
@@ -34,7 +34,7 @@ void Ngraph::setCoords(coord_t* cs) {
 }
   
 const coord_t& Ngraph::coord(GraphVertex* vtx) const {
-  uintptr_t index = (uintptr_t)(vtx)-1;
+  lid_t index = (lid_t)(vtx)-1;
   if (index>=numTotalVtxs()){
     printf("[ERROR] invalid vertex given to coord(vtx)\n");
     throw 1;
@@ -48,7 +48,7 @@ const coord_t& Ngraph::coord(GraphVertex* vtx) const {
 
 
 int Ngraph::owner(GraphVertex* vtx) const {
-  uintptr_t index = (uintptr_t)(vtx)-1;
+  lid_t index = (lid_t)(vtx)-1;
   if (index>=num_local_verts+num_ghost_verts) {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
     return -1;
@@ -62,7 +62,7 @@ int Ngraph::owner(GraphVertex* vtx) const {
 
 part_t Ngraph::originalOwner(GraphVertex* vtx) const {
   assert(original_owners);
-  uintptr_t index = (uintptr_t)(vtx)-1;
+  lid_t index = (lid_t)(vtx)-1;
   if (index>=num_local_verts+num_ghost_verts) {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
     return -1;

@@ -68,7 +68,7 @@ void cengpar_getPartition(ngraph g, agi::gid_t* verts,
   agi::Ngraph* ng = (agi::Ngraph*)g;
   assert(ng);
   agi::PartitionMap* ptn = ng->getPartition();
-  assert( ptn->size() == nverts );
+  assert( (int)ptn->size() == nverts );
   agi::PartitionMap::iterator itr;
   int i=0;
   for (itr=ptn->begin();itr!=ptn->end();itr++) {

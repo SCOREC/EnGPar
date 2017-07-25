@@ -65,7 +65,7 @@ void testVertices(agi::Ngraph* g) {
     printf("Iterating over vertices\n");
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
-  size_t i=0;
+  int i=0;
   while ((vtx = g->iterate(gitr))) {
     i++;
     //assert(g->weight(vtx)==1.0);
@@ -104,7 +104,7 @@ void testEdges(agi::Ngraph* g) {
     g->destroy(eitr);
     assert(temp_count==deg);
   }
-  assert(ghosts.size()==g->numGhostVtxs());
+  assert((int)ghosts.size()==g->numGhostVtxs());
   assert(num_edges==g->numLocalEdges());
 
 }

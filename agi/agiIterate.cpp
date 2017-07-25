@@ -18,7 +18,7 @@ namespace agi {
   }
   
   GraphVertex* Ngraph::iterate(VertexIterator*& itr) const {
-    uintptr_t index = (uintptr_t)(itr);
+    lid_t index = (uintptr_t)(itr);
     if (index==num_local_verts+1)  {
       itr=NULL;
       return NULL;

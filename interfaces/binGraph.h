@@ -33,13 +33,13 @@ class binGraph : public Ngraph {
   // \endcond
  private:
   //Loads edges from binary file
-  etype load_edges(char* filename,uint64_t*& read_edges, uint64_t& m_read);
+  etype load_edges(char* filename,int64_t*& read_edges, int64_t& m_read);
   //Reads vertex owners from file
   int read_ranks(char* filename,int32_t* ranks);
   //Basic vertex block partitioning
   int vert_block_ranks(int32_t* ranks);
   //Exchanges the local edges to the correct processes
-  int exchange_edges(uint64_t m_read, uint64_t* read_edges,
+  int exchange_edges(int64_t m_read, int64_t* read_edges,
                      int32_t* ranks,etype t);
   //Creates the distributed csr
   int create_dist_csr(int32_t* ranks,etype t,bool createGhost = true);

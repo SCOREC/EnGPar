@@ -116,6 +116,6 @@ void compareTraversal(agi::Ngraph* g,agi::etype t) {
     }
     g->destroy(eitr);
   }
-  assert(i==vtxs.size());
-  assert(i==edges.size());
+  assert(i==(int)vtxs.size());
+  assert(i==(int)edges.size());
 }

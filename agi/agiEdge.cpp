@@ -112,7 +112,7 @@ namespace agi {
         edge_weights[t][i]=1;
       return;
     }
-    assert(wgts.size()==num_local_edges[t]);
+    assert((lid_t)wgts.size()==num_local_edges[t]);
     edge_weights[t] = new wgt_t[num_local_edges[t]];
     memcpy(edge_weights[t],&(wgts[0]),num_local_edges[t]*sizeof(wgt_t));
   }

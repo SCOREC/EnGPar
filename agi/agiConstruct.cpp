@@ -79,11 +79,11 @@ namespace agi {
     local_weights = new wgt_t[num_local_verts];
     local_coords = NULL;
     num_types = 0;
-    for (lid_t i=0;i<verts.size();i++) {
+    for (lid_t i=0;i<(lid_t)verts.size();i++) {
       local_unmap[i] = verts[i];
       vtx_mapping[verts[i]]=i;
       //set local_weights
-      if (wgts.size()>i)
+      if ((lid_t)wgts.size()>i)
         local_weights[i] = wgts[i];
       else
         local_weights[i] = 1;
@@ -117,7 +117,7 @@ namespace agi {
     pin_degree_list[t][0]=0;
     pin_list[t] = new lid_t[pins_to_verts.size()];
     lid_t new_ghosts=0;
-    for (lid_t i=0;i<edge_ids.size();i++) {
+    for (lid_t i=0;i<(lid_t)edge_ids.size();i++) {
       //set edge_weight
       gid_t gid = edge_ids[i];
       edge_mapping[t][gid]=i;
@@ -166,7 +166,7 @@ namespace agi {
         ghost_unmap = new gid_t[num_ghost_verts];
     }
   
-    for (lid_t i=0;i<edge_ids.size();i++) {
+    for (lid_t i=0;i<(lid_t)edge_ids.size();i++) {
       for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
         lid_t u = pin_list[t][j];
         if (u>=num_local_verts){

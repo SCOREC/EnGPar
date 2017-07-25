@@ -89,7 +89,7 @@ void testVertices(agi::Ngraph* g1,agi::Ngraph* g2) {
   agi::GraphVertex* vtx1=NULL;
   agi::VertexIterator* gitr2 = g2->begin();
   agi::GraphVertex* vtx2=NULL;
-  size_t i=0;
+  int i=0;
   while ((vtx1 = g1->iterate(gitr1))&&(vtx2 = g2->iterate(gitr2))) {
     i++;
     assert(g1->weight(vtx1)==g2->weight(vtx2));

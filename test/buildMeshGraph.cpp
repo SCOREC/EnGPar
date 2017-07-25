@@ -114,7 +114,7 @@ int main(int argc, char* argv[]) {
   return 0;
 }
 
-size_t getNumPins(apf::Mesh* m,int primary,int second) {
+agi::lid_t getNumPins(apf::Mesh* m,int primary,int second) {
   apf::MeshEntity* ent;
   apf::MeshIterator* itr = m->begin(second);
   size_t num_pins=0;
@@ -127,7 +127,7 @@ size_t getNumPins(apf::Mesh* m,int primary,int second) {
   return num_pins;
 }
 
-size_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
+agi::lid_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
   apf::MeshEntity* ent;
   apf::MeshIterator* itr = m->begin(primary);
   size_t num_edges=0;
@@ -147,15 +147,15 @@ size_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
 void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
   if (!PCU_Comm_Self())
     printf("Checking Sizes\n");
-  size_t num_verts = countOwned(m,primary);
-  size_t global_verts = countOwned(m,primary);
+  agi::lid_t num_verts = countOwned(m,primary);
+  agi::lid_t global_verts = countOwned(m,primary);
   global_verts = PCU_Add_Long(global_verts);
   assert(g->numLocalVtxs()==num_verts);
   assert(g->numGlobalVtxs()==global_verts);
 
   for (int i=0;i<n;i++) {
-    size_t num_edges = m->count(seconds[i]);
-    size_t global_edges = countOwned(m,seconds[i]);
+    agi::lid_t num_edges = m->count(seconds[i]);
+    agi::lid_t global_edges = countOwned(m,seconds[i]);
     global_edges = PCU_Add_Long(global_edges);
     assert(g->numLocalEdges(i)==num_edges);
     assert(g->numGlobalEdges(i)==global_edges);
@@ -203,7 +203,7 @@ void testVertices(apf::Mesh*,agi::Ngraph* g) {
   //Test iterating through vertices
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
-  size_t i=0;
+  agi::lid_t i=0;
   while ((vtx = g->iterate(gitr))) {
     i++;
     assert(g->weight(vtx)==1.0);
@@ -287,7 +287,7 @@ void testGhosts(apf::Mesh* m,agi::Ngraph* g, int primary, int* seconds, int n) {
       //Get the number of adjacent mesh primaries
       apf::Adjacent adj;
       m->getAdjacent(ent,primary,adj);
-      assert(owned_pins==adj.getSize());
+      assert(owned_pins==(agi::lid_t)adj.getSize());
       assert(owned_pins+ghost_pins == deg);
     }
     m->end(mitr);
