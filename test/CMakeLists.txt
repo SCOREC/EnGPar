@@ -22,9 +22,12 @@ include_directories(
   ${KOKKOS_INCLUDE_DIRS}
   )
 
+if(ENGPAR_FORTRAN_INTERFACE)
+  set(ALL_LIBS engpar_ftn)
+endif()
+
 set(ALL_LIBS
   ${ALL_LIBS}
-  engpar_ftn
   engpar_support
   agi
   interfaces
