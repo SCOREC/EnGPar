@@ -9,4 +9,7 @@ for the partitioning APIs.
 If you are partitioning an apf::Mesh then you can also look at agi::apfGraph which is an interface
 from apf::Mesh and agi::Ngraph.
 
+The FORTRAN module is documented in engpar.f90
+
 */
+

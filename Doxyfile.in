@@ -777,7 +777,8 @@ INPUT                  = \
 @CMAKE_CURRENT_SOURCE_DIR@/partition/engpar.h \
 @CMAKE_CURRENT_SOURCE_DIR@/interfaces/binGraph.h \
 @CMAKE_CURRENT_SOURCE_DIR@/interfaces/apfGraph.h \
-@CMAKE_CURRENT_SOURCE_DIR@/partition/engpar.h 
+@CMAKE_CURRENT_SOURCE_DIR@/partition/engpar.h \
+@CMAKE_CURRENT_SOURCE_DIR@/ftn/engpar.f90
 
 
 # This tag can be used to specify the character encoding of the source files
