@@ -13,4 +13,5 @@ agi::Ngraph* buildHyperGraphParts();
 
 agi::Ngraph* buildHyperGraphLine();
 
+agi::Ngraph* buildRequirementsGraph();
 #endif

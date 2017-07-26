@@ -258,3 +258,37 @@ agi::Ngraph* buildHyperGraphLine() {
   g->setEdgeWeights(weights,0);
   return g;
 }
+
+agi::Ngraph* buildRequirementsGraph() {
+  agi::Ngraph* g = agi::createEmptyGraph();
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  std::vector<agi::gid_t> verts;
+
+  verts.push_back(1);
+  verts.push_back(3);
+  verts.push_back(5);
+  verts.push_back(9);
+
+  edges.push_back(3);
+  edges.push_back(9);
+  edges.push_back(27);
+
+  degrees.push_back(0);
+  degrees.push_back(4);
+  degrees.push_back(2);
+
+  pins.push_back(1);
+  pins.push_back(3);
+  pins.push_back(5);
+  pins.push_back(9);
+  pins.push_back(1);
+  pins.push_back(1);
+  std::vector<agi::wgt_t> weights;
+  g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
+  g->setEdgeWeights(weights,0);
+  return g;
+
+}

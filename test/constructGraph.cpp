@@ -8,6 +8,7 @@ void testGraph();
 void testHyperGraph();
 void testGraphParts();
 void testHyperGraphParts();
+void testRequirements();
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
@@ -25,6 +26,10 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
 
   testHyperGraphParts();
+
+  PCU_Barrier();
+
+  testRequirements();
 
   PCU_Barrier();
 
@@ -314,4 +319,13 @@ void testHyperGraphParts() {
   }
   graph->destroy(eitr);
   agi::destroyGraph(graph);
+}
+
+
+void testRequirements() {
+  if (!PCU_Comm_Self())
+    printf("Testing Requirements Graph\n");  
+  agi::Ngraph* g = buildRequirementsGraph();
+  agi::checkValidity(g);
+  agi::destroyGraph(g);
 }
