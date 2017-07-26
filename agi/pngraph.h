@@ -11,6 +11,9 @@
 
 namespace agi {
 
+  class GraphVertex;
+  class GraphEdge;
+  
 class PNgraph {
  public:
     /** \brief A flag for if the hypergraph functionality is turned on
@@ -142,6 +145,14 @@ class PNgraph {
    * size = num_local_edges
    */
   gid_t* edge_unmap[MAX_TYPES];  
+
+  GraphVertex* getVertex(lid_t lid) {
+    return reinterpret_cast<GraphVertex*>((lid_t*)(lid+1));
+  }
+  GraphEdge* getEdge(lid_t lid,etype t) {
+    return reinterpret_cast<GraphEdge*>((lid_t*)(num_types*lid+t+1));
+  }
+  
 };
 
 }
