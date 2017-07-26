@@ -41,4 +41,6 @@ Visit [scorec.rpi.edu](http://scorec.rpi.edu/about_us.php) for more info.
 
 Cameron W. Smith [smithc11@rpi.edu](mailto:smithc11@rpi.edu)
 
+Gerrett Diamond [diamog@rpi.edu](mailto:diamog@rpi.edu)
+
 Mark S. Shephard [shephard@rpi.edu](mailto:shephard@rpi.edu)
