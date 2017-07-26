@@ -20,12 +20,18 @@ namespace agi {
     while ((e=g->iterate(eitr))) {
       coord_t c = {0,0,0};
       agi::PinIterator* pitr = g->pins(e);
+      int ghosts=0;
       while ((v = g->iterate(pitr))) {
+        if (g->owner(v)!=PCU_Comm_Self()){
+          ghosts++;
+          continue;
+        }
         const coord_t& cv = g->coord(v);
         c[0]+=cv[0];c[1]+=cv[1];c[2]+=cv[2];
       }
       g->destroy(pitr);
-      c[0]/=g->degree(e);c[1]/=g->degree(e);c[2]/=g->degree(e);
+      lid_t deg = g->degree(e)-ghosts;
+      c[0]/=deg;c[1]/=deg;c[2]/=deg;
       fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
     }
     g->destroy(eitr);
@@ -94,7 +100,7 @@ namespace agi {
   }
   void writeVTK(Ngraph* g, const char* prefix,GraphTag* tag,etype t) {
     char filename[256];
-    sprintf(filename,"%s.vtu",prefix);
+    sprintf(filename,"%s%d.vtu",prefix,PCU_Comm_Self());
     FILE* f = fopen(filename,"w");
     fprintf(f,"<VTKFile type=\"UnstructuredGrid\">\n");
     fprintf(f,"<UnstructuredGrid>\n");
