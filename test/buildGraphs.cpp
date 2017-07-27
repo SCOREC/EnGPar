@@ -292,3 +292,147 @@ agi::Ngraph* buildRequirementsGraph() {
   return g;
 
 }
+
+agi::Ngraph* buildDisconnected2Graph() {
+  //The graph is 2 parts where one has two vertices that have edges to 4 different components in the other part
+  //The core component is a line of 5 vertices, then there are two components with depth 2. One is a tree and the other is a line. The last component is a a line of 2
+  //The first part also has an island of vertices completely disconnected from the rest of the graph
+  assert(PCU_Comm_Peers()==2);
+
+  agi::Ngraph* g = agi::createEmptyGraph();
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  std::vector<agi::gid_t> verts;
+  agi::coord_t* cs;
+  if (PCU_Comm_Self()) {
+    cs = new agi::coord_t[5];
+    verts.push_back(-1);
+    for (int i=0;i<3;i++)
+      cs[0][i] = 0;
+    cs[0][1]=1;
+    verts.push_back(0);
+    for (int i=0;i<3;i++)
+      cs[1][i] = 0;
+    edges.push_back(0);
+    degrees.push_back(2);
+    pins.push_back(-1);
+    pins.push_back(0);
+    edges.push_back(100);
+    edges.push_back(200);
+    edges.push_back(300);
+    edges.push_back(400);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    degrees.push_back(2);
+    pins.push_back(0);
+    pins.push_back(100);
+    pins.push_back(0);
+    pins.push_back(200);
+    pins.push_back(0);
+    pins.push_back(300);
+    pins.push_back(0);
+    pins.push_back(400);
+    owners[100]=0;
+    owners[200]=0;
+    owners[300]=0;
+    owners[400]=0;
+
+    //Island of vertices
+    verts.push_back(1);
+    cs[2][0]=1;cs[2][1]=2;cs[2][2]=0;
+    verts.push_back(2);
+    cs[3][0]=1.5;cs[3][1]=2.5;cs[3][2]=0;
+    verts.push_back(3);
+    cs[4][0]=1.5;cs[4][1]=1.5;cs[4][2]=0;
+    edges.push_back(2);
+    degrees.push_back(3);
+    pins.push_back(1);
+    pins.push_back(2);
+    pins.push_back(3);
+  }
+  else {
+    cs = new agi::coord_t[17];
+    //Core Component, 5 vertices in a straight line
+    for (int i=100;i<105;i++) {
+      verts.push_back(i);
+      cs[i-100][0]=-.5*(i-99);cs[i-100][1]=0; cs[i-100][2]=0;
+      edges.push_back(i);
+      degrees.push_back(2);
+      pins.push_back(i);
+      if (i==100)
+        pins.push_back(0);
+      else
+        pins.push_back(i-1);
+    }
+    owners[0]=1;
+    
+    //Second Line component, 3 vertices in a straight line
+    for (int i=200;i<203;i++) {
+      verts.push_back(i);
+      int index = i-200+5;
+      cs[index][0]=.5*(i-199);cs[index][1]=0; cs[index][2]=0;
+      edges.push_back(i);
+      degrees.push_back(2);
+      pins.push_back(i);
+      if (i==200)
+        pins.push_back(0);
+      else
+        pins.push_back(i-1);
+    }
+    
+    /*Third component, tree
+     *  root is connected to part 1
+     *  depth=3
+     *  each non leaf vertex has 2 children
+     */
+    
+    verts.push_back(300);
+    int index=8;
+    cs[index][0] = 0; cs[index][1]=-.5; cs[index++][2]=0;
+    edges.push_back(300);
+    degrees.push_back(2);
+    pins.push_back(300);
+    pins.push_back(0);
+    for (int i=0;i<3;i++) {
+      int base = 300+i*2;
+      verts.push_back(base+1);
+      verts.push_back(base+2);
+      edges.push_back(300+i+1);
+      degrees.push_back(3);
+      pins.push_back(300+i);
+      pins.push_back(base+1);
+      pins.push_back(base+2);
+    }
+    cs[index][0] = -.5; cs[index][1]=-1; cs[index++][2]=0;
+    cs[index][0] = .5; cs[index][1]=-1; cs[index++][2]=0;
+    cs[index][0] = -.75; cs[index][1]=-2; cs[index++][2]=0;
+    cs[index][0] = -.25; cs[index][1]=-2; cs[index++][2]=0;
+    cs[index][0] = .25; cs[index][1]=-2; cs[index++][2]=0;
+    cs[index][0] = .75; cs[index][1]=-2; cs[index++][2]=0;
+
+    
+    //Last component, line of 2 vertices
+    for (int i=400;i<402;i++) {
+      verts.push_back(i);
+      int ind = i-400+15;
+      cs[ind][1]=-.5*(i-399);cs[ind][1]=.5*(i-399); cs[ind][2]=0;
+      edges.push_back(i);
+      degrees.push_back(2);
+      pins.push_back(i);
+      if (i==400)
+        pins.push_back(0);
+      else
+        pins.push_back(i-1);
+    }
+    
+  }
+  std::vector<agi::wgt_t> weights;
+  g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
+  g->setCoords(cs);
+  g->setEdgeWeights(weights,0);
+  return g;
+
+}

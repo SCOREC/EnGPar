@@ -31,7 +31,11 @@ namespace agi {
       }
       g->destroy(pitr);
       lid_t deg = g->degree(e)-ghosts;
-      c[0]/=deg;c[1]/=deg;c[2]/=deg;
+      for (int i=0;i<3;i++) {
+        if (deg==1)
+          c[i]+=.1;
+        c[i]/=deg;
+      }
       fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
     }
     g->destroy(eitr);
@@ -112,5 +116,6 @@ namespace agi {
     fprintf(f,"</Piece>\n");
     fprintf(f,"</UnstructuredGrid>\n");
     fprintf(f,"</VTKFile>\n");
+    fclose(f);
   }
 }

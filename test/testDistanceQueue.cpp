@@ -9,7 +9,10 @@ int main(int argc, char* argv[]) {
 
   agi::Ngraph* g;
   if (argc==1)
-    g = buildHyperGraphLine();
+    if (PCU_Comm_Peers()==2)
+      g = buildDisconnected2Graph();
+    else
+      g=buildHyperGraphLine();
   else {
     g = agi::createEmptyGraph();
     g->loadFromFile(argv[1]);
@@ -18,7 +21,7 @@ int main(int argc, char* argv[]) {
 
   engpar::Queue* q = engpar::createDistanceQueue(g);
   for (unsigned int i=0;i<q->size();i++)
-    printf("%lu\n",g->localID((*q)[i]));
+    printf("%d %lu\n",PCU_Comm_Self(),g->globalID((*q)[i]));
   delete q;
 
   agi::destroyGraph(g);

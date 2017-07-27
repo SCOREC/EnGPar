@@ -6,6 +6,7 @@
 #include <apfGraph.h>
 #include <apfMDS.h>
 #include <gmi_mesh.h>
+#include "buildGraphs.h"
 bool cmpebin(char* str) {
   return strlen(str)>4&&strcmp(str+strlen(str)-5,".ebin")==0;             
 }
@@ -15,8 +16,9 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Open_Log();
   
-  if ( argc!= 2 && argc!=3) {
+  if ( argc!=1 && argc!= 2 && argc!=3) {
     if ( !PCU_Comm_Self() ) {
+      printf("Usage: %s\n",argv[0]);
       printf("Usage: %s <graph>\n", argv[0]);
       printf("Usage: %s <bgd_prefix>\n", argv[0]);
       printf("Usage: %s <model> <mesh>\n", argv[0]);
@@ -25,7 +27,10 @@ int main(int argc, char* argv[]) {
     assert(false);
   }
   agi::Ngraph* g=NULL;
-  if (argc==3) {
+  if (argc==1) {
+    g = buildDisconnected2Graph();
+  }
+  else if (argc==3) {
     gmi_register_mesh();
     apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
     g= agi::createAPFGraph(m,3,2);
@@ -36,7 +41,7 @@ int main(int argc, char* argv[]) {
     g = agi::createEmptyGraph();
     g->loadFromFile(argv[1]);
   }
-  
+
   //Ensure the graph is valid
   agi::checkValidity(g);
 
