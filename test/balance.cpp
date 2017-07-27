@@ -46,8 +46,10 @@ int main(int argc, char* argv[]) {
   input->tolerances.push_back(1.1);
 
   input->step_factor=.1;
-
-  input->useDistanceQueue=true;
+  if (g->isHyper())
+    input->useDistanceQueue=true;
+  else
+    input->useDistanceQueue=false;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input);
   balancer->balance(1.1);

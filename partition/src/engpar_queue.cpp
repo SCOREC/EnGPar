@@ -208,18 +208,6 @@ namespace engpar {
       visited[i] = -1;
     }
     runBFS(pg,t,first_bfs,size,0,visited);
-    agi::GraphTag* tag = g->createIntTag(0);
-    agi::GraphEdge* edge;
-    agi::EdgeIterator* eitr = g->begin(0);
-    while ((edge=g->iterate(eitr))) {
-      agi::lid_t lid = g->localID(edge);
-      g->setIntTag(tag,edge,visited[lid]);
-    }
-    g->destroy(eitr);
-    if (g->hasCoords()) {
-      std::string filename = "first_bfs";
-      agi::writeVTK(g,filename.c_str(),tag,0);
-    }
     
     int* visited2 = new int[pg->num_local_edges[t]];
     agi::lid_t size2=0;
@@ -241,17 +229,6 @@ namespace engpar {
         ind--;
       }
       depth = runBFSDisjoint(pg,t,second_bfs,size2,start_seed,visited2,depth);
-    }
-    agi::GraphTag* tag2 = g->createIntTag(0);
-    eitr = g->begin(0);
-    while ((edge=g->iterate(eitr))) {
-      agi::lid_t lid = g->localID(edge);
-      g->setIntTag(tag2,edge,visited2[lid]);
-    }
-    g->destroy(eitr);
-    if (g->hasCoords()) {
-      std::string filename = "second_bfs";
-      agi::writeVTK(g,filename.c_str(),tag2,0);
     }
     delete [] visited;
     delete [] visited2;
