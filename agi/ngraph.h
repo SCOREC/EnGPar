@@ -462,6 +462,8 @@ public:
   void sendVertex(GraphVertex*, part_t);
   void recvVertex(std::vector<gid_t>&,std::vector<wgt_t>&,
                   std::vector<part_t>&);
+  void sendCoord(GraphVertex*, part_t);
+  void recvCoord(coord_t*,lid_t& size);
   void sendEdges(Migration*,std::unordered_set<GraphEdge*>&);
   void recvEdges(std::unordered_set<gid_t>&,std::vector<gid_t>&,
                  std::vector<wgt_t>&,std::vector<lid_t>&,

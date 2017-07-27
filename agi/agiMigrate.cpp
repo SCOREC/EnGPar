@@ -86,6 +86,19 @@ namespace agi {
       }
     }
   }
+  void addCoords(Ngraph* g,VertexVector& verts,coord_t* cs,lid_t& size) {
+    VertexIterator* vitr = g->begin();
+    GraphVertex* v;
+    while ((v = g->iterate(vitr))) {
+      if (verts.find(v)==verts.end()) {
+        const coord_t& c = g->coord(v);
+        for (int i=0;i<3;i++)
+          cs[size][i] = c[i];
+        size++;
+      }
+    }
+
+  }
   void addEdges(Ngraph* g, Migration* plan, std::vector<gid_t>& ownedEdges,
                 std::vector<wgt_t>& edgeWeights,
                 std::vector<lid_t>& degrees,std::vector<gid_t>& pins,
@@ -148,6 +161,18 @@ namespace agi {
     recv.push_back(gid);
     wgts.push_back(w);
     old_owners.push_back(old_owner);
+  }
+  void Ngraph::sendCoord(GraphVertex* vtx, part_t toSend) {
+    const coord_t& c = coord(vtx);
+    PCU_COMM_PACK(toSend,c[0]);
+    PCU_COMM_PACK(toSend,c[1]);
+    PCU_COMM_PACK(toSend,c[2]);
+  }
+  void Ngraph::recvCoord(coord_t* cs,lid_t& size) {
+    PCU_COMM_UNPACK(cs[size][0]);
+    PCU_COMM_UNPACK(cs[size][1]);
+    PCU_COMM_UNPACK(cs[size][2]);
+    size++;
   }
 
   void Ngraph::sendEdges(Migration* plan, EdgeVector& affectedEdges) {
@@ -289,6 +314,23 @@ namespace agi {
     while (PCU_Comm_Receive()) {
       recvVertex(ownedVerts,vertWeights,old_owners);
     }
+    //Send and recieve coordinates
+    coord_t* cs=NULL;
+    if (hasCoords()) {
+      lid_t size=0;
+      cs = new coord_t[ownedVerts.size()];
+      addCoords(this,affectedVerts,cs,size);
+      Migration::iterator itr;
+      PCU_Comm_Begin();
+      for (itr = plan->begin();itr!=plan->end();itr++) {
+        sendCoord(itr->first,itr->second);
+      }
+      PCU_Comm_Send();
+      while (PCU_Comm_Receive()) {
+        recvCoord(cs,size);
+      }
+      assert(size==(lid_t)ownedVerts.size());
+    }
     //Send and receive edges of each type
     for (etype t = 0;t < nt;t++) {
       PCU_Comm_Begin();
@@ -302,6 +344,8 @@ namespace agi {
     times[1]=PCU_Time();
     //Construct the migrated graph
     constructVerts(isHyperGraph,ownedVerts,vertWeights);
+    if (cs)
+      setCoords(cs);
     for (int i=0;i<nt;i++) {
       constructEdges(ownedEdges[i],degrees[i],pins[i]);
       setEdgeWeights(edgeWeights[i],i);
