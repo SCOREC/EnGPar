@@ -29,6 +29,10 @@ int main(int argc, char* argv[]) {
     g->loadFromFile(argv[1]);
   }
 
+  if (g->hasCoords()) {
+    std::string filename = "before";
+    agi::writeVTK(g,filename.c_str());
+  }
   engpar::evaluatePartition(g);
 
   engpar::Input* input = new engpar::Input(g);
@@ -42,7 +46,8 @@ int main(int argc, char* argv[]) {
   input->tolerances.push_back(1.1);
 
   input->step_factor=.1;
-  
+
+  input->useDistanceQueue=true;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input);
   balancer->balance(1.1);
@@ -53,7 +58,12 @@ int main(int argc, char* argv[]) {
 
   //Ensure the graph is still valid
   agi::checkValidity(g);
-  
+
+  if (g->hasCoords()) {
+    std::string filename = "after";
+    agi::writeVTK(g,filename.c_str());
+  }
+
   //Migration of original data structure
   if (argc>2) {
     g->getPartition();

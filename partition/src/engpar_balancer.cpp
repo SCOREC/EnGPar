@@ -59,7 +59,6 @@ namespace engpar {
     Queue* pq;
     if (input->useDistanceQueue) {
       pq = createDistanceQueue(input->g);
-      return false;
     }
     else 
       pq = createIterationQueue(input->g);
