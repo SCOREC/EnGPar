@@ -30,16 +30,19 @@ int main(int argc, char* argv[]) {
   //visualize the mesh before balancing
   apf::writeVtkFiles("pre", m);
 
+  double times[10];
+
+  times[0] = PCU_Time();
+  times[4] = PCU_Time();
   //Construct graph
-  if (argc==4) {
-    int edges[2] = {0,2};
-    g = agi::createAPFGraph(m,3,edges,2);
-  }
-  else
-    g=agi::createAPFGraph(m,3,0);
-     
+  int edges[2] = {0,2};
+  g = agi::createAPFGraph(m,3,edges,2);
+  times[0] = PCU_Time() - times[0];
+
   engpar::evaluatePartition(g);
 
+  times[1] = PCU_Time();
+  
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
   input->tolerances.push_back(1.1);
@@ -52,7 +55,7 @@ int main(int argc, char* argv[]) {
 
   input->step_factor=.1;
 
-  input->useDistanceQueue=false;
+  input->useDistanceQueue=true;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input);
   balancer->balance(1.1);
@@ -60,10 +63,13 @@ int main(int argc, char* argv[]) {
   engpar::evaluatePartition(g);
   //Destroy balancer
   delete balancer;
+  times[1] = PCU_Time() - times[1];
 
   //Ensure the graph is still valid
   agi::checkValidity(g);
-  
+
+  times[2] = PCU_Time();
+
   //Migration of original data structure
   //Only implemented for mesh
   agi::PartitionMap* map = g->getPartition();
@@ -83,6 +89,17 @@ int main(int argc, char* argv[]) {
   m->end(mitr);
   delete map;
   m->migrate(plan);
+
+  times[2] = PCU_Time() - times[2];
+  times[4] = PCU_Time() - times[4];
+  PCU_Max_Doubles(times,4);
+  
+  if (!PCU_Comm_Self()) {
+    printf("Total Time: %f\n",times[4]);
+    printf("Construct Time: %f\n",times[0]);
+    printf("Balancing Time: %f\n",times[1]);
+    printf("Repartition Time: %f\n",times[2]);
+  }
   
   //Destroy graph
   agi::destroyGraph(g);
