@@ -46,6 +46,8 @@ namespace engpar {
    * \param g The graph
    */
   void evaluatePartition(agi::Ngraph* g);
+
+  void printImbalances(agi::Ngraph* g);
   ///@}
 }
 #endif

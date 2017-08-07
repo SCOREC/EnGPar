@@ -29,6 +29,17 @@ namespace engpar {
     avg = total*1.0/PCU_Comm_Peers();
     return max*1.0/avg;
   }
+
+  void printImbalances(agi::Ngraph* g) {
+    for (agi::etype type = -1;type<g->numEdgeTypes();type++) {
+      agi::wgt_t w = getWeight(g,type);
+      double imb = EnGPar_Get_Imbalance(w);
+      if (!PCU_Comm_Self())
+        printf("%2.4f ",imb);
+    }
+    if (!PCU_Comm_Self())
+      printf("\n");
+  }
   
   void printMaxMinAvgImb(agi::gid_t my_val,std::string prefix) {
     agi::gid_t max,min,total;

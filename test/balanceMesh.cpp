@@ -8,6 +8,7 @@
 #include <engpar.h>
 #include <engpar_input.h>
 #include <binGraph.h>
+#include <parma.h>
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -26,21 +27,22 @@ int main(int argc, char* argv[]) {
   //Load mesh
   gmi_register_mesh();
   m = apf::loadMdsMesh(argv[1],argv[2]);
-
+  
+  Parma_PrintPtnStats(m,"before");
   //visualize the mesh before balancing
   apf::writeVtkFiles("pre", m);
 
   double times[10];
-
   times[0] = PCU_Time();
   times[4] = PCU_Time();
   //Construct graph
-  int edges[2] = {0,2};
-  g = agi::createAPFGraph(m,3,edges,2);
-  times[0] = PCU_Time() - times[0];
-
-  engpar::evaluatePartition(g);
-
+  if (argc==4) {
+    int edges[2] = {0,2};
+    g = agi::createAPFGraph(m,3,edges,2);
+  }
+  else
+    g = agi::createAPFGraph(m,3,0);
+  times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
   
   engpar::Input* input = new engpar::Input(g);
@@ -106,7 +108,8 @@ int main(int argc, char* argv[]) {
 
   //visualize the mesh after balancing
   apf::writeVtkFiles("post", m);
-
+  Parma_PrintPtnStats(m,"after");
+  
   //Destroy mesh
   m->destroyNative();
   apf::destroyMesh(m);
