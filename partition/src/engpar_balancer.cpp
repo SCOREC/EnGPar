@@ -175,8 +175,8 @@ namespace engpar {
         targetTime = PCU_Time()-targetTime;
         targetTime = PCU_Max_Double(targetTime);
         if (verbosity>=0&&!PCU_Comm_Self()) {
-          printf("Completed criteria type %d in %f seconds\n",target_dimension,
-                 targetTime);
+          printf("Completed criteria type %d in %d steps and took %f seconds\n",
+                 target_dimension, inner_steps+1, targetTime);
         }
         targetTime=PCU_Time();
         
