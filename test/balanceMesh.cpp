@@ -15,9 +15,9 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Open_Log();
   
-  if (argc != 3&& argc!=4) {
+  if (argc != 4 && argc!=5) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <model> <mesh> [multi-edgetypes]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <tolerance> [multi-edgetypes]\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
@@ -31,36 +31,42 @@ int main(int argc, char* argv[]) {
   Parma_PrintPtnStats(m,"before");
   //visualize the mesh before balancing
   apf::writeVtkFiles("pre", m);
+  
+  double tol = atof(argv[3]);
+  if (!PCU_Comm_Self())
+    printf("tolerance %f\n", tol);
 
   double times[10];
   times[0] = PCU_Time();
   times[4] = PCU_Time();
-  //Construct graph
-  if (argc==4) {
+  if (argc==5) {
     int edges[2] = {0,2};
+    //balance vtx>edge>elm
     g = agi::createAPFGraph(m,3,edges,2);
   }
-  else
+  else {
+    //balance vtx>elm
     g = agi::createAPFGraph(m,3,0);
+  }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
   
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
-  input->tolerances.push_back(1.1);
-  if (argc==4) {
+  input->tolerances.push_back(tol);
+  if (argc==5) {
     input->priorities.push_back(1);
-    input->tolerances.push_back(1.1);
+    input->tolerances.push_back(tol);
   }
   input->priorities.push_back(-1);
-  input->tolerances.push_back(1.1);
+  input->tolerances.push_back(tol);
 
   input->step_factor=.1;
 
   input->useDistanceQueue=true;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input);
-  balancer->balance(1.1);
+  balancer->balance(tol);
 
   engpar::evaluatePartition(g);
   //Destroy balancer
