@@ -8,7 +8,7 @@ namespace engpar {
   class Input {
   public:
     Input(agi::Ngraph*);
-    ~Input();
+    ~Input() {};
 
     /** \brief The graph being balanced */
     agi::Ngraph* g;

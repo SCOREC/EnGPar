@@ -109,6 +109,8 @@ namespace engpar {
     time[1] = PCU_Time();
     if (numMigrate>0)
       input->g->migrate(plan);
+    else
+      delete plan;
     time[1] = PCU_Time()-time[1];
     PCU_Max_Doubles(time,2);
     if (!PCU_Comm_Self()) {

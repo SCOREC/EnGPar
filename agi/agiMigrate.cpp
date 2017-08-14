@@ -23,6 +23,7 @@ namespace agi {
           PCU_COMM_PACK(own,toSend);
         }
       }
+      destroy(gitr);
     }
     PCU_Comm_Send();
     while (PCU_Comm_Receive()) {
@@ -69,6 +70,7 @@ namespace agi {
           if (old==NULL||e!=old) 
             edges[t].insert(e);
         }
+        g->destroy(gitr);
       }      
     } 
   }
@@ -135,6 +137,7 @@ namespace agi {
             ghost_owners[other_gid] = owner;
           
         }
+        g->destroy(pitr);
       }
     }
     g->destroy(itr);
@@ -254,8 +257,11 @@ namespace agi {
       PCU_Comm_Unpack(pin,deg*sizeof(gid_t));
       PCU_Comm_Unpack(pin_owners,deg*sizeof(part_t));
       if (isHyperGraph) {
-        if (addedEdges.find(id)!=addedEdges.end())
+        if (addedEdges.find(id)!=addedEdges.end()) {
+          delete [] pin;
+          delete [] pin_owners;
           continue;
+        }
       }
       addedEdges.insert(id);
       edge_mapping[t][id]=0;
@@ -367,6 +373,7 @@ namespace agi {
     delete [] edgeWeights;
     delete [] degrees;
     delete [] pins;
+    delete [] cs;
     delete plan;
   }
 

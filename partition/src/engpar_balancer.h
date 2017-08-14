@@ -16,7 +16,7 @@ namespace engpar {
     Balancer(agi::Ngraph* graph_, double factor_, int verbosity_,
              const char* name_);
     Balancer(Input* input_,int verbosity_,const char* name_);
-    virtual ~Balancer() {}
+    virtual ~Balancer() {delete input;}
     virtual bool runStep(double tolerance);
     void balance(double tolerance);
     

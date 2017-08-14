@@ -23,7 +23,9 @@ namespace engpar {
             increment(owner);
           }
         }
+        in->g->destroy(pitr);
       }
+      in->g->destroy(eitr);
     }
   };
 

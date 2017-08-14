@@ -15,7 +15,7 @@ namespace engpar {
       agi::EdgeIterator* eitr = g->begin(dimension);
       while ((edge = g->iterate(eitr))) 
         w+=g->weight(edge);
-      
+      g->destroy(eitr);
     }
     return w;
   }
