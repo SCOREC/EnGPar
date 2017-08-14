@@ -138,6 +138,9 @@ namespace engpar {
         set_size[i]=0;
       }
     }
+    delete [] parents;
+    delete [] set_size;
+    delete [] labels;
     //Sort the recent BFS in accordance to the offsets
     bfsSort(seed,start_seed,numSeeds-1,visited);
     return level+addition;
