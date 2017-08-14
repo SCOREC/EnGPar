@@ -30,6 +30,12 @@ namespace engpar {
   bool Balancer::runStep(double tolerance) {
     double time[2];
     time[0] = PCU_Time();
+
+    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
+    //Check for completition of criteria
+    if (imb < tolerance)
+      return false;
+
     Sides* sides = makeSides(input);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
@@ -115,9 +121,7 @@ namespace engpar {
     if (numMigrate==0)
       return false;
 
-    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
-    //Check for completition of criteria
-    return imb>tolerance;
+    return true; //not done balancing
   }
   void Balancer::balance(double) {
     if (EnGPar_Is_Log_Open()) {
@@ -165,7 +169,14 @@ namespace engpar {
     double time = PCU_Time();
     double targetTime=PCU_Time();
     while (step++<input->maxIterations) {
+      //runStep(tol) balances the current dimension.
+      //Advance to the next dimension if the current dimesion is balanced
+      //or the maximum per dimension iterations is reached.
       if (!runStep(tol)||inner_steps++>=input->maxIterationsPerType) {
+        // Set the imbalance limit for the higher priority dimension
+        // while balancing lower priority dimensions to be the larger of
+        // the specified imbalance (tgtMaxW) or, if it wasn't reached, the
+        // current weight (maxW).
         completed_dimensions.push_back(target_dimension);
         double maxW = getMaxWeight(input->g,target_dimension);
         double tgtMaxW = getAvgWeight(input->g,target_dimension)*tol;

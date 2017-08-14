@@ -15,52 +15,60 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Open_Log();
   
-  if (argc != 3&& argc!=4) {
+  if (argc != 5 && argc != 6) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <model> <mesh> [multi-edgetypes]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> [multi-edgetypes]\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
   }
+
   apf::Mesh2* m=NULL;
   agi::Ngraph* g=NULL;
   //Load mesh
   gmi_register_mesh();
   m = apf::loadMdsMesh(argv[1],argv[2]);
-  
+
+  double tol = atof(argv[3]);
+  const int render = atoi(argv[4]);
+  if (!PCU_Comm_Self())
+    printf("render vtk %s\n", render == 0 ? "off" : "on" );
+
   Parma_PrintPtnStats(m,"before");
-  //visualize the mesh before balancing
-  apf::writeVtkFiles("pre", m);
+  if(render)
+    apf::writeVtkFiles("pre", m);
 
   double times[10];
   times[0] = PCU_Time();
   times[4] = PCU_Time();
-  //Construct graph
-  if (argc==4) {
+  if (argc==6) {
     int edges[2] = {0,2};
+    //balance vtx>edge>elm
     g = agi::createAPFGraph(m,3,edges,2);
   }
-  else
+  else {
+    //balance vtx>elm
     g = agi::createAPFGraph(m,3,0);
+  }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
   
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
-  input->tolerances.push_back(1.1);
-  if (argc==4) {
+  input->tolerances.push_back(tol);
+  if (argc==5) {
     input->priorities.push_back(1);
-    input->tolerances.push_back(1.1);
+    input->tolerances.push_back(tol);
   }
   input->priorities.push_back(-1);
-  input->tolerances.push_back(1.1);
+  input->tolerances.push_back(tol);
 
   input->step_factor=.1;
 
   input->useDistanceQueue=true;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input);
-  balancer->balance(1.1);
+  balancer->balance(tol);
 
   engpar::evaluatePartition(g);
   //Destroy balancer
@@ -106,8 +114,8 @@ int main(int argc, char* argv[]) {
   //Destroy graph
   agi::destroyGraph(g);
 
-  //visualize the mesh after balancing
-  apf::writeVtkFiles("post", m);
+  if(render)
+    apf::writeVtkFiles("post", m);
   Parma_PrintPtnStats(m,"after");
   
   //Destroy mesh
