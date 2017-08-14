@@ -434,5 +434,39 @@ agi::Ngraph* buildDisconnected2Graph() {
   g->setCoords(cs);
   g->setEdgeWeights(weights,0);
   return g;
+ 
+}
 
+agi::Ngraph* buildEmptyGraph() {
+  agi::Ngraph* g = agi::createEmptyGraph();
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+  std::vector<agi::gid_t> verts;
+
+  if (PCU_Comm_Self()==1) {
+    verts.push_back(0);
+    if (PCU_Comm_Peers()>2) {
+      edges.push_back(1);
+      pins.push_back(0);
+      pins.push_back(1);
+      degrees.push_back(2);
+      owners[1]=2;
+    }
+  }
+  if (PCU_Comm_Self()==2) {
+    for (int i=0;i<5;i++)
+      verts.push_back(i);
+    edges.push_back(1);
+    pins.push_back(0);
+    pins.push_back(1);
+    degrees.push_back(2);
+    owners[0]=1;
+  }
+  
+  std::vector<agi::wgt_t> weights;
+  g->constructGraph(false,verts,weights,edges,degrees,pins,owners);
+  g->setEdgeWeights(weights,0);
+  return g;  
 }

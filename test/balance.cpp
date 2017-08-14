@@ -3,6 +3,7 @@
 #include <engpar_input.h>
 #include <binGraph.h>
 #include <cstring>
+#include "buildGraphs.h"
 
 bool cmpebin(char* str) {
   return strlen(str)>4&&strcmp(str+strlen(str)-5,".ebin")==0;             
@@ -13,16 +14,20 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Open_Log();
   
-  if ( argc!= 2 && argc!=3) {
+  if ( argc!=1 &&argc!= 2 && argc!=3) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <graph>\n", argv[0]);
       printf("Usage: %s <bgd_prefix> [second edge type]\n", argv[0]);
+      printf("Usage: %s\n",argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
   }
   agi::Ngraph* g=NULL;
-  if (cmpebin(argv[1]))
+  if (argc==1) {
+    g= buildEmptyGraph();
+  }
+  else if (cmpebin(argv[1]))
     g= agi::createBinGraph(argv[1]);
   else {
     g = agi::createEmptyGraph();
@@ -51,7 +56,7 @@ int main(int argc, char* argv[]) {
   else
     input->useDistanceQueue=false;
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input);
+  agi::Balancer* balancer = engpar::makeBalancer(input,5);
   balancer->balance(1.1);
 
   engpar::evaluatePartition(g);

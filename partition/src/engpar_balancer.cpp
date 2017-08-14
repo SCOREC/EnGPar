@@ -103,6 +103,7 @@ namespace engpar {
       for (int i=0;i<PCU_Comm_Peers();i++)
         if (counts[i]>0)
           printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);
+      delete [] counts;
     }
 
     time[1] = PCU_Time();

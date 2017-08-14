@@ -16,4 +16,6 @@ agi::Ngraph* buildHyperGraphLine();
 agi::Ngraph* buildRequirementsGraph();
 
 agi::Ngraph* buildDisconnected2Graph();
+
+agi::Ngraph* buildEmptyGraph();
 #endif
