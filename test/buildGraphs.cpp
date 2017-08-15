@@ -237,7 +237,7 @@ agi::Ngraph* buildHyperGraphLine() {
     pins.push_back(local_verts*PCU_Comm_Self()-1);
     pins.push_back(local_verts*PCU_Comm_Self());
     owners[local_verts*PCU_Comm_Self()-1]=PCU_Comm_Self()-1;
-    printf("Ghost vertex: %lu\n",local_verts*PCU_Comm_Self()-1);
+    printf("Ghost vertex: %lld\n",local_verts*PCU_Comm_Self()-1);
   }
   for (agi::gid_t i=0;i<local_verts;i++) {
     int vert = local_verts*PCU_Comm_Self()+i;

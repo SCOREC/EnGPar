@@ -48,7 +48,7 @@ namespace agi {
     fprintf(f,"<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n");
     for (lid_t i=0;i<pg->num_local_edges[0];i++) {
       for (lid_t j=pg->pin_degree_list[0][i];j<pg->pin_degree_list[0][i+1];j++)
-        fprintf(f,"%lu %lu\n",i+pg->num_local_verts,pg->pin_list[0][j]);
+        fprintf(f,"%lld %lld\n",i+pg->num_local_verts,pg->pin_list[0][j]);
     }
     int off=0;
     fprintf(f,"\n</DataArray>\n<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n");
@@ -108,7 +108,7 @@ namespace agi {
     FILE* f = fopen(filename,"w");
     fprintf(f,"<VTKFile type=\"UnstructuredGrid\">\n");
     fprintf(f,"<UnstructuredGrid>\n");
-    fprintf(f,"<Piece NumberOfPoints=\"%lu\" NumberOfCells=\"%lu\">\n",
+    fprintf(f,"<Piece NumberOfPoints=\"%lld\" NumberOfCells=\"%lld\">\n",
             g->numLocalVtxs()+g->numLocalEdges(),g->numLocalPins());
     writePoints(g,f);
     writeCells(g,f);
