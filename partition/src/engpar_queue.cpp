@@ -102,7 +102,7 @@ namespace engpar {
             }
             else {
               int l2 = labels[edge];
-              while(l2!=parents[l2])
+              while(l2!=parents[l2]) 
                 l2=parents[l2];
               if (label!=l2) {
                 num_sets--;
@@ -128,6 +128,8 @@ namespace engpar {
         if (addition>0) {
           for (int j=0;j<pg->num_local_edges[t];j++) {
             int l2 = labels[j];
+            if (l2<0)
+              continue;
             while (l2!=parents[l2])
               l2 = parents[l2];
             if (l2==l)
@@ -185,7 +187,7 @@ namespace engpar {
     agi::lid_t* first_bfs = new agi::lid_t[pg->num_local_edges[t]];
 
     if (PCU_Comm_Peers()==1)
-      first_bfs[size++]=2;
+       first_bfs[size++]=2;
     else if (pg->isHyperGraph) {
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
         bool isShared=false;

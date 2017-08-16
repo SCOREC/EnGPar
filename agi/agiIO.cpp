@@ -148,9 +148,7 @@ namespace agi {
     if (hasC==1) {
       cs = new coord_t[nv];
       for (unsigned int i=0;i<nv;i++) {
-        //I think this is right?
         pcu_read_doubles(f,cs[i],3);
-        //s = fread(cs+i,sizeof(double),3,f);
       }
     }
     
@@ -209,6 +207,7 @@ namespace agi {
     constructVerts(isHG,verts,weights);
     if (cs!=NULL)
       setCoords(cs);
+    delete [] cs;
     unsigned int nt;
     PCU_READ_UNSIGNED(file,nt);
     std::unordered_map<gid_t,part_t> owns;

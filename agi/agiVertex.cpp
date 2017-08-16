@@ -55,7 +55,6 @@ int Ngraph::owner(GraphVertex* vtx) const {
   }
   if (index<num_local_verts)
     return PCU_Comm_Self();
-  assert(PCU_Comm_Peers()>1);
   index-=num_local_verts;
   return owners[index];
 }
