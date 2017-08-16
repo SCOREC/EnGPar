@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
 
   engpar::Queue* q = engpar::createDistanceQueue(g);
   for (unsigned int i=0;i<q->size();i++)
-    printf("%d %lu\n",PCU_Comm_Self(),g->globalID((*q)[i]));
+    printf("%d %lld\n",PCU_Comm_Self(),g->globalID((*q)[i]));
   delete q;
 
   agi::destroyGraph(g);
