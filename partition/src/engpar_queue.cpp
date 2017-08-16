@@ -184,9 +184,10 @@ namespace engpar {
     agi::etype t = 0;
     agi::lid_t* first_bfs = new agi::lid_t[pg->num_local_edges[t]];
 
-    if (PCU_Comm_Peers()==1)
-      first_bfs[size++]=2;
-    else if (pg->isHyperGraph) {
+    //if (PCU_Comm_Peers()==1)
+    //  first_bfs[size++]=2;
+    /*else*/
+    if (pg->isHyperGraph) {
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
         bool isShared=false;
         for (agi::lid_t j=pg->pin_degree_list[t][i];

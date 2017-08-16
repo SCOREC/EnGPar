@@ -3,6 +3,7 @@
 #include <PCU.h>
 #include <cstring>
 #include <sys/stat.h>
+#include <pcu_io.h>
 namespace agi {
 
   /* File Format 
@@ -14,73 +15,77 @@ namespace agi {
    * <ghost gid> <owner> ...
    */
 
-  void writeHeader(FILE* f, Ngraph* g) {
-    bool isH = g->isHyper();
-    fwrite(&isH,sizeof(bool),1,f);
+  void writeHeader(struct pcu_file* f, Ngraph* g) {
+    unsigned int isH = g->isHyper();
+    PCU_WRITE_UNSIGNED(f,isH);
   }
-  void writeVertices(FILE* f, Ngraph* g) {
-    lid_t numVtxs = g->numLocalVtxs();
-    fwrite(&numVtxs,sizeof(lid_t),1,f);
+  void writeVertices(struct pcu_file* f, Ngraph* g) {
+    unsigned int numVtxs = g->numLocalVtxs();
+    PCU_WRITE_UNSIGNED(f,numVtxs);
     agi::VertexIterator* itr = g->begin();
     agi::GraphVertex* vtx;
     while ((vtx = g->iterate(itr))) {
-      gid_t gid =  g->globalID(vtx);
+      unsigned int gid =  g->globalID(vtx);
       wgt_t w = g->weight(vtx);
-      fwrite(&gid,sizeof(gid_t),1,f);
-      fwrite(&w,sizeof(wgt_t),1,f);
+      PCU_WRITE_UNSIGNED(f,gid);
+      pcu_write_doubles(f,&w,1);          
     }
     //Write the coordinates if they exist
     if (g->hasCoords()) {
-      int one = 1;
-      fwrite(&one,sizeof(int),1,f);
+      unsigned int one = 1;
+      PCU_WRITE_UNSIGNED(f,one);
       agi::VertexIterator* itr = g->begin();
       agi::GraphVertex* vtx;
       while ((vtx = g->iterate(itr))) {
         const coord_t& c = g->coord(vtx);
-        fwrite(c,sizeof(double),3,f);
+        coord_t copy;
+        for (int i = 0; i < 3; i++)
+          copy[i] = c[i];
+        pcu_write_doubles(f,copy,3);
       }
     }
     else {
-      int zero = 0;
-      fwrite(&zero,sizeof(int),1,f);
+      unsigned int zero = 0;
+      PCU_WRITE_UNSIGNED(f,zero);
     }
   }
-  void writeEdges(FILE* f,Ngraph* g,etype t,
+  void writeEdges(struct pcu_file* f,Ngraph* g,unsigned int t,
                   std::unordered_map<gid_t,part_t>& owns) {
-    fwrite(&t,sizeof(etype),1,f);
-    gid_t numEdges = g->numLocalEdges(t);
-    fwrite(&numEdges,sizeof(gid_t),1,f);
+    PCU_WRITE_UNSIGNED(f,t);
+    unsigned int numEdges = g->numLocalEdges(t);
+    PCU_WRITE_UNSIGNED(f,numEdges);
     agi::EdgeIterator* eitr = g->begin(t);
     agi::GraphEdge* edge;
     while ((edge = g->iterate(eitr))) {
-      gid_t gid = g->globalID(edge);
+      unsigned int gid = g->globalID(edge);
       wgt_t w = g->weight(edge);
-      lid_t deg = g->degree(edge);
-      gid_t* ps = new gid_t[deg];
+      unsigned int deg = g->degree(edge);
+      unsigned int* ps = new unsigned int[deg];
       agi::PinIterator* pitr = g->pins(edge);
-      for (lid_t i = 0;i<deg;i++) {
+      for (unsigned int i = 0;i<deg;i++) {
         agi::GraphVertex* v = g->iterate(pitr);
         ps[i] = g->globalID(v);
         if (g->owner(v)!=PCU_Comm_Self())
           owns[ps[i]] = g->owner(v);
       }
       g->destroy(pitr);
-      fwrite(&gid,sizeof(gid_t),1,f);
-      fwrite(&w,sizeof(wgt_t),1,f);
-      fwrite(&deg,sizeof(lid_t),1,f);
-      fwrite(ps,sizeof(gid_t),deg,f);
+      PCU_WRITE_UNSIGNED(f,gid);
+      pcu_write_doubles(f,&w,1);
+      PCU_WRITE_UNSIGNED(f,deg);
+      pcu_write_unsigneds(f,ps,deg);
       delete [] ps;
     }
     g->destroy(eitr);
   }
-  void writeGhosts(FILE* f, const std::unordered_map<gid_t,part_t>& owns) {
-    lid_t numOwners = owns.size();
-    fwrite(&numOwners,sizeof(lid_t),1,f);
-
+  void writeGhosts(struct pcu_file* f, const std::unordered_map<gid_t,part_t>& owns) {
+    unsigned int numOwners = owns.size();
+    PCU_WRITE_UNSIGNED(f,numOwners);
     std::unordered_map<gid_t,part_t>::const_iterator itr;
     for (itr=owns.begin();itr!=owns.end();itr++) {
-      fwrite(&itr->first,sizeof(gid_t),1,f);
-      fwrite(&itr->second,sizeof(part_t),1,f);
+      unsigned int first = itr->first;
+      PCU_WRITE_UNSIGNED(f,first);
+      unsigned int s = itr->second;
+      PCU_WRITE_UNSIGNED(f,s);
     }
   }
 
@@ -105,85 +110,84 @@ namespace agi {
     char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
     mkdir_r(filename);
-    FILE* file = fopen(filename,"wb");
+    struct pcu_file* file = pcu_fopen(filename,true,false);
     if (!file) {
       printf("Could not open file for saving: %s#.bgd\n",prefix);
       throw 1;
     }
     writeHeader(file,this); 
     writeVertices(file,this);
-    int nt = numEdgeTypes();
-    fwrite(&nt,sizeof(int),1,file);
+    unsigned int nt = numEdgeTypes();
+    PCU_WRITE_UNSIGNED(file,nt);
     std::unordered_map<gid_t,part_t> owns;
-    for (etype t=0;t<nt;t++)
+    for (unsigned int t=0;t<nt;t++)
       writeEdges(file,this,t,owns);
     writeGhosts(file,owns);
-    fclose(file);
+    pcu_fclose(file);
   }
 
-  bool readHeader(FILE* f) {
-    bool isHG;
-    size_t s = fread(&isHG,sizeof(bool),1,f);
-    assert(s==1);
+  bool readHeader(struct pcu_file* f) {
+    unsigned int isHG;
+    PCU_READ_UNSIGNED(f,isHG);
     return isHG;
   }
-  void readVertices(FILE* f, std::vector<gid_t>& verts,
+  void readVertices(struct pcu_file* f, std::vector<gid_t>& verts,
                     std::vector<wgt_t>& weights,coord_t*& cs) {
-    lid_t nv;
-    size_t s = fread(&nv,sizeof(lid_t),1,f);
-    assert(s == 1);
-    for (lid_t i=0;i<nv;i++) {
-      gid_t gid;
+    unsigned int nv;
+    PCU_READ_UNSIGNED(f,nv);
+    for (unsigned int i=0;i<nv;i++) {
+      unsigned int gid;
       wgt_t w;
-      s = fread(&gid,sizeof(gid_t),1,f);
-      s = fread(&w,sizeof(wgt_t),1,f);
+      PCU_READ_UNSIGNED(f,gid);
+      pcu_read_doubles(f,&w,1);
       verts.push_back(gid);
       weights.push_back(w);
     }
-    int hasC;
-    s = fread(&hasC,sizeof(int),1,f);
+    unsigned int hasC;
+    PCU_READ_UNSIGNED(f,hasC);
     if (hasC==1) {
       cs = new coord_t[nv];
-      for (lid_t i=0;i<nv;i++) {
-        s = fread(cs+i,sizeof(double),3,f);
+      for (unsigned int i=0;i<nv;i++) {
+        //I think this is right?
+        pcu_read_doubles(f,cs[i],3);
+        //s = fread(cs+i,sizeof(double),3,f);
       }
     }
     
   }
-  void readEdges(FILE* f,std::vector<gid_t>& edges, std::vector<wgt_t>& eWeights,
-                 std::vector<lid_t>& degs, std::vector<gid_t>& pins2v, etype& t){
-    size_t s = fread(&t,sizeof(etype),1,f);
-    gid_t ne;
-    s = fread(&ne,sizeof(gid_t),1,f);
-    assert( s ==1);
-    for (gid_t i=0;i<ne;i++) {
-      gid_t gid;
+  void readEdges(struct pcu_file* f,std::vector<gid_t>& edges,
+                 std::vector<wgt_t>& eWeights, std::vector<lid_t>& degs,
+                 std::vector<gid_t>& pins2v, unsigned int& t){
+    PCU_READ_UNSIGNED(f,t);
+    unsigned int ne;
+    PCU_READ_UNSIGNED(f,ne);
+    for (unsigned int i=0;i<ne;i++) {
+      unsigned int gid;
       wgt_t w;
-      lid_t deg=0;
+      unsigned int deg=0;
       
-      s = fread(&gid,sizeof(gid_t),1,f);
-      s = fread(&w,sizeof(wgt_t),1,f);
+      PCU_READ_UNSIGNED(f,gid);
+      pcu_read_doubles(f,&w,1);
       edges.push_back(gid);
       eWeights.push_back(w);
-      s = fread(&deg,sizeof(lid_t),1,f);
+      PCU_READ_UNSIGNED(f,deg);
       degs.push_back(deg);
-      gid_t pin;
-      for (lid_t j=0;j<deg;j++) {
-        s = fread(&pin,sizeof(gid_t),1,f);
+      unsigned int pin;
+      for (unsigned int j=0;j<deg;j++) {
+        PCU_READ_UNSIGNED(f,pin);
         pins2v.push_back(pin);
       }
     }
     
   }
-  void readGhosts(FILE* f, std::unordered_map<gid_t,part_t>& owns) {
-    lid_t num_gs;
-    size_t s = fread(&num_gs,sizeof(lid_t),1,f);
-    assert(s == 1);
-    gid_t v;
-    part_t o;
-    for (lid_t i =0;i<num_gs;i++) {
-      s = fread(&v,sizeof(gid_t),1,f);
-      s = fread(&o,sizeof(part_t),1,f);
+  void readGhosts(struct pcu_file* f, std::unordered_map<gid_t,part_t>& owns) {
+    unsigned int num_gs;
+    PCU_READ_UNSIGNED(f,num_gs);
+    unsigned int v;
+    unsigned int o;
+    for (unsigned int i =0;i<num_gs;i++) {
+      PCU_READ_UNSIGNED(f,v);
+      PCU_READ_UNSIGNED(f,o);
       owns[v] = o;
     }
   }
@@ -191,7 +195,7 @@ namespace agi {
   void Ngraph::loadFromFile(char* prefix) {
     char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
-    FILE* file = fopen(filename,"rb");
+    struct pcu_file* file = pcu_fopen(filename,false,false);
     if (!file) {
       printf("Could not open file for loading: %s#.bgd",prefix);
       throw 1;
@@ -205,11 +209,10 @@ namespace agi {
     constructVerts(isHG,verts,weights);
     if (cs!=NULL)
       setCoords(cs);
-    int nt;
-    size_t s = fread(&nt,sizeof(int),1,file);
-    assert(s==1);
+    unsigned int nt;
+    PCU_READ_UNSIGNED(file,nt);
     std::unordered_map<gid_t,part_t> owns;
-    for (etype t=0;t<nt;t++) {
+    for (unsigned int t=0;t<nt;t++) {
       std::vector<gid_t> es;
       std::vector<wgt_t> eWeights;
       std::vector<lid_t> degs;
@@ -220,6 +223,6 @@ namespace agi {
     }
     readGhosts(file,owns);
     constructGhosts(owns);
-    fclose(file);
+    pcu_fclose(file);
   }
 }
