@@ -113,14 +113,21 @@ namespace engpar {
       delete plan;
     time[1] = PCU_Time()-time[1];
     PCU_Max_Doubles(time,2);
-    if (!PCU_Comm_Self()) {
-      if (verbosity>=1) {
+    if (verbosity>=1) {
+      if (!PCU_Comm_Self()) {
         printf("Step took %f seconds\n",time[0]);
+        printf("Imbalances <v, e0, ...>: ");
+      }
+      printImbalances(input->g);
+      times[0]+=time[0];      
+    }
+    if (verbosity>=2) {
+      if (!PCU_Comm_Self()) {
         printf("Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
       }
-      times[0]+=time[0];
       times[1]+=time[1];
     }
+
     if (numMigrate==0)
       return false;
 
@@ -190,7 +197,7 @@ namespace engpar {
         targetTime = PCU_Max_Double(targetTime);
         if (verbosity>=0&&!PCU_Comm_Self()) {
           printf("Completed criteria type %d in %d steps and took %f seconds\n",
-                 target_dimension, inner_steps+1, targetTime);
+                 target_dimension, inner_steps, targetTime);
         }
         targetTime=PCU_Time();
         
@@ -218,7 +225,7 @@ namespace engpar {
           printf("EnGPar converged in %d iterations in %f seconds\n",step,
                  time);
       }
-      if (verbosity>=1)
+      if (verbosity>=2)
         printf("Migration took %f%% of the total time\n",times[1]/time*100);
     }
     if (EnGPar_Is_Log_Open())

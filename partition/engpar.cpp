@@ -79,7 +79,7 @@ namespace engpar {
     for (agi::etype t = 0;t<g->numEdgeTypes();t++) {
       agi::wgt_t my_edges = getWeight(g,t);
       char edge_name[15];
-      sprintf(edge_name,"Local Edges %d",t);
+      sprintf(edge_name,"Edges type %d",t);
       printMaxMinAvgImb(my_edges,edge_name);
     }
   
