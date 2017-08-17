@@ -35,7 +35,10 @@ namespace engpar {
     //Check for completition of criteria
     if (imb < tolerance)
       return false;
-
+    //Check stagnation detection
+    sd->push(imb);
+    if (sd->isFull()&&sd->slope()>0)
+      return false;
     Sides* sides = makeSides(input);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
@@ -123,6 +126,8 @@ namespace engpar {
     }
     if (verbosity>=2) {
       if (!PCU_Comm_Self()) {
+        if (sd->isFull())
+          printf("Slope: %f\n",sd->slope());
         printf("Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
       }
       times[1]+=time[1];
@@ -164,6 +169,7 @@ namespace engpar {
     input->g->setOriginalOwners();
     unsigned int index=0;
     target_dimension = input->priorities[index];
+    sd = new SDSlope;
     double tol=1.1;
     if (input->tolerances.size()>index)
       tol = input->tolerances[index];
@@ -206,6 +212,8 @@ namespace engpar {
           break;
         inner_steps=0;
         target_dimension=input->priorities[index];
+        delete sd;
+        sd = new SDSlope;
         if (input->tolerances.size()>index)
           tol = input->tolerances[index];
         if (!PCU_Comm_Self()&&verbosity>=0)
@@ -214,6 +222,7 @@ namespace engpar {
 
       }      
     }
+    delete sd;
     time = PCU_Time()-time;
     time = PCU_Max_Double(time);
     if (!PCU_Comm_Self()) {

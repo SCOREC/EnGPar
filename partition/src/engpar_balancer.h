@@ -7,6 +7,7 @@
 #include "engpar_weights.h"
 #include "engpar_targets.h"
 #include "engpar_selector.h"
+#include "engpar_sd.h"
 
 namespace engpar {
   wgt_t getMaxWeight(agi::Ngraph*, int);
@@ -22,6 +23,7 @@ namespace engpar {
     
   protected:
     int target_dimension;
+    SDSlope* sd;
     std::vector<int> completed_dimensions;
     std::vector<wgt_t> completed_weights;
     Input* input;

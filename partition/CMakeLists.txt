@@ -14,6 +14,7 @@ set(ENGPAR_SOURCES
   src/engpar_selector.cpp
   src/engpar_input.cpp
   src/engpar_make.cpp
+  src/engpar_sd.cpp
   )
 
 set(ENGPAR_HEADERS
