@@ -62,8 +62,8 @@ namespace engpar {
     }
     int* labels = new int[pg->num_local_edges[t]];
     int l=0;
-    for (agi::lid_t i=0;i<start_seed;i++)
-      labels[seed[i]]=-1;
+    for (agi::lid_t i=0;i<pg->num_local_edges[t];i++)
+      labels[i]=-1;
     for (agi::lid_t i=start_seed;i<numSeeds;i++) {
       visited[seed[i]] = depth;
       labels[seed[i]] = l++;
