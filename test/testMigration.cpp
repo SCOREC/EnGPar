@@ -11,7 +11,7 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   agi::Ngraph* g = buildGraph();
   PCU_Barrier();
-  agi::Migration* plan = new agi::Migration;
+  agi::Migration* plan = new agi::Migration(g);
   agi::GraphVertex* v;
   agi::VertexIterator* itr=g->begin();
   while ((v = g->iterate(itr))) {
@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
         break;
       }
     }
+    g->destroy(gitr);
   }
   g->setOriginalOwners();
   if (!PCU_Comm_Self())
@@ -37,11 +38,12 @@ int main(int argc, char* argv[]) {
 
   g = buildHyperGraph();
   PCU_Barrier();
-  plan = new agi::Migration;
+  plan = new agi::Migration(g);
 
   itr=g->begin();
   v = g->iterate(itr);
-  (*plan)[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+  plan->insert(std::make_pair(v,(PCU_Comm_Self()+PCU_Comm_Peers()-1)
+                              %PCU_Comm_Peers()));
   g->setOriginalOwners();
   if (!PCU_Comm_Self())
     printf("Migrating hypergraph\n");
@@ -74,7 +76,7 @@ void migrateGraphParts() {
   //Create a migration and send nothing to test if the reconstructed graph
   // is the same even with 2 edge types
   graph->setOriginalOwners();
-  agi::Migration* plan = new agi::Migration;
+  agi::Migration* plan = new agi::Migration(graph);
   graph->migrate(plan);  
   
   assert(graph->numLocalVtxs()==local_verts);

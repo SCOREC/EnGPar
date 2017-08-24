@@ -3,7 +3,7 @@
 
 #include <stdexcept>
 #include "pngraph.h"
-
+#include "agiMigration.h"
 /** \file ngraph.h
     \brief The N-Graph interface 
 */
@@ -16,6 +16,7 @@ class PinIterator;
 class EdgeIterator;
 class GraphIterator;
 class GraphTag;
+
 /** \class Ngraph
  *  \brief An abstract graph used to represent the data passed into EnGPar
  *   \nosubgrouping
@@ -163,7 +164,12 @@ public:
    * \param residence The part ids that the edge resides on
    */
   void getResidence(GraphEdge* e,Peers& residence) const;
-
+  /** \brief Returns true if the target part shares the given edge
+   * \param e the edge
+   * \param peer the target part
+   * \return whether the target part shares the edge
+   */
+  bool isResidentOn(GraphEdge* e,part_t peer) const;
   /** \brief Returns the local id of the vertex
    * \param vtx The vertex
    * \return The local id of the vertex.

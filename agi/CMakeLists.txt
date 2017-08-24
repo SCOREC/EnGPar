@@ -11,6 +11,7 @@ set(AGI_SOURCES
   agiIterate.cpp
   agiTag.cpp
   agiBalancer.cpp
+  agiMigration.cpp
   agiMigrate.cpp
   agiIO.cpp
   agiValid.cpp

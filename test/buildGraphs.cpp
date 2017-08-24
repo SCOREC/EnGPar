@@ -50,7 +50,7 @@ agi::Ngraph* buildGraph() {
 }
 
 agi::Ngraph* buildHyperGraph() {
-  agi::Ngraph* graph  = agi::createEmptyGraph();
+  agi::Ngraph* graph = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;
   agi::gid_t start_vert = local_verts*PCU_Comm_Self();
   agi::gid_t end_vert = local_verts*(PCU_Comm_Self()+1)-1;

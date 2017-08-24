@@ -12,7 +12,7 @@ namespace engpar {
     for (agi::lid_t i =0;i<deg;i++) {
       vtx = g->iterate(pitr);
       if (g->owner(vtx)==PCU_Comm_Self()) {
-        if(plan->find(vtx)==plan->end())
+        if(plan->has(vtx))
           cav.push_back(vtx);
       }
       else
@@ -40,8 +40,11 @@ namespace engpar {
       }
     }
     std::set<agi::GraphEdge*>::iterator sitr;
-    for (sitr = target_edges.begin();sitr!=target_edges.end();++sitr)
-      w+=g->weight(*sitr);
+    for (sitr = target_edges.begin();sitr!=target_edges.end();++sitr) {
+      agi::GraphEdge* e = *sitr;
+      if (!g->isResidentOn(e,peer))
+        w+=g->weight(e);
+    }
     return w;
   }
 
@@ -75,15 +78,8 @@ namespace engpar {
     agi::EdgeIterator* eitr = g->edges(vtx,dim);
     agi::GraphEdge* e;
     while ((e = g->iterate(eitr))) {
-      bool isInterior=true;
-      agi::PinIterator* pitr = g->pins(e);
-      for (agi::lid_t i=0;i<g->degree(e);i++) {
-        if (g->owner(g->iterate(pitr))==dest)
-          isInterior=false;
-      }
-      if (isInterior)
+      if (!g->isResidentOn(e,dest))
         edges.insert(e);
-      g->destroy(pitr);
     }
     g->destroy(eitr);
   }
@@ -95,15 +91,8 @@ namespace engpar {
     while ((e = g->iterate(eitr))) {
       if (edges.find(e)!=edges.end())
         continue;
-      bool isInterior=true;
-      agi::PinIterator* pitr = g->pins(e);
-      for (agi::lid_t i=0;i<g->degree(e);i++) {
-        if (g->owner(g->iterate(pitr))==dest)
-          isInterior=false;
-      }
-      if (isInterior)
+      if (!g->isResidentOn(e,dest))
         tmpEdges.insert(e);
-      g->destroy(pitr);
     }
     g->destroy(eitr);
   }
@@ -145,8 +134,8 @@ namespace engpar {
     PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
     agi::Migration::iterator itr;
     for(itr = plan->begin();itr!=plan->end();itr++) {
-      agi::GraphVertex* vtx = itr->first;
-      const int dest = itr->second;
+      agi::GraphVertex* vtx = *itr;
+      const int dest = plan->get(vtx);
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
         insertInteriorEdges(vtx, dest, peerEdges[i][dest],
                             completed_dimensions->at(i));
@@ -243,14 +232,13 @@ namespace engpar {
     std::vector<PlanPair > keep; //temporary plan container
     keep.reserve(plan->size());
 
-    //Plan is a unsorted map so this iterates over the plan in a "random order"
-    //TODO: determine best way to make this iterate in the order they were
-    //      selected in.
+    //Plan is a vector so this iterates over the plan in the order they were
+    //    selected in.
     PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
     agi::Migration::iterator pitr;
     for(pitr = plan->begin();pitr!=plan->end();pitr++) {
-      agi::GraphVertex* v = pitr->first;
-      int dest = pitr->second;
+      agi::GraphVertex* v = *pitr;
+      int dest = plan->get(v);
       bool isSpace=true;
       EdgeSet* tmpEdges = new EdgeSet[completed_dimensions->size()];
       
@@ -273,9 +261,8 @@ namespace engpar {
       delete [] acc->second;
     }
     delete capacity;
-    delete plan;
     delete [] peerEdges;
-    plan = new agi::Migration;
+    plan->clear();
     for(size_t i=0; i < keep.size(); i++)
       plan->insert(keep[i]);
   }

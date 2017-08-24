@@ -9,6 +9,7 @@
 namespace agi {
 
   void Ngraph::getResidence(GraphEdge* e, Peers& residence) const {
+    residence.clear();
     agi::PinIterator* pitr = pins(e);
     agi::GraphVertex* vtx;
     lid_t deg = degree(e);
@@ -18,7 +19,20 @@ namespace agi {
     }
     destroy(pitr);
   }
-  
+  bool Ngraph::isResidentOn(GraphEdge* e,part_t peer) const {
+    agi::PinIterator* pitr = pins(e);
+    agi::GraphVertex* vtx;
+    lid_t deg = degree(e);
+    for (lid_t i=0;i<deg;i++) {
+      vtx = iterate(pitr);
+      if (owner(vtx)==peer) {
+        destroy(pitr);
+        return true;
+      }
+    }
+    destroy(pitr);
+    return false;
+  }
 
   wgt_t Ngraph::weight(GraphEdge* edge) const {
     uintptr_t id = (uintptr_t)(edge)-1;

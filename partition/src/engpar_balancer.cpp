@@ -73,7 +73,7 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     Selector* selector = makeSelector(input,pq,&completed_dimensions,
                                       &completed_weights);
-    agi::Migration* plan = new agi::Migration;
+    agi::Migration* plan = new agi::Migration(input->g);
     wgt_t planW = 0.0;
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       planW += selector->select(targets,plan,planW,cavSize,target_dimension);
@@ -102,7 +102,7 @@ namespace engpar {
         counts[i] = 0;
       agi::Migration::iterator itr;
       for (itr = plan->begin();itr!=plan->end();itr++)
-        counts[itr->second]++;
+        counts[plan->get(*itr)]++;
       for (int i=0;i<PCU_Comm_Peers();i++)
         if (counts[i]>0)
           printf("%d sending %d to %d\n",PCU_Comm_Self(),counts[i],i);

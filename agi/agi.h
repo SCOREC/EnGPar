@@ -22,7 +22,6 @@ namespace agi {
   
   class GraphVertex;
   typedef std::unordered_map<gid_t,part_t> PartitionMap;
-  typedef std::unordered_map<GraphVertex*,part_t> Migration;
   typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
   typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
 

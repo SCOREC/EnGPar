@@ -11,8 +11,8 @@ namespace agi {
     PCU_Comm_Begin();
     Migration::iterator itr;
     for (itr = plan->begin();itr!=plan->end();itr++) {
-      GraphVertex* v = itr->first;
-      part_t toSend = itr->second;
+      GraphVertex* v = *itr;
+      part_t toSend = plan->get(v);
       GraphIterator* gitr = adjacent(v);
       GraphVertex* other;
       while ((other=iterate(gitr))) {
@@ -48,8 +48,8 @@ namespace agi {
     //verts.reserve(plan->size());
     Migration::iterator itr;
     for (itr = plan->begin();itr!=plan->end();itr++) {
-      GraphVertex* v = itr->first;
-      part_t toSend = itr->second;
+      GraphVertex* v = *itr;
+      part_t toSend = plan->get(v);
       if (toSend!=PCU_Comm_Self()) {
         verts.insert(v);
       }
@@ -114,7 +114,7 @@ namespace agi {
       agi::GraphVertex* end;
       lid_t i=0;
       while ((end=g->iterate(pitr))) {
-        if (plan->find(end)!=plan->end())
+        if (plan->has(end))
           break;
         i++;
       }
@@ -131,8 +131,8 @@ namespace agi {
           gid_t other_gid = g->globalID(end);
           pins.push_back(other_gid);
           part_t owner = g->owner(end);
-          if (plan->find(end)!=plan->end())
-            owner = plan->find(end)->second;
+          if (plan->has(end))
+            owner = plan->get(end);
           if (owner!=PCU_Comm_Self()) 
             ghost_owners[other_gid] = owner;
           
@@ -198,9 +198,8 @@ namespace agi {
         for (lid_t i=0;i<degree(e);i++) {
           vtx = iterate(pitr);
           part_t o = owner(vtx);
-
-          if (plan->find(vtx)!=plan->end())
-            o= plan->find(vtx)->second;
+          if (plan->has(vtx))
+            o= plan->get(vtx);
           pin_owners[deg]=o;
           pin[deg++] = globalID(vtx);
           residence.insert(o);
@@ -216,14 +215,13 @@ namespace agi {
         pin[deg++] = globalID(source);
         GraphVertex* dest = v(e);
         part_t o = owner(dest);
-        if (plan->find(dest)!=plan->end())
-          o= plan->find(dest)->second;
+        if (plan->has(dest))
+          o= plan->get(dest);
         pin_owners[deg] = o;
         pin[deg++] = globalID(dest);
-        Migration::iterator mitr = plan->find(source);
-        pin_owners[0] = mitr->second;
-        assert(mitr!=plan->end());
-        residence.insert(mitr->second);
+        assert(plan->has(source));
+        pin_owners[0] = plan->get(source);
+        residence.insert(plan->get(source));
       }
       std::unordered_set<part_t>::iterator sitr;
       for (sitr=residence.begin();sitr!=residence.end();sitr++) {
@@ -314,7 +312,7 @@ namespace agi {
     Migration::iterator itr;
     PCU_Comm_Begin();
     for (itr = plan->begin();itr!=plan->end();itr++) {
-      sendVertex(itr->first,itr->second);
+      sendVertex(*itr,plan->get(*itr));
     }
     PCU_Comm_Send();
     while (PCU_Comm_Receive()) {
@@ -329,7 +327,7 @@ namespace agi {
       Migration::iterator itr;
       PCU_Comm_Begin();
       for (itr = plan->begin();itr!=plan->end();itr++) {
-        sendCoord(itr->first,itr->second);
+        sendCoord(*itr,plan->get(*itr));
       }
       PCU_Comm_Send();
       while (PCU_Comm_Receive()) {
