@@ -70,7 +70,8 @@ int main(int argc, char* argv[]) {
 
   input->useDistanceQueue=true;
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input);
+  int verbosity = 1;
+  agi::Balancer* balancer = engpar::makeBalancer(input, verbosity);
   balancer->balance(tol);
 
   engpar::evaluatePartition(g);
