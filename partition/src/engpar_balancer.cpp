@@ -88,9 +88,10 @@ namespace engpar {
       Midd* midd = selector->trim(targets,plan);
       selector->cancel(plan,midd);
       sizes[1]=plan->size();
-      if (verbosity>=2&&!PCU_Comm_Self()) {
+      if (verbosity>=2) {
         PCU_Add_Ints(sizes,2);
-        printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
+        if (!PCU_Comm_Self())
+          printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
       }
     }
     delete pq;
@@ -245,7 +246,7 @@ namespace engpar {
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
         printf("Migration took %f%% of the total time\n",times[1]/time*100);
-        printf("Distance Computation took %f%% seconds\n",distance_time);
+        printf("Distance Computation took %f seconds\n",distance_time);
       }
     }
     if (EnGPar_Is_Log_Open())

@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
   else
     input->useDistanceQueue=false;
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input,1);
+  agi::Balancer* balancer = engpar::makeBalancer(input,2);
   balancer->balance(1.1);
 
   engpar::evaluatePartition(g);
