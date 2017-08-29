@@ -28,6 +28,7 @@ namespace engpar {
     std::vector<wgt_t> completed_weights;
     Input* input;
     double times[2];
+    double distance_time;
   };
 }
 
