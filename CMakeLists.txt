@@ -7,8 +7,6 @@ set(CMAKE_MODULE_PATH
    ${CMAKE_MODULE_PATH} 
    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
-find_package(MPI REQUIRED)
-
 #Setup doxygen documentation
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -69,7 +67,6 @@ endif()
 
 include_directories(
   ${SCOREC_PREFIX}/include
-  ${MPI_C_INCLUDE_PATH}
   )
 
 macro(engpar_export_lib target headers)

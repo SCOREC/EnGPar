@@ -40,8 +40,6 @@ endif()
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
-  ${MPI_C_LINK_FLAGS}
-  ${MPI_C_LIBRARIES}
 )
 
 function(make_exe exename srcname)

@@ -13,17 +13,14 @@ if [ $cuda == "ON" ]; then
 fi
 echo $cudaopts
 
-export CC=mpicc
-export CXX=mpicxx
-export NVCC_WRAPPER_DEFAULT_COMPILER=$CXX
+#be sure to set this before runnign make!!!
+export NVCC_WRAPPER_DEFAULT_COMPILER=mpicxx
 
 set -x
 cmake ../EnGPar \
     -DCMAKE_BUILD_TYPE=$opt \
-    -DCMAKE_C_COMPILER=$CC \
-    -DCMAKE_CXX_COMPILER=$CXX \
-    -DMPI_CXX_COMPILER=$CXX \
-    -DMPI_C_COMPILER=$CC \
+    -DCMAKE_C_COMPILER=mpicc \
+    -DCMAKE_CXX_COMPILER=mpicxx \
     $cudaopts \
     -DENABLE_ZOLTAN=OFF \
     -DENABLE_KOKKOS=ON \
