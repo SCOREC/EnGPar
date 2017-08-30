@@ -23,5 +23,5 @@ set(AGI_HEADERS
 
 add_library(agi ${AGI_SOURCES})
 
-target_link_libraries(agi PUBLIC engpar_support)
+target_link_libraries(agi PUBLIC engpar_support kokkos)
 engpar_export_lib(agi "${AGI_HEADERS}")

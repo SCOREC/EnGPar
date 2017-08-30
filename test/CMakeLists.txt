@@ -8,9 +8,6 @@ set(CMAKE_MODULE_PATH
 if (ENABLE_ZOLTAN)
   find_package(Zoltan MODULE REQUIRED)
 endif()
-if (ENABLE_KOKKOS)
-  find_package(Kokkos MODULE REQUIRED)
-endif()
 include_directories(
   ../support
   ../agi
@@ -19,7 +16,6 @@ include_directories(
   ../interfaces
   ${ZOLTAN_INCLUDE_DIRS}
   ${PARMETIS_INCLUDE_DIRS}
-  ${KOKKOS_INCLUDE_DIRS}
   )
 
 if(ENGPAR_FORTRAN_INTERFACE)
@@ -44,7 +40,8 @@ endif()
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
-  ${KOKKOS_LIBRARIES}
+  ${MPI_C_LINK_FLAGS}
+  ${MPI_C_LIBRARIES}
 )
 
 function(make_exe exename srcname)
@@ -78,10 +75,17 @@ if (ZOLTAN_FOUND)
 endif()
 
 
-if (KOKKOS_FOUND)
-  make_exe(kokkosHelloWorld kokkosHelloWorld.cpp)
-  make_exe(kokkosFor kokkosFor.cpp)
-  make_exe(bfsSearch bfsSearch.cpp)
+if (ENABLE_KOKKOS)
+  set(kokkos_ext "host")
+  if(KOKKOS_ENABLE_CUDA)
+    set(kokkos_ext "gpu")
+  endif()
+  make_exe(kokkosHelloWorld.${kokkos_ext} kokkosHelloWorld.cpp)
+  set_property(TARGET kokkosHelloWorld.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
+  make_exe(kokkosFor.${kokkos_ext} kokkosFor.cpp)
+  set_property(TARGET kokkosFor.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
+  make_exe(bfsSearch.${kokkos_ext} bfsSearch.cpp)
+  set_property(TARGET bfsSearch.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE)

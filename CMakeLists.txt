@@ -7,6 +7,8 @@ set(CMAKE_MODULE_PATH
    ${CMAKE_MODULE_PATH} 
    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+find_package(MPI REQUIRED)
+
 #Setup doxygen documentation
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -56,14 +58,18 @@ if(ENGPAR_FORTRAN_INTERFACE)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION include)
 endif()
 
+set(KOKKOS_PATH "" CACHE STRING "path to the Kokkos source directory")
 if (ENABLE_KOKKOS)
-  find_package(Kokkos MODULE REQUIRED)
+  set(CMAKE_CXX_STANDARD 11)
+  set(CMAKE_CXX_EXTENSIONS OFF)
+  add_subdirectory(${KOKKOS_PATH} ${CMAKE_BINARY_DIR}/kokkos)
   add_definitions(-DKOKKOS_ENABLED)
+  include_directories(${Kokkos_INCLUDE_DIRS_RET})
 endif()
 
 include_directories(
   ${SCOREC_PREFIX}/include
-  ${KOKKOS_INCLUDE_DIRS}
+  ${MPI_C_INCLUDE_PATH}
   )
 
 macro(engpar_export_lib target headers)
