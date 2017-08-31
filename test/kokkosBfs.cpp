@@ -36,6 +36,9 @@ int main(int argc, char* argv[]) {
 
   agi::PNgraph* png = g->publicize();
   fprintf(stderr, "num_local_verts %d\n", png->num_local_verts);
+  fprintf(stderr, "num_types %d\n", png->num_types);
+  const int edgeType = 0;
+  assert(png->isHyperGraph);
 
   typedef Kokkos::View< agi::lid_t > lid_type;
 
@@ -47,11 +50,31 @@ int main(int argc, char* argv[]) {
   Kokkos::deep_copy( num_local_verts, num_local_verts_h );
 
   bool_array visited("visited", png->num_local_verts);
-
   int_type root("root", 0); //pick the first vertex for now
 
   // initialize visited
   fwbw_init(num_local_verts, visited, root);
+
+  // copy the vertex degree list to the device
+  int_array vtx_degree("vtx degree", png->num_local_verts+1);
+  int_array::HostMirror vtx_degree_h = Kokkos::create_mirror_view( vtx_degree );
+  for(int i=0; i<png->num_local_verts+1; i++)
+    vtx_degree_h(i) = png->degree_list[edgeType][i];
+  Kokkos::deep_copy( vtx_degree, vtx_degree_h );
+
+  // copy the adjacent vertex list to the device
+  int_array adj_vtx("adj vtx", png->num_local_edges[edgeType]);
+  int_array::HostMirror adj_vtx_h = Kokkos::create_mirror_view( adj_vtx );
+  for(int i=0; i<png->num_local_edges[edgeType]; i++)
+    adj_vtx_h(i) = png->edge_list[edgeType][i];
+  Kokkos::deep_copy( adj_vtx, adj_vtx_h );
+
+  // create the queues (device work arrays)
+  int_array queue("queue", png->num_local_verts*QUEUE_MULTIPLIER);
+  int_array queue_next("queue next", png->num_local_verts*QUEUE_MULTIPLIER);
+
+  // run the traversal
+  fwbw_baseline(vtx_degree, adj_vtx, root, visited, queue, queue_next);
 
   destroyGraph(g);
   PCU_Barrier();

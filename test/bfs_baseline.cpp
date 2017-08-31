@@ -49,16 +49,6 @@
 #define out_vertice(n, j) out_array[out_degree_list[n]+j]
 #define out_degree(n) (out_degree_list[n+1] - out_degree_list[n])
 
-#if GPU
-  #define LOCAL_BUFFER_LENGTH 16
-  #define WORK_CHUNK 2048
-  #define WARP_SIZE 32
-#else
-  #define LOCAL_BUFFER_LENGTH 2048
-  #define WORK_CHUNK 2048
-#endif
-#define QUEUE_MULTIPLIER 1.25
-
 typedef Kokkos::TeamPolicy<> team_policy;
 
 typedef Kokkos::View<bool*> bool_array;
@@ -113,7 +103,6 @@ struct fwbw_init {
 struct fwbw_baseline {
   int_array out_array;
   int_array out_degree_list;
-  bool_array valid;
 
   int num_visited;
   int_type root;
@@ -128,14 +117,12 @@ struct fwbw_baseline {
   fwbw_baseline(
     int_array out_degree_list_in,
     int_array out_array_in,
-    bool_array valid_in,
     int_type root_in,
     bool_array visited_in,
     int_array queue_in,
     int_array queue_next_in)
   : out_array(out_array_in)             // device - list of adjacent vertices for each vtx
   , out_degree_list(out_degree_list_in) // device - degree of each vtx
-  , valid(valid_in)                     // device - ignore, set to true 
   , root(root_in)                       // device - starting vtx
   , visited(visited_in)                 // device - list of visited vertices
   , queue(queue_in)                     // device - list of vertices to visit
@@ -203,7 +190,7 @@ struct fwbw_baseline {
       for (int j = 0; j < out_degree; ++j)
       {
         int out = out_vertice(vert, j);
-        if (!visited[out] && valid[out])
+        if (!visited[out])
         {
           visited[out] = true;
           local_buffer[local_count++] = out;
