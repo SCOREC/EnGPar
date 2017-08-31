@@ -80,8 +80,11 @@ if (ENABLE_KOKKOS)
   endif()
   make_exe(kokkosHelloWorld.${kokkos_ext} kokkosHelloWorld.cpp)
   set_property(TARGET kokkosHelloWorld.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
-  make_exe(kokkosFor.${kokkos_ext} kokkosFor.cpp)
+
+  add_executable(kokkosFor.${kokkos_ext} kokkosFor.cpp bfs_baseline.cpp)
   set_property(TARGET kokkosFor.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
+  target_link_libraries(kokkosFor.${kokkos_ext} ${ALL_LIBS})
+
   make_exe(bfsSearch.${kokkos_ext} bfsSearch.cpp)
   set_property(TARGET bfsSearch.${kokkos_ext} PROPERTY CXX_STANDARD_REQUIRED 11)
 endif()
