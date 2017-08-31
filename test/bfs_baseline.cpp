@@ -44,6 +44,7 @@
 */
 
 #include <Kokkos_Core.hpp>
+#include "kokkosBfs.h"
 
 #define out_vertice(n, j) out_array[out_degree_list[n]+j]
 #define out_degree(n) (out_degree_list[n+1] - out_degree_list[n])
@@ -56,6 +57,7 @@
   #define LOCAL_BUFFER_LENGTH 2048
   #define WORK_CHUNK 2048
 #endif
+#define QUEUE_MULTIPLIER 1.25
 
 typedef Kokkos::TeamPolicy<> team_policy;
 
