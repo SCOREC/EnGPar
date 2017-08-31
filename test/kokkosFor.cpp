@@ -3,6 +3,8 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <engpar_support.h>
+#include <ngraph.h>
+#include <pngraph.h>
 
 
 int main(int argc, char* argv[]) {
@@ -20,11 +22,12 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc,argv);
 
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
-  KOKKOS_FOR_VERTS(g,v) {
-    printf("%lu\n",g->globalID(v));
-    printf("%lu\n",g->localID(v));
-  }
-  KOKKOS_END_FOR()
+  agi::PNgraph* png = g->publicize();
+  Kokkos::parallel_for(png->num_local_verts,
+    KOKKOS_LAMBDA(uintptr_t i) { \
+      printf("%lu\n",png->local_weights[i+1]);
+    }
+  );
   
   destroyGraph(g);
   PCU_Barrier();
