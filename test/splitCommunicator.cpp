@@ -21,8 +21,7 @@ int main(int argc, char* argv[]) {
     agi::Ngraph* g = buildGraph();
 
     agi::VertexIterator* itr = g->begin();
-    agi::GraphVertex* vert;
-    while ((vert = g->iterate(itr)));
+    while (g->iterate(itr));
     
     agi::destroyGraph(g);
   }
@@ -30,8 +29,7 @@ int main(int argc, char* argv[]) {
     agi::Ngraph* g = buildHyperGraph();
 
     agi::EdgeIterator* itr = g->begin(0);
-    agi::GraphEdge* edge;
-    while ((edge = g->iterate(itr)));
+    while (g->iterate(itr));
     g->destroy(itr);  
 
     agi::destroyGraph(g);

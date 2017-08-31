@@ -64,9 +64,8 @@ void testVertices(agi::Ngraph* g) {
   if (!PCU_Comm_Self())
     printf("Iterating over vertices\n");
   agi::VertexIterator* gitr = g->begin();
-  agi::GraphVertex* vtx=NULL;
   int i=0;
-  while ((vtx = g->iterate(gitr))) {
+  while (g->iterate(gitr)) {
     i++;
     //assert(g->weight(vtx)==1.0);
     assert(i<=g->numLocalVtxs());

@@ -67,14 +67,12 @@ namespace agi {
   void writePointData(Ngraph* g, FILE* f, GraphTag* tag,etype t) {
     fprintf(f,"<PointData>\n");
     fprintf(f,"<DataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\">\n");
-    agi::GraphVertex* v;
     agi::VertexIterator* vitr = g->begin();
-    while ((v=g->iterate(vitr))) {
+    while (g->iterate(vitr)) {
       fprintf(f,"0\n");
     }
-    agi::GraphEdge* e;
     agi::EdgeIterator* eitr = g->begin(0);
-    while ((e=g->iterate(eitr))) {
+    while (g->iterate(eitr)) {
       fprintf(f,"1\n");
     }
     g->destroy(eitr);

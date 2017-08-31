@@ -127,8 +127,7 @@ void testHyperGraph() {
     assert(graph->degree(vtx)==vert_degs[i]);
     agi::lid_t count = 0;
     agi::EdgeIterator* eitr = graph->edges(vtx);
-    agi::GraphEdge* e;
-    while ((e = graph->iterate(eitr))) {
+    while (graph->iterate(eitr)) {
       count++;
     }
     assert(count==vert_degs[i]);
@@ -279,8 +278,7 @@ void testHyperGraphParts() {
     assert(graph->degree(vtx)==vert_degs[i]);
     agi::lid_t count = 0;
     agi::EdgeIterator* eitr = graph->edges(vtx);
-    agi::GraphEdge* e;
-    while ((e = graph->iterate(eitr))) {
+    while (graph->iterate(eitr)) {
       count++;
     }
     assert(count==vert_degs[i]);
