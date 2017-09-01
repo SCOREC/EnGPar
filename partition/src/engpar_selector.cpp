@@ -40,8 +40,11 @@ namespace engpar {
       }
     }
     std::set<agi::GraphEdge*>::iterator sitr;
-    for (sitr = target_edges.begin();sitr!=target_edges.end();++sitr)
-      w+=g->weight(*sitr);
+    for (sitr = target_edges.begin();sitr!=target_edges.end();++sitr) {
+      agi::GraphEdge* e = *sitr;
+      if (!g->isResidentOn(e,peer))
+        w+=g->weight(*sitr);
+    }
     return w;
   }
 
