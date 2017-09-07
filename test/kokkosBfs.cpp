@@ -56,25 +56,25 @@ int main(int argc, char* argv[]) {
   fwbw_init(num_local_verts, visited, root);
 
   // copy the vertex degree list to the device
-  int_array vtx_degree("vtx degree", png->num_local_verts+1);
-  int_array::HostMirror vtx_degree_h = Kokkos::create_mirror_view( vtx_degree );
+  int_array vtx_to_net_offsets("vtx to net offsets", png->num_local_verts+1);
+  int_array::HostMirror vtx_to_net_offsets_h = Kokkos::create_mirror_view( vtx_to_net_offsets );
   for(int i=0; i<png->num_local_verts+1; i++)
-    vtx_degree_h(i) = png->degree_list[edgeType][i];
-  Kokkos::deep_copy( vtx_degree, vtx_degree_h );
+    vtx_to_net_offsets_h(i) = png->degree_list[edgeType][i];
+  Kokkos::deep_copy( vtx_to_net_offsets, vtx_to_net_offsets_h );
 
   // copy the adjacent vertex list to the device
-  int_array adj_vtx("adj vtx", png->num_local_edges[edgeType]);
-  int_array::HostMirror adj_vtx_h = Kokkos::create_mirror_view( adj_vtx );
+  int_array vtx_to_net("vtx to net adjacencies", png->num_local_edges[edgeType]);
+  int_array::HostMirror vtx_to_net_h = Kokkos::create_mirror_view( vtx_to_net );
   for(int i=0; i<png->num_local_edges[edgeType]; i++)
-    adj_vtx_h(i) = png->edge_list[edgeType][i];
-  Kokkos::deep_copy( adj_vtx, adj_vtx_h );
+    vtx_to_net_h(i) = png->edge_list[edgeType][i];
+  Kokkos::deep_copy( vtx_to_net, vtx_to_net_h );
 
   // create the queues (device work arrays)
   int_array queue("queue", png->num_local_verts*QUEUE_MULTIPLIER);
   int_array queue_next("queue next", png->num_local_verts*QUEUE_MULTIPLIER);
 
   // run the traversal
-  fwbw_baseline(vtx_degree, adj_vtx, root, visited, queue, queue_next);
+  fwbw_baseline(vtx_to_net_offsets, vtx_to_net, root, visited, queue, queue_next);
 
   destroyGraph(g);
   PCU_Barrier();
