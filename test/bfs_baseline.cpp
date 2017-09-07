@@ -121,8 +121,8 @@ struct fwbw_baseline {
     bool_array visited_in,
     int_array queue_in,
     int_array queue_next_in)
-  : out_array(out_array_in)             // device - list of adjacent vertices for each vtx
-  , out_degree_list(out_degree_list_in) // device - degree of each vtx
+  : out_degree_list(out_degree_list_in) // device - degree of each vtx
+  , out_array(out_array_in)             // device - list of adjacent vertices for each vtx
   , root(root_in)                       // device - starting vtx
   , visited(visited_in)                 // device - list of visited vertices
   , queue(queue_in)                     // device - list of vertices to visit
@@ -130,19 +130,22 @@ struct fwbw_baseline {
   , queue_size("queue size")            // device - size of queue
   , next_size("next size")              // device - size of queue_next
   {
+    num_visited = 1;
+
+    // number of vertices queued
     typename int_type::HostMirror host_size = create_mirror(queue_size);
-    typename int_type::HostMirror host_next = create_mirror(next_size);
+    host_size() = 1;
+    deep_copy(queue_size, host_size);
+
     typename int_type::HostMirror host_root = create_mirror(root);
     deep_copy(host_root, root);
-    host_size() = 1;
-    num_visited = 1;
-    deep_copy(queue_size, host_size);
 
     // initialize the queue with the root node
     typename int_array::HostMirror host_queue = create_mirror_view(queue);
     host_queue(0) = host_root();
     deep_copy(queue, host_queue);
 
+    typename int_type::HostMirror host_next = create_mirror(next_size);
     int team_size = team_policy::team_size_recommended(*this);
     int count = 0;
     while (host_size() > 0)
@@ -176,6 +179,7 @@ struct fwbw_baseline {
     int end = begin + WORK_CHUNK;
     int team_size = dev.team_size();
 
+    printf("begin %d end %d team_size %d\n", begin, end, team_size);
     for (int i = begin; i < end; i += team_size)
     {
       int out_degree = 0;
