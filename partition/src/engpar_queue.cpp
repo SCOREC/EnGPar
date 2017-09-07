@@ -150,26 +150,34 @@ namespace engpar {
   agi::lid_t runBFS(agi::PNgraph* pg, agi::etype t,agi::lid_t* seed,
                     agi::lid_t& numSeeds, agi::lid_t start_seed, int* visited) {
     for (agi::lid_t i=start_seed;i<numSeeds;i++) 
-      visited[seed[i]] = 0;
+      visited[seed[i]] = 0; // set the distance of the seed nets/edges
     int num_updates;
     int level=0;
     //Implemented for HG
     do {
       num_updates=0;
+      // loop over all vertices
       for (agi::lid_t i=0;i<pg->num_local_verts;i++) {
         int min_dist=-1;
+        //find the minimum distance of the nets/edges adjacent to vertex i
         for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
           agi::lid_t edge = pg->edge_list[t][j];
-          min_dist = (visited[edge]!=-1&&(min_dist==-1||visited[edge]<min_dist))
-            ? visited[edge] : min_dist;
+          if (visited[edge] != -1) // a visited edge
+            // if a visited edge has not been found yet (min_dist == -1) or
+            // the distance of the visited edge is less than the minimum
+            // distance
+            if (min_dist == -1 || visited[edge]<min_dist) 
+              min_dist = visited[edge]; // new minimum distance for a visited edge
         }
+        //if the vertex is adjacent to an edge with the current iterations distance
         if (min_dist==level) {
+          //loop over all nets/edges adjacent to vertex i
           for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
             agi::lid_t edge = pg->edge_list[t][j];
-            if (visited[edge]==-1) {
-              seed[numSeeds++] = edge;
+            if (visited[edge]==-1) { // a net/edge that has not been visited
+              seed[numSeeds++] = edge; // why?
               num_updates++;
-              visited[edge] = min_dist+1;
+              visited[edge] = min_dist+1; // set the net/edge distance
             }
           }
         }
@@ -186,11 +194,13 @@ namespace engpar {
     agi::etype t = 0;
     agi::lid_t* first_bfs = new agi::lid_t[pg->num_local_edges[t]];
 
-    if (PCU_Comm_Peers()==1)
-       first_bfs[size++]=2;
+    if (PCU_Comm_Peers()==1) //serial
+       first_bfs[size++]=2; // ????
     else if (pg->isHyperGraph) {
+      // the edges/nets that contain the vertex with the highest id are the
+      // seeds for the bfs
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
-        bool isShared=false;
+        bool isShared=false; // why 'shared' ?
         for (agi::lid_t j=pg->pin_degree_list[t][i];
              j<pg->pin_degree_list[t][i+1];++j) {
           agi::lid_t vert = pg->pin_list[t][j];
@@ -201,7 +211,7 @@ namespace engpar {
         }
       }
     }
-    else {
+    else { // not a hypergraph
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
         agi::lid_t v = pg->edge_list[t][i];
         if (v>=pg->num_local_verts)
@@ -212,6 +222,8 @@ namespace engpar {
     for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
       visited[i] = -1;
     }
+    // mark the first reachable set of edges from the set of
+    // seed edges (see above)
     runBFS(pg,t,first_bfs,size,0,visited);
     
     int* visited2 = new int[pg->num_local_edges[t]];
