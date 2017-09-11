@@ -26,6 +26,10 @@ namespace agi {
   }
 
   void Migration::insert(std::pair<GraphVertex*, int> pair) {
+    if (has(pair.first)) {
+      g->setLongTag(dest,pair.first,pair.second);
+      return;
+    }
     sending.push_back(pair.first);
     g->setLongTag(dest,pair.first,pair.second);
   }

@@ -12,8 +12,9 @@ namespace engpar {
     for (agi::lid_t i =0;i<deg;i++) {
       vtx = g->iterate(pitr);
       if (g->owner(vtx)==PCU_Comm_Self()) {
-        if(plan->has(vtx))
+        if(!plan->has(vtx)) {
           cav.push_back(vtx);
+        }
       }
       else
         peers.insert(g->owner(vtx));
