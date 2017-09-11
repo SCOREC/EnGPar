@@ -21,11 +21,13 @@ namespace engpar {
     input->step_factor = f;
     times[0]=0;
     times[1]=0;
+    distance_time=0;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
     agi::Balancer(input_->g,v,n), input(input_) {
     times[0]=0;
     times[1]=0;
+    distance_time=0;
   }
   bool Balancer::runStep(double tolerance) {
     double time[2];
@@ -66,11 +68,13 @@ namespace engpar {
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq;
+    double t = PCU_Time();
     if (input->useDistanceQueue) {
       pq = createDistanceQueue(input->g);
     }
     else 
       pq = createIterationQueue(input->g);
+    distance_time+=PCU_Time()-t;
     Selector* selector = makeSelector(input,pq,&completed_dimensions,
                                       &completed_weights);
     agi::Migration* plan = new agi::Migration(input->g);
@@ -84,11 +88,12 @@ namespace engpar {
       Midd* midd = selector->trim(targets,plan);
       selector->cancel(plan,midd);
       sizes[1]=plan->size();
-      PCU_Add_Ints(sizes,2);
-      if (verbosity>=2&&!PCU_Comm_Self())
-        printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
+      if (verbosity>=2) {
+        PCU_Add_Ints(sizes,2);
+        if (!PCU_Comm_Self())
+          printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
+      }
     }
-
     delete pq;
     delete targets;
     delete selector;
@@ -115,8 +120,8 @@ namespace engpar {
     else
       delete plan;
     time[1] = PCU_Time()-time[1];
-    PCU_Max_Doubles(time,2);
-    if (verbosity>=1) {
+    
+    if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
         printf("Step took %f seconds\n",time[0]);
         printf("Imbalances <v, e0, ...>: ");
@@ -124,7 +129,7 @@ namespace engpar {
       printImbalances(input->g);
       times[0]+=time[0];      
     }
-    if (verbosity>=2) {
+    if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
           printf("Slope: %f\n",sd->slope());
@@ -133,7 +138,7 @@ namespace engpar {
       times[1]+=time[1];
     }
 
-    if (numMigrate==0)
+    if (numMigrate == 0)
       return false;
 
     return true; //not done balancing
@@ -177,7 +182,7 @@ namespace engpar {
       printf("EnGPar ran in serial, nothing to do exiting...\n");
       return;
     }
-    if (!PCU_Comm_Self()&&verbosity>=0)
+    if (!PCU_Comm_Self() && verbosity >= 0)
       printf("Starting criteria type %d with imbalances: ",target_dimension);
     printImbalances(input->g);
     int step = 0;
@@ -188,7 +193,7 @@ namespace engpar {
       //runStep(tol) balances the current dimension.
       //Advance to the next dimension if the current dimesion is balanced
       //or the maximum per dimension iterations is reached.
-      if (!runStep(tol)||inner_steps++>=input->maxIterationsPerType) {
+      if (!runStep(tol) || inner_steps++ >= input->maxIterationsPerType) {
         // Set the imbalance limit for the higher priority dimension
         // while balancing lower priority dimensions to be the larger of
         // the specified imbalance (tgtMaxW) or, if it wasn't reached, the
@@ -201,7 +206,7 @@ namespace engpar {
         
         targetTime = PCU_Time()-targetTime;
         targetTime = PCU_Max_Double(targetTime);
-        if (verbosity>=0&&!PCU_Comm_Self()) {
+        if (verbosity >= 0 && !PCU_Comm_Self()) {
           printf("Completed criteria type %d in %d steps and took %f seconds\n",
                  target_dimension, inner_steps, targetTime);
         }
@@ -216,7 +221,7 @@ namespace engpar {
         sd = new SDSlope;
         if (input->tolerances.size()>index)
           tol = input->tolerances[index];
-        if (!PCU_Comm_Self()&&verbosity>=0)
+        if (!PCU_Comm_Self()&&verbosity >= 0)
           printf("Starting criteria type %d with imbalances: ",target_dimension);
         printImbalances(input->g);
 
@@ -224,9 +229,10 @@ namespace engpar {
     }
     delete sd;
     time = PCU_Time()-time;
-    time = PCU_Max_Double(time);
-    if (!PCU_Comm_Self()) {
-      if (verbosity>=0) {
+
+    if (verbosity >= 0) {
+      time = PCU_Max_Double(time);
+      if (!PCU_Comm_Self()) {
         if(step==input->maxIterations)
           printf("EnGPar ran to completion in %d iterations in %f seconds\n",
                  input->maxIterations, time);
@@ -234,8 +240,14 @@ namespace engpar {
           printf("EnGPar converged in %d iterations in %f seconds\n",step,
                  time);
       }
-      if (verbosity>=2)
+    }
+    if (verbosity >= 2) {
+      times[1] = PCU_Max_Double(times[1]);
+      distance_time = PCU_Max_Double(distance_time);
+      if (!PCU_Comm_Self()) {
         printf("Migration took %f%% of the total time\n",times[1]/time*100);
+        printf("Distance Computation took %f seconds\n",distance_time);
+      }
     }
     if (EnGPar_Is_Log_Open())
       EnGPar_End_Function();

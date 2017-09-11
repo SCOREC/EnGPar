@@ -23,6 +23,9 @@ int main(int argc, char* argv[]) {
     assert(false);
   }
 
+  int isMultiEdge = 0;
+  if( argc == 6 ) isMultiEdge = 1;
+
   apf::Mesh2* m=NULL;
   agi::Ngraph* g=NULL;
   //Load mesh
@@ -41,7 +44,7 @@ int main(int argc, char* argv[]) {
   double times[10];
   times[0] = PCU_Time();
   times[4] = PCU_Time();
-  if (argc==6) {
+  if (isMultiEdge) {
     int edges[2] = {0,2};
     //balance vtx>edge>elm
     g = agi::createAPFGraph(m,3,edges,2);
@@ -56,7 +59,7 @@ int main(int argc, char* argv[]) {
   engpar::Input* input = new engpar::Input(g);
   input->priorities.push_back(0);
   input->tolerances.push_back(tol);
-  if (argc==5) {
+  if (isMultiEdge) {
     input->priorities.push_back(1);
     input->tolerances.push_back(tol);
   }
@@ -67,7 +70,8 @@ int main(int argc, char* argv[]) {
 
   input->useDistanceQueue=true;
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input);
+  int verbosity = 1;
+  agi::Balancer* balancer = engpar::makeBalancer(input, verbosity);
   balancer->balance(tol);
 
   engpar::evaluatePartition(g);

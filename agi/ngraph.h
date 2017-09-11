@@ -170,6 +170,7 @@ public:
    * \return whether the target part shares the edge
    */
   bool isResidentOn(GraphEdge* e,part_t peer) const;
+
   /** \brief Returns the local id of the vertex
    * \param vtx The vertex
    * \return The local id of the vertex.
