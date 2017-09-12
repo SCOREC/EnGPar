@@ -12,13 +12,13 @@ namespace agi {
     Migration::iterator itr;
     for (itr = plan->begin();itr!=plan->end();itr++) {
       GraphVertex* v = *itr;
+      gid_t gid = globalID(v);
       part_t toSend = plan->get(v);
       GraphIterator* gitr = adjacent(v);
       GraphVertex* other;
       while ((other=iterate(gitr))) {
         part_t own = owner(other);
         if (own!=PCU_Comm_Self()) {
-          gid_t gid = globalID(v);
           PCU_COMM_PACK(own,gid);
           PCU_COMM_PACK(own,toSend);
         }
@@ -31,9 +31,9 @@ namespace agi {
       part_t own;
       PCU_COMM_UNPACK(gid);
       PCU_COMM_UNPACK(own);
+
       lid_t lid = vtx_mapping[gid];
       if (lid>=num_local_verts) {
-        assert(lid>=num_local_verts);
         owners[lid-num_local_verts]=own;
       }
     }
@@ -112,12 +112,9 @@ namespace agi {
     while ((e = g->iterate(itr))) {
       agi::PinIterator* pitr = g->pins(e);
       agi::GraphVertex* end;
-      lid_t i=0;
-      while ((end=g->iterate(pitr))) {
+      while ((end=g->iterate(pitr)))
         if (plan->has(end))
           break;
-        i++;
-      }
       g->destroy(pitr);
       if (!end) {
         //Add the Edge
@@ -131,11 +128,9 @@ namespace agi {
           gid_t other_gid = g->globalID(end);
           pins.push_back(other_gid);
           part_t owner = g->owner(end);
-          if (plan->has(end))
-            owner = plan->get(end);
+
           if (owner!=PCU_Comm_Self()) 
-            ghost_owners[other_gid] = owner;
-          
+            ghost_owners[other_gid] = owner;          
         }
         g->destroy(pitr);
       }
@@ -277,10 +272,6 @@ namespace agi {
 
   }
   void Ngraph::migrate(Migration* plan) {
-    double times[2];
-    times[0]=PCU_Time();
-    double mig[4];
-    mig[0]=PCU_Time();
     int nt = num_types;
     updateGhostOwners(plan);
     VertexVector affectedVerts;
@@ -295,19 +286,12 @@ namespace agi {
     std::unordered_map<gid_t,part_t> ghost_owners;
     ownedVerts.reserve(num_local_verts);
     vertWeights.reserve(num_local_verts);
-    mig[0] = PCU_Time()-mig[0];
-    mig[1]=PCU_Time();
     getAffected(this,plan,affectedVerts,affectedEdges);
-    mig[1] = PCU_Time()-mig[1];
-    mig[2] = PCU_Time();
     addVertices(this,ownedVerts,affectedVerts,vertWeights,old_owners);
-    mig[2] = PCU_Time()-mig[2];
-    mig[3] = PCU_Time();
     std::unordered_set<gid_t>* addedEdges = new std::unordered_set<gid_t>[nt];
     for (etype i=0;i<nt;i++)
       addEdges(this,plan,ownedEdges[i],edgeWeights[i],degrees[i],pins[i],
                ghost_owners,addedEdges[i],i);
-    mig[3] = PCU_Time()-mig[3];
     //Send and recieve vertices
     Migration::iterator itr;
     PCU_Comm_Begin();
@@ -344,8 +328,6 @@ namespace agi {
                 pins[t],ghost_owners,t);
     }
     delete [] addedEdges;
-    times[0]=PCU_Time()-times[0];
-    times[1]=PCU_Time();
     //Construct the migrated graph
     constructVerts(isHyperGraph,ownedVerts,vertWeights);
     if (cs)
@@ -356,15 +338,6 @@ namespace agi {
     }
     constructGhosts(ghost_owners);
     setOriginalOwners(old_owners);
-    times[1] = PCU_Time()-times[1];
-
-    PCU_Max_Doubles(times,2);
-    PCU_Max_Doubles(mig,4);
-    // if (!PCU_Comm_Self()) {
-    //   printf("Create Vars %f, getAffected %f, addVerts %f, addEdges %f\n",
-    //          mig[0],mig[1],mig[2],mig[3]);
-    //   printf("Time to migrate %f, Time to construct %f\n",times[0],times[1]);
-    // }
     
     delete [] affectedEdges;
     delete [] ownedEdges;
