@@ -20,9 +20,16 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
 
   engpar::Queue* q = engpar::createDistanceQueue(g);
-  for (unsigned int i=0;i<q->size();i++)
-    printf("%d %ld\n",PCU_Comm_Self(),g->globalID((*q)[i]));
+  if (!PCU_Comm_Self()) {
+    for (unsigned int i=0;i<q->size();i++)
+      printf("%d %ld\n",PCU_Comm_Self(),g->globalID((*q)[i]));
+  }
   delete q;
+  
+  if (g->hasCoords()) {
+    std::string filename = "graph";
+    agi::writeVTK(g,filename.c_str());
+  }
 
   agi::destroyGraph(g);
 

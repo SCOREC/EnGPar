@@ -295,10 +295,16 @@ agi::Ngraph* buildRequirementsGraph() {
 
 agi::Ngraph* buildDisconnected2Graph() {
   //The graph is 2 parts where one has two vertices that have edges to 4 different components in the other part
-  //The core component is a line of 5 vertices, then there are two components with depth 2. One is a tree and the other is a line. The last component is a a line of 2
+  //The core component is a line of 5 vertices, then there are two components with depth 2. One is a tree and the other is a line. The last component is a line of 2
   //The first part also has an island of vertices completely disconnected from the rest of the graph
   assert(PCU_Comm_Peers()==2);
 
+  if (!PCU_Comm_Self()) {
+    printf("Queue of part 0 for this graph should be:\n");
+    printf("400\n");
+    printf("300/200\n");
+    printf("100\n");
+  }
   agi::Ngraph* g = agi::createEmptyGraph();
   std::unordered_map<agi::gid_t,agi::part_t> owners;
   std::vector<agi::gid_t> edges;

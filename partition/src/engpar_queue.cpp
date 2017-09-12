@@ -49,6 +49,104 @@ namespace engpar {
       bfsSort(arr, i, right,values);
   }
 
+  class Inputs {
+  public:
+    Inputs() {
+      seeds=NULL;
+      numSeeds=0;
+      visited=NULL;
+      num_osets=0;
+      num_sets=0;
+      parents=NULL;
+      set_size=NULL;
+      labels=NULL;
+    }
+    ~Inputs() {
+      if (seeds)
+        delete [] seeds;
+      if (visited)
+        delete [] visited;
+      if (parents) {
+        delete [] parents;
+        delete [] set_size;
+        delete [] labels;
+      }
+    }
+    agi::lid_t* seeds;
+    agi::lid_t numSeeds;
+    int* visited;
+
+    int num_osets;//= numSeeds-start_seed;
+    int num_sets; //= num_osets;
+    int* parents; //= new int[num_sets];
+    int* set_size;//= new int[num_sets];
+    int* labels;  //= new int[pg->num_local_edges[t]];
+  };
+  typedef bool (*visitFn)(Inputs*,agi::lid_t,agi::lid_t);
+  bool depth_visit(Inputs* i,agi::lid_t source,agi::lid_t dest) {
+    int min_dist = i->visited[source];
+    if (i->visited[dest]==-1) {
+      i->seeds[i->numSeeds++] = dest;
+      i->visited[dest] = min_dist+1;
+      return true;
+    }
+    return false;
+  }
+  bool distance_visit(Inputs* i,agi::lid_t source, agi::lid_t dest) {
+    int label = i->labels[source];
+    int min_dist = i->visited[source];
+    if (label==-1)
+      return false;
+    while(label!=i->parents[label])
+      label = i->parents[label];
+    if (i->visited[dest]==-1) {
+      i->seeds[i->numSeeds++] = dest;
+      i->visited[dest] = min_dist+1;
+      i->labels[dest] = label;
+      i->set_size[label]++;
+      return true;
+    }
+    int l2 = i->labels[dest];
+    while(l2!=i->parents[l2]) 
+      l2=i->parents[l2];
+    if (label!=l2) {
+      i->num_sets--;
+      i->set_size[label]+=i->set_size[l2];
+      i->set_size[l2]=0;
+      i->parents[l2]=label;
+    }
+    return false;
+  }
+  int bfs_pull(agi::PNgraph* pg, agi::etype t,agi::lid_t start_seed,
+               int start_depth, visitFn visit, Inputs* in) {
+    int level=start_depth;
+    for (agi::lid_t i=start_seed;i<in->numSeeds;i++) 
+      in->visited[in->seeds[i]] = level;
+    int num_updates;
+    //Implemented for HG
+    do {
+      num_updates=0;
+      for (agi::lid_t i=0;i<pg->num_local_verts;i++) {
+        int source = -1;
+        for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
+          agi::lid_t edge = pg->edge_list[t][j];
+          if (in->visited[edge] != -1 &&
+              (source == -1 || in->visited[edge] < in->visited[source]))
+            source = edge;
+        }
+        if (source!=-1&&in->visited[source]==level) {
+          for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
+            agi::lid_t edge = pg->edge_list[t][j];
+            num_updates+=visit(in,source,edge);
+          }
+        }
+      }
+      level++;
+    }
+    while (num_updates);
+    return level;
+  }
+
   agi::lid_t runBFSDisjoint(agi::PNgraph* pg, agi::etype t,agi::lid_t* seed,
                     agi::lid_t& numSeeds, agi::lid_t start_seed, int* visited,
                     agi::lid_t depth=0) {
@@ -84,7 +182,7 @@ namespace engpar {
             label = labels[edge];
             if (label ==-1)
               break;
-            while(label!=parents[label])
+            while (label!=parents[label])
               label = parents[label];
           }
         }
@@ -181,13 +279,15 @@ namespace engpar {
   }
 
   Queue* createDistanceQueue(agi::Ngraph* g) {  
-    agi::lid_t size=0;
     agi::PNgraph* pg = g->publicize();
     agi::etype t = 0;
-    agi::lid_t* first_bfs = new agi::lid_t[pg->num_local_edges[t]];
-
+    //Setup Inputs for first BFS traversal
+    Inputs* in1 = new Inputs;
+    in1->seeds = new agi::lid_t[pg->num_local_edges[t]];
+    //If run in serial use edge 2 for the seed
     if (PCU_Comm_Peers()==1)
-       first_bfs[size++]=2;
+       in1->seeds[in1->numSeeds++]=2;
+    //Otherwise use all edges that are shared across part boundaries
     else if (pg->isHyperGraph) {
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
         bool isShared=false;
@@ -197,7 +297,7 @@ namespace engpar {
           isShared = isShared||vert>=pg->num_local_verts;
         }
         if (isShared) {
-          first_bfs[size++] = i;
+          in1->seeds[in1->numSeeds++] = i;
         }
       }
     }
@@ -205,42 +305,92 @@ namespace engpar {
       for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
         agi::lid_t v = pg->edge_list[t][i];
         if (v>=pg->num_local_verts)
-          first_bfs[size++] = i;
+          in1->seeds[in1->numSeeds++] = i;
       }
     }
-    int* visited = new int[pg->num_local_edges[t]];
-    for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
-      visited[i] = -1;
-    }
-    runBFS(pg,t,first_bfs,size,0,visited);
     
-    int* visited2 = new int[pg->num_local_edges[t]];
-    agi::lid_t size2=0;
-    agi::lid_t* second_bfs = new agi::lid_t[pg->num_local_edges[t]];
-    for (agi::lid_t i=0;i<pg->num_local_edges[t];i++)
-      visited2[i]=-1;
-    agi::lid_t ind = size-1;
-    agi::lid_t depth = 0;
-    while (size2<size) {
-      while(visited2[first_bfs[ind]]!=-1&&ind>=0)
-        ind--;
-      if (ind<0)
-        break;
-      int max_depth = visited[first_bfs[ind]];
-      agi::lid_t start_seed = size2;
-      while(visited[first_bfs[ind]]==max_depth&&ind>0) {
-        if (visited2[first_bfs[ind]]==-1)
-          second_bfs[size2++] = first_bfs[ind];
-        ind--;
-      }
-      depth = runBFSDisjoint(pg,t,second_bfs,size2,start_seed,visited2,depth);
+    in1->visited = new int[pg->num_local_edges[t]];
+    for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {
+      in1->visited[i] = -1;
     }
-    delete [] visited;
-    delete [] visited2;
-    delete [] first_bfs;
+    //Run first BFS using depth visit operation
+    bfs_pull(pg,t,0,0,depth_visit,in1);
+
+    //Setup inputs to second BFS traversal
+    Inputs* in2 = new Inputs;
+    in2->visited = new int[pg->num_local_edges[t]];
+    in2->seeds = new agi::lid_t[pg->num_local_edges[t]];
+    for (agi::lid_t i = 0; i < pg->num_local_edges[t]; i++)
+      in2->visited[i] = -1;
+    in2->labels = new int[pg->num_local_edges[t]];
+    for (agi::lid_t i=0;i<pg->num_local_edges[t];i++)
+      in2->labels[i]=-1;
+
+    //Seconds BFS traversal for distance computation
+    // Automatically detects disconnected components using disjoint sets
+    agi::lid_t ind = in1->numSeeds-1;
+    agi::lid_t depth = 0;
+    while (in2->numSeeds < in1->numSeeds) {
+      //Find the next deepest layer of edges
+      while(in2->visited[in1->seeds[ind]] != -1 && ind >= 0)
+        --ind;
+      if (ind < 0)
+        break;
+      int max_depth = in1->visited[in1->seeds[ind]];
+      agi::lid_t start_seed = in2->numSeeds;
+      while(in1->visited[in1->seeds[ind]] == max_depth && ind > 0) {
+        if (in2->visited[in1->seeds[ind]] == -1)
+          in2->seeds[in2->numSeeds++] = in1->seeds[ind];
+        --ind;
+      }
+      //Setup the disjoint set structure
+      in2->num_osets = in2->numSeeds-start_seed;
+      in2->num_sets = in2->num_osets;
+      in2->parents = new int[in2->num_sets];
+      in2->set_size = new int[in2->num_sets];
+      for (int i=0;i<in2->num_sets;i++) {
+        in2->parents[i] = i;
+        in2->set_size[i] = 1;
+      }
+      for (agi::lid_t i=start_seed;i<in2->numSeeds;i++) {
+        in2->labels[in2->seeds[i]] = i-start_seed;
+      }
+      //Run the bfs using the distance visit operation
+      depth = bfs_pull(pg,t,start_seed,depth,distance_visit,in2);
+
+      //Correct the distance when there are multiple disjoint sets
+      int addition=0;
+      if (in2->num_sets>1) {
+        for (int i=0;i<in2->num_sets;i++) {
+          int l=0;
+          for (int j=1;j<in2->num_osets;j++) {
+            if (in2->set_size[j]>in2->set_size[l]) 
+              l=j;
+          }
+          if (addition>0) {
+            for (agi::lid_t j=start_seed;j<in2->numSeeds;j++) {
+              int l2 = in2->labels[j];
+              if (l2<0)
+                continue;
+              while (l2!=in2->parents[l2])
+                l2 = in2->parents[l2];
+              if (l2==l)
+                in2->visited[j]+=addition;
+            }
+          }
+          addition+=in2->set_size[i];
+          in2->set_size[i]=0;
+        }
+        depth+=addition;
+      }
+      //Sort the recent BFS in accordance to the offsets
+      bfsSort(in2->seeds,start_seed,in2->numSeeds-1,in2->visited);
+    }
+    delete in1;
+    //Setup the Queue from the second bfs
     Queue* q = new Queue;
-    for (int i=size2;i>0;i--) {
-      agi::lid_t lid = second_bfs[i-1];
+    for (int i=in2->numSeeds;i>0;i--) {
+      agi::lid_t lid = in2->seeds[i-1];
       agi::GraphEdge* edge = pg->getEdge(lid,t);
       assert(g->localID(edge)==lid);
       agi::Peers res;
@@ -248,7 +398,7 @@ namespace engpar {
       if (res.size()>1)
         q->push_back(edge);
     }
-    delete [] second_bfs;
+    delete in2;
     return q;
   }
 }
