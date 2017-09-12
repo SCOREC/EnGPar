@@ -66,6 +66,10 @@ int main(int argc, char* argv[]) {
   //Ensure the graph is still valid
   agi::checkValidity(g);
 
+  //Ensure the graph was balanced to the target tolerance
+  assert(engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1))<1.2);
+  assert(engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,0))<1.2);
+  
   if (g->hasCoords()) {
     std::string filename = "after";
     agi::writeVTK(g,filename.c_str());
@@ -74,7 +78,6 @@ int main(int argc, char* argv[]) {
   //Migration of original data structure
   if (argc>2) {
     g->getPartition();
-
   }
   
   //Destroy graph
