@@ -300,9 +300,10 @@ agi::Ngraph* buildDisconnected2Graph() {
   assert(PCU_Comm_Peers()==2);
 
   if (!PCU_Comm_Self()) {
-    printf("Queue of part 0 for this graph should be:\n");
+    printf("Distance Queue of part 0 for this graph should be:\n");
     printf("400\n");
-    printf("300/200\n");
+    printf("200\n");
+    printf("300\n");
     printf("100\n");
   }
   agi::Ngraph* g = agi::createEmptyGraph();
