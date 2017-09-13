@@ -144,9 +144,6 @@ mpi_test(balanceTorusVtxFaceElm 4
   "${GRAPHS}/torus/4_01/"
   yes)
 
-mpi_test(balanceTree 2
-  ./balance
-  "${GRAPHS}/tree.ebin")
 
 if (ENABLE_ZOLTAN)
 

@@ -29,6 +29,7 @@ namespace engpar {
     Input* input;
     double times[2];
     double distance_time;
+    int sideTol;
   };
 }
 

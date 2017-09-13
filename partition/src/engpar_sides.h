@@ -13,17 +13,16 @@ namespace engpar {
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = graph->begin(in->sides_edge_type);
       while ((edge = graph->iterate(eitr))) {
-        agi::GraphVertex* pin;
-        agi::PinIterator* pitr = graph->pins(edge);
-        int deg = graph->degree(edge);
-        for (int i=0;i<deg;i++) {
-          pin = graph->iterate(pitr);
-          agi::part_t owner = graph->owner(pin);
-          if (PCU_Comm_Self()!=owner){
-            increment(owner);
+        agi::Peers res;
+        in->g->getResidence(edge,res);
+        if (res.size()>1) {
+          agi::Peers::iterator itr;
+          for (itr=res.begin();itr!=res.end();itr++) {
+            if (*itr!=PCU_Comm_Self()) {
+              increment(*itr);
+            }
           }
         }
-        in->g->destroy(pitr);
       }
       in->g->destroy(eitr);
     }

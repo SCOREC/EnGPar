@@ -14,6 +14,11 @@ namespace engpar {
     wgt_t w = getWeight(g,dimension);
     return PCU_Add_Double(w) / PCU_Comm_Peers();
   }
+  double averageSides(Sides* s) {
+    double tot = s->total();
+    tot = PCU_Add_Double(tot);
+    return tot / PCU_Comm_Peers();
+  }
   
   Balancer::Balancer(agi::Ngraph* g, double f, int v, const char* n) :
     agi::Balancer(g,v,n) {
@@ -32,7 +37,6 @@ namespace engpar {
   bool Balancer::runStep(double tolerance) {
     double time[2];
     time[0] = PCU_Time();
-
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
     //Check for completition of criteria
     if (imb < tolerance)
@@ -55,7 +59,7 @@ namespace engpar {
         completedWs[i] = makeWeights(input,sides,completed_dimensions[i]);
       }
     }
-    Targets* targets = makeTargets(input,sides,targetWeights,
+    Targets* targets = makeTargets(input,sides,targetWeights,sideTol,
                                    completedWs,completed_weights);
     delete sides;
     if (completedWs) {
@@ -91,7 +95,7 @@ namespace engpar {
       if (verbosity>=2) {
         PCU_Add_Ints(sizes,2);
         if (!PCU_Comm_Self())
-          printf("Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
+          printf("  Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
       }
     }
     delete pq;
@@ -123,8 +127,8 @@ namespace engpar {
     
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
-        printf("Step took %f seconds\n",time[0]);
-        printf("Imbalances <v, e0, ...>: ");
+        printf("  Step took %f seconds\n",time[0]);
+        printf("  Imbalances <v, e0, ...>: ");
       }
       printImbalances(input->g);
       times[0]+=time[0];      
@@ -132,8 +136,8 @@ namespace engpar {
     if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
-          printf("Slope: %f\n",sd->slope());
-        printf("Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
+          printf("    Slope: %f\n",sd->slope());
+        printf("    Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
       }
       times[1]+=time[1];
     }
@@ -169,22 +173,35 @@ namespace engpar {
       
       EnGPar_Log_Function(message);
     }
+    if (1 == PCU_Comm_Peers()) {
+      printf("EnGPar ran in serial, nothing to do exiting...\n");
+      return;
+    }
 
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
     unsigned int index=0;
     target_dimension = input->priorities[index];
+    
+    //Construct Stagnation detection
     sd = new SDSlope;
+    
+    //Set imbalance tolerance
     double tol=1.1;
     if (input->tolerances.size()>index)
       tol = input->tolerances[index];
-    if (1 == PCU_Comm_Peers()) {
-      printf("EnGPar ran in serial, nothing to do exiting...\n");
-      return;
-    }
+    
+    //Set side tolerance
+    Sides* sides = makeSides(input);
+    sideTol = averageSides(sides);
+    delete sides;
+    
     if (!PCU_Comm_Self() && verbosity >= 0)
       printf("Starting criteria type %d with imbalances: ",target_dimension);
     printImbalances(input->g);
+    if (!PCU_Comm_Self() && verbosity >= 1)
+      printf("Side Tolerance is: %d\n", sideTol);
+
     int step = 0;
     int inner_steps=0;
     double time = PCU_Time();
@@ -216,14 +233,25 @@ namespace engpar {
         if (index==input->priorities.size())
           break;
         inner_steps=0;
+        //Set new target criteria
         target_dimension=input->priorities[index];
+        //Recreate stagnation detection
         delete sd;
         sd = new SDSlope;
+        //Set new tolerance
         if (input->tolerances.size()>index)
-          tol = input->tolerances[index];
-        if (!PCU_Comm_Self()&&verbosity >= 0)
+          tol = input->tolerances[index];        
+        //Set side tolerance
+        Sides* sides = makeSides(input);
+        sideTol = averageSides(sides);
+        delete sides;
+
+        if (!PCU_Comm_Self() && verbosity >= 0)
           printf("Starting criteria type %d with imbalances: ",target_dimension);
         printImbalances(input->g);
+        if (!PCU_Comm_Self() && verbosity >= 1)
+          printf("Side Tolerance is: %d\n", sideTol);
+
 
       }      
     }
@@ -237,8 +265,8 @@ namespace engpar {
           printf("EnGPar ran to completion in %d iterations in %f seconds\n",
                  input->maxIterations, time);
         else
-          printf("EnGPar converged in %d iterations in %f seconds\n",step,
-                 time);
+          printf("EnGPar converged in %lu iterations in %f seconds\n",
+                 step-input->priorities.size(),time);
       }
     }
     if (verbosity >= 2) {

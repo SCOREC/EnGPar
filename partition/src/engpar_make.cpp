@@ -11,8 +11,8 @@ namespace engpar {
   Weights* makeWeights(Input* in, Sides* s, int target) {
     return new Weights(in,s,target);
   }
-  Targets* makeTargets(Input* in, Sides* s, Weights* tW,Weights** cWs,
-                       std::vector<wgt_t>& cTs) {
-    return new Targets(in,s,tW,cWs,cTs);
+  Targets* makeTargets(Input* in, Sides* s, Weights* tW,int sT,
+                       Weights** cWs, std::vector<wgt_t>& cTs) {
+    return new Targets(in,s,tW,sT,cWs,cTs);
   }
 }
