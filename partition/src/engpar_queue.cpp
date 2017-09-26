@@ -206,6 +206,11 @@ namespace engpar {
           in1->seeds[in1->numSeeds++] = i;
       }
     }
+
+    if (in1->numSeeds==0) {
+      Queue* q = new Queue;
+      return q;
+    }
     
     in1->visited = new int[pg->num_local_edges[t]];
     for (agi::lid_t i=0;i<pg->num_local_edges[t];i++) {

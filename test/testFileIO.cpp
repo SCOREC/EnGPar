@@ -47,6 +47,7 @@ int main(int argc, char* argv[]) {
       edges[i-4] = atoi(argv[i]);
     }
     g = agi::createAPFGraph(m,3,edges,argc-4);
+    delete [] edges;
   }
   PCU_Barrier();
 

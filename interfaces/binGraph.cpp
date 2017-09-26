@@ -24,21 +24,20 @@ Ngraph* createBinGraph(char* graph_file,char* part_file) {
   return new binGraph(graph_file,part_file);
 }
 
-  //TODO: replace mallocs with new
   //TODO: replace mpi calls with PCU
 binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   int64_t* read_edges;
   int64_t m_read;
   etype t = load_edges(graph_file,read_edges,m_read);
-  int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
+  int32_t* ranks = new int32_t[num_global_verts];
   if (!part_file)
     vert_block_ranks(ranks);
   else
     read_ranks(part_file,ranks);
   exchange_edges(m_read,read_edges,ranks,t);
-  free(read_edges);
+  delete [] read_edges;
   create_dist_csr(ranks,t);
-  free(ranks);
+  delete [] ranks;
   std::vector<wgt_t> wgts;
   setEdgeWeights(wgts,0);
 }
@@ -78,7 +77,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   edge_list[0] = new gid_t[num_local_edges[0]*2];
   std::copy(recv_edges.begin(),recv_edges.end(),edge_list[0]);
   vtx_mapping.clear();
-  int32_t* ranks = (int32_t*)malloc(num_global_verts*sizeof(int32_t));
+  int32_t* ranks = new int32_t[num_global_verts];
   for (gid_t i=0;i<num_global_verts;i++)
     ranks[i] = -1;
   for (lid_t i=0;i<num_local_edges[0]*2;i++) {
@@ -121,7 +120,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
 
   ghost_unmap = new gid_t[dups.size()];
   owners = new part_t[dups.size()];
-  int64_t* temp_counts = (int64_t*)malloc(num_local_verts*sizeof(int64_t));
+  int64_t* temp_counts = new int64_t[num_local_verts];
   memcpy(temp_counts, degree_list[SPLIT_TYPE], num_local_verts*sizeof(int64_t));
 
   edge_list[SPLIT_TYPE] = new lid_t[dups.size()];
@@ -156,14 +155,14 @@ etype binGraph::load_edges(char *filename, int64_t*& read_edges,
 
   m_read = (read_offset_end - read_offset_start)/(2*sizeof(int32_t));
 
-  int32_t* temp_read = (int32_t*)malloc(2*m_read*sizeof(int32_t));
-  read_edges = (int64_t*)malloc(2*m_read*sizeof(int64_t));
+  int32_t* temp_read = new int32_t[2*m_read];
+  read_edges = new int64_t[2*m_read];
   fseek(infp, read_offset_start, SEEK_SET);
   fread(temp_read, m_read, 2*sizeof(int32_t), infp);
   fclose(infp);
   for (int64_t i = 0; i < m_read*2; ++i)
     read_edges[i] = (int64_t)temp_read[i];
-  free(temp_read);
+  delete [] temp_read;
   
   num_global_verts = 0;
   for (int64_t i = 0; i < m_read*2; ++i)
@@ -238,7 +237,7 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   int32_t total_send = sdispls[PCU_Comm_Peers()-1] + scounts[PCU_Comm_Peers()-1];
   int32_t total_recv = rdispls[PCU_Comm_Peers()-1] + rcounts[PCU_Comm_Peers()-1];
   int64_t* sendbuf = (int64_t*)malloc(total_send*sizeof(int64_t));
-  edge_list[t] = (lid_t*)malloc(total_recv*sizeof(lid_t));
+  edge_list[t] = new lid_t[total_recv];
   num_local_edges[t] = total_recv / 2;
   num_local_pins[t] = 2*num_local_edges[t];
 
@@ -294,7 +293,7 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
       edge_list[t][i] = vtx_mapping[out];
   }
   gid_t* tmp_edges = new gid_t[num_local_edges[t]];
-  int64_t* temp_counts = (int64_t*)malloc(num_local_verts*sizeof(int64_t));
+  int64_t* temp_counts = new int64_t[num_local_verts];
   degree_list[t] = new lid_t[num_local_verts+1];
   for (int64_t i = 0; i < num_local_verts+1; ++i)
     degree_list[t][i] = 0;
@@ -307,8 +306,8 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(int64_t));
   for (int64_t i = 0; i < num_local_edges[t]*2; i+=2)
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
-  free(temp_counts);
-  free(edge_list[t]);
+  delete [] temp_counts;
+  delete [] edge_list[t];
   edge_list[t] = tmp_edges;
   if (createGhost) {
     cur_label = num_local_verts;
@@ -325,8 +324,8 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
     }
     num_ghost_verts = cur_label - num_local_verts;
     if (num_ghost_verts>0) {
-      ghost_unmap = (gid_t*)malloc(num_ghost_verts*sizeof(gid_t));
-      owners = (int32_t*)malloc(num_ghost_verts*sizeof(int32_t));
+      ghost_unmap = new gid_t[num_ghost_verts];
+      owners = new int32_t[num_ghost_verts];
       for (int64_t i = 0; i < (int64_t)nonlocal_vids.size(); ++i) {
         ghost_unmap[i] = nonlocal_vids[i];
         owners[i] = ranks[nonlocal_vids[i]];
