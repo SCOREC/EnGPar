@@ -137,7 +137,9 @@ namespace engpar {
             continue;
           visit(in,g->localID(source),g->localID(dest));
         }
+        g->destroy(eitr);
       }
+      g->destroy(pitr);
     }
     return in->visited[in->seeds[in->numSeeds-1]];
   }
