@@ -27,7 +27,32 @@ curl https://api.github.com/graphql \
 }
 EOF
 
-$jq '.data.repository.issues.edges[][]["updatedAt"]' 26092017.issues | xargs -L 1 date +"%d%m%Y" -d > engpar.issues
+$jq '.data.repository.issues.edges[][]["updatedAt"]' $stamp.issues | xargs -L 1 date +"%d-%m-%Y" -d > engpar.issues
 sort -t '-' -k 2 -k 1 engpar.issues > engpar.sorted.issues
 
-#rm $stamp.*
+#merged or closed pull requests 
+curl https://api.github.com/graphql \
+  -H "$auth" \
+  -X POST \
+  -o $stamp.pulls \
+  -d @- << EOF
+{
+  "query": "query {
+     repository(owner:\"SCOREC\", name:\"EnGPar\") {
+       pullRequests(last:100, states:[CLOSED, MERGED]) {
+         edges {
+           node {
+             title
+             state
+             updatedAt
+             mergedAt
+           }
+         }
+       }
+     }
+  }"
+}
+EOF
+
+$jq '.data.repository.pullRequests.edges[][]["updatedAt"]' $stamp.pulls | xargs -L 1 date +"%d-%m-%Y" -d > engpar.pulls
+sort -t '-' -k 2 -k 1 engpar.pulls > engpar.sorted.pulls
