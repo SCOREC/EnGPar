@@ -66,11 +66,12 @@ namespace engpar {
         delete [] seeds;
       if (visited)
         delete [] visited;
-      if (parents) {
+      if (parents) 
         delete [] parents;
+      if (set_size)
         delete [] set_size;
+      if (labels)
         delete [] labels;
-      }
     }
     agi::lid_t* seeds;
     agi::lid_t numSeeds;
@@ -243,6 +244,8 @@ namespace engpar {
       //Setup the disjoint set structure
       in2->num_osets = in2->numSeeds-start_seed;
       in2->num_sets = in2->num_osets;
+      if (in2->num_sets==0)
+        continue;
       in2->parents = new int[in2->num_sets];
       in2->set_size = new int[in2->num_sets];
       for (int i=0;i<in2->num_sets;i++) {
@@ -283,6 +286,12 @@ namespace engpar {
       }
       //Sort the recent BFS in accordance to the offsets
       bfsSort(in2->seeds,start_seed,in2->numSeeds-1,in2->visited);
+      
+      //Cleanup disjoint sets
+      delete [] in2->parents;
+      in2->parents = NULL;
+      delete [] in2->set_size;
+      in2->set_size = NULL;
     }
     delete in1;
     //Setup the Queue from the second bfs
@@ -290,7 +299,6 @@ namespace engpar {
     for (int i=in2->numSeeds;i>0;i--) {
       agi::lid_t lid = in2->seeds[i-1];
       agi::GraphEdge* edge = pg->getEdge(lid,t);
-      assert(g->localID(edge)==lid);
       agi::Peers res;
       g->getResidence(edge,res);
       if (res.size()>1)
