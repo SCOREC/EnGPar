@@ -83,7 +83,10 @@ namespace engpar {
     int* set_size;//= new int[num_sets];
     int* labels;  //= new int[pg->num_local_edges[t]];
   };
+  //Visit function takes in the input, the source edge and destination edge
   typedef bool (*visitFn)(Inputs*,agi::lid_t,agi::lid_t);
+
+  //Visit function for first traversal
   bool depth_visit(Inputs* i,agi::lid_t source,agi::lid_t dest) {
     int min_dist = i->visited[source];
     if (i->visited[dest]==-1) {
@@ -93,6 +96,8 @@ namespace engpar {
     }
     return false;
   }
+  
+  //Visit function for second traversal (uses disjoint sets)
   bool distance_visit(Inputs* i,agi::lid_t source, agi::lid_t dest) {
     int label = i->labels[source];
     int min_dist = i->visited[source];
@@ -118,6 +123,16 @@ namespace engpar {
     }
     return false;
   }
+
+  /*
+    Push based BFS takes in :
+      graph
+      edge type
+      first seed index into visited array
+      starting depth
+      the visit function
+      inputs object
+  */
   int bfs_push(agi::Ngraph* g, agi::etype t, agi::lid_t start_seed,
                int start_depth,visitFn visit, Inputs* in) {
     for (agi::lid_t i=start_seed;i<in->numSeeds;i++) 
@@ -144,6 +159,16 @@ namespace engpar {
     }
     return in->visited[in->seeds[in->numSeeds-1]];
   }
+  
+  /*
+    Pull based BFS takes in :
+      graph
+      edge type
+      first seed index into visited array
+      starting depth
+      the visit function
+      inputs object
+  */
   int bfs_pull(agi::Ngraph* g, agi::etype t,agi::lid_t start_seed,
                int start_depth, visitFn visit, Inputs* in) {
     agi::PNgraph* pg = g->publicize();
