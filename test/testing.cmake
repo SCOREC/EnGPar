@@ -87,9 +87,13 @@ mpi_test(buildSerialBinaryTree 1
   ./buildBinaryGraph
   "${GRAPHS}/tree.ebin")
 
-mpi_test(buildParallelBinaryGraph 4
+mpi_test(buildParallelBinaryGraph2 2
   ./buildBinaryGraph
-  "${GRAPHS}/google.ebin")
+  "${GRAPHS}/gnutella.ebin")
+
+mpi_test(buildParallelBinaryGraph4 4
+  ./buildBinaryGraph
+  "${GRAPHS}/enron.ebin")
 
 mpi_test(testAdjacentSerial 1
   ./testAdjacentTraversal
@@ -126,9 +130,9 @@ mpi_test(vtxBalanceTorus 4
   "${GRAPHS}/torus/4/"
   .15)
 
-mpi_test(vtxBalanceRing 2
+mpi_test(vtxBalanceGraph 2
   ./vtxBalance
-  "${GRAPHS}/ring.ebin"
+  "${GRAPHS}/gnutella.ebin"
   .1)
 
 mpi_test(balanceCube 4
