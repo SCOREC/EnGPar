@@ -279,9 +279,6 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   int64_t cur_label = 0;
   for (int64_t i = 0; i < num_local_edges[t]*2; i++) {
     int64_t out = edge_list[t][i];
-
-
-    
     if (ranks[out] != PCU_Comm_Self())
       continue;
     if (vtx_mapping.count(out) == 0) {
@@ -304,11 +301,14 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   for (int64_t i = 0; i < num_local_verts; ++i)
     degree_list[t][i+1] = degree_list[t][i] + temp_counts[i];
   memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(int64_t));
-  for (int64_t i = 0; i < num_local_edges[t]*2; i+=2)
+  for (int64_t i = 0; i < num_local_edges[t]*2; i+=2) {
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
+  }
   delete [] temp_counts;
   delete [] edge_list[t];
   edge_list[t] = tmp_edges;
+  
+
   if (createGhost) {
     cur_label = num_local_verts;
     std::vector<int64_t> nonlocal_vids;
@@ -319,7 +319,7 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
         edge_list[t][i] = cur_label++;
         nonlocal_vids.push_back(out);
       }
-      else        
+      else if (vtx_mapping[out] >= num_local_verts)
         edge_list[t][i] = vtx_mapping[out];
     }
     num_ghost_verts = cur_label - num_local_verts;
