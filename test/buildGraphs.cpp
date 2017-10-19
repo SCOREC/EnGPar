@@ -295,7 +295,7 @@ agi::Ngraph* buildRequirementsGraph() {
 
 agi::Ngraph* buildDisconnected2Graph() {
   //The graph is 2 parts where one has two vertices that have edges to 4 different components in the other part
-  //The core component is a line of 5 vertices, then there are two components with depth 2. One is a tree and the other is a line. The last component is a line of 2
+  //The core component is a line of 5 vertices, then there are two components with depth 2. One is a tree and the other is a line. The last component is a line of 1
   //The first part also has an island of vertices completely disconnected from the rest of the graph
   assert(PCU_Comm_Peers()==2);
 
@@ -421,8 +421,8 @@ agi::Ngraph* buildDisconnected2Graph() {
     cs[index][0] = .75; cs[index][1]=-2; cs[index++][2]=0;
 
     
-    //Last component, line of 2 vertices
-    for (int i=400;i<402;i++) {
+    //Last component, line of 1 vertex
+    for (int i=400;i<401;i++) {
       verts.push_back(i);
       int ind = i-400+15;
       cs[ind][1]=-.5*(i-399);cs[ind][1]=.5*(i-399); cs[ind][2]=0;

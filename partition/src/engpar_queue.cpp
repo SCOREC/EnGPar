@@ -260,13 +260,13 @@ namespace engpar {
     agi::lid_t depth = 0;
     while (in2->numSeeds < in1->numSeeds) {
       //Find the next deepest layer of edges
-      while(in2->visited[in1->seeds[ind]] != -1 && ind >= 0)
+      while(ind >= 0&&in2->visited[in1->seeds[ind]] != -1)
         --ind;
       if (ind < 0)
         break;
       int max_depth = in1->visited[in1->seeds[ind]];
       agi::lid_t start_seed = in2->numSeeds;
-      while(in1->visited[in1->seeds[ind]] == max_depth && ind > 0) {
+      while(ind >= 0 && in1->visited[in1->seeds[ind]] == max_depth) {
         if (in2->visited[in1->seeds[ind]] == -1)
           in2->seeds[in2->numSeeds++] = in1->seeds[ind];
         --ind;
