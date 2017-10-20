@@ -107,6 +107,9 @@ agi::Ngraph* buildGraphParts() {
   agi::lid_t local_verts = 4;
   agi::gid_t global_verts = 4*PCU_Comm_Peers();
   std::vector<agi::gid_t> verts;
+  agi::gid_t gids[50];
+  agi::part_t owns[50];
+  agi::lid_t num_ghosts=0;
   std::unordered_map<agi::gid_t,agi::part_t> owners;
   std::vector<agi::gid_t> edges;
   std::vector<agi::lid_t> degrees;
@@ -114,7 +117,7 @@ agi::Ngraph* buildGraphParts() {
   for (agi::gid_t i=0;i<local_verts;i++)
     verts.push_back(local_verts*PCU_Comm_Self()+i);
   std::vector<agi::wgt_t> weights;
-  graph->constructVerts(false,verts,weights);
+  graph->constructVerts(false,verts.size(),&verts[0],&weights[0]);
 
   for (agi::gid_t i=0;i<local_verts;i++) {
     agi::gid_t e = local_verts*PCU_Comm_Self()+i;
@@ -123,14 +126,21 @@ agi::Ngraph* buildGraphParts() {
     pins.push_back(e);
     pins.push_back((e+1)%global_verts);
     if (i==local_verts-1&&PCU_Comm_Peers()>1) {
-      owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
-      
+      if ((PCU_Comm_Self()+1)%PCU_Comm_Peers()!=PCU_Comm_Self()) {
+        gids[num_ghosts] = (e+1)%global_verts;
+        owns[num_ghosts++] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
+        owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
+      }
     }
     else {
       edges.push_back(e*2+1);
       degrees.push_back(2);
       pins.push_back((e+1)%global_verts);
-      owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+      if ((PCU_Comm_Self()+1)%PCU_Comm_Peers()!=PCU_Comm_Self()) {
+        gids[num_ghosts] = e;
+        owns[num_ghosts++] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+        owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
+      }
       pins.push_back(e);
     }
   }
@@ -141,7 +151,8 @@ agi::Ngraph* buildGraphParts() {
     pins.push_back((e+1)%global_verts);
     pins.push_back(e);
   }
-  agi::etype t =graph->constructEdges(edges,degrees,pins);
+  agi::etype t =graph->constructEdges(edges.size(),&edges[0],
+                                      &degrees[0],&pins[0]);
   graph->setEdgeWeights(weights,t);
 
   std::vector<agi::gid_t> edges2;
@@ -161,9 +172,14 @@ agi::Ngraph* buildGraphParts() {
     pins2.push_back(1);
     
   }
-  agi::etype t2 = graph->constructEdges(edges2,degrees2,pins2);
+  agi::etype t2 = graph->constructEdges(edges2.size(),&edges2[0],
+                                        &degrees2[0],&pins2[0]);
   graph->setEdgeWeights(weights,t2);
+  for (int i=0;i<num_ghosts;i++) {
+    printf("%d, %ld: %d %d\n",i,gids[i],owns[i],owners[gids[i]]);
+  }
   graph->constructGhosts(owners);
+  graph->constructGhosts(num_ghosts,gids,owns);
   return graph;
 }
 

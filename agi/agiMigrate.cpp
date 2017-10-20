@@ -329,11 +329,12 @@ namespace agi {
     }
     delete [] addedEdges;
     //Construct the migrated graph
-    constructVerts(isHyperGraph,ownedVerts,vertWeights);
+    constructVerts(isHyperGraph,ownedVerts.size(),&ownedVerts[0],&vertWeights[0]);
     if (cs)
       setCoords(cs);
     for (int i=0;i<nt;i++) {
-      constructEdges(ownedEdges[i],degrees[i],pins[i]);
+      constructEdges(ownedEdges[i].size(),&ownedEdges[i][0],
+                     &degrees[i][0],&pins[i][0]);
       setEdgeWeights(edgeWeights[i],i);
     }
     constructGhosts(ghost_owners);

@@ -41,6 +41,8 @@ public:
   void constructVerts(bool isHG,
                       std::vector<gid_t>& verts,
                       std::vector<wgt_t>& weights);
+  void constructVerts(bool isHG, lid_t num_verts,
+                      gid_t* verts, wgt_t* weights);
   /** \brief Constructs an edge type and returns the id of the type
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
@@ -52,12 +54,15 @@ public:
   etype constructEdges(std::vector<gid_t>& edge_ids,
                       std::vector<lid_t>& degs,
                       std::vector<gid_t>& pins_to_verts);
+  etype constructEdges(gid_t num_edges, gid_t* edge_ids,
+                       lid_t* degs, gid_t* pins_to_verts);
   /** \brief Constructs the ghost information for all non local vertices connected by edges
    * \param owns mapping from global_id to owner for each ghosted vertex
    *
    * Must be called after all edge types have been constructed 
    */
   void constructGhosts(std::unordered_map<gid_t,part_t>& owns);
+  void constructGhosts(lid_t num_ghosts, gid_t* vert_ids, part_t* owns);
   /** \brief Constructs the Ngraph given a set of information
    * \param isHG true if the given construction is for a hypergraph
    * \param verts list of global ids of vertices that this part owns
