@@ -276,6 +276,7 @@ namespace agi {
     updateGhostOwners(plan);
     VertexVector affectedVerts;
     EdgeVector* affectedEdges = new EdgeVector[nt];
+    //TODO: replace vectors with arrays to improve performance
     std::vector<gid_t> ownedVerts;
     std::vector<wgt_t> vertWeights;
     std::vector<part_t> old_owners;
@@ -284,8 +285,18 @@ namespace agi {
     std::vector<lid_t>* degrees = new std::vector<lid_t>[nt];
     std::vector<gid_t>* pins = new std::vector<gid_t>[nt];
     std::unordered_map<gid_t,part_t> ghost_owners;
+    
+    //Presize the vectors to reduce the number of reallocations
     ownedVerts.reserve(num_local_verts);
     vertWeights.reserve(num_local_verts);
+    old_owners.reserve(num_local_verts);
+    for (int i=0;i<nt;i++) {
+      ownedEdges[i].reserve(num_local_edges[i]);
+      edgeWeights[i].reserve(num_local_edges[i]);
+      degrees[i].reserve(num_local_edges[i]);
+      pins[i].reserve(num_local_pins[i]);
+    }
+    
     getAffected(this,plan,affectedVerts,affectedEdges);
     addVertices(this,ownedVerts,affectedVerts,vertWeights,old_owners);
     std::unordered_set<gid_t>* addedEdges = new std::unordered_set<gid_t>[nt];
