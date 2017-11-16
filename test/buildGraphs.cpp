@@ -45,7 +45,6 @@ agi::Ngraph* buildGraph() {
   //owners[last_vert] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
   std::vector<agi::wgt_t> weights;
   graph->constructGraph(false,verts,weights,edges,degrees,pins,owners);
-  //graph->setEdgeWeights(weights,0);
   return graph;
 }
 
@@ -98,7 +97,6 @@ agi::Ngraph* buildHyperGraph() {
   }
   std::vector<agi::wgt_t> weights;
   graph->constructGraph(true,verts,weights,edges,degrees,pins,ghost_owners);
-  //graph->setEdgeWeights(weights,0);
   return graph;
 }
 
@@ -153,7 +151,6 @@ agi::Ngraph* buildGraphParts() {
   }
   graph->constructEdges(edges.size(),&edges[0],
                                       &degrees[0],&pins[0]);
-  //graph->setEdgeWeights(weights,t);
 
   std::vector<agi::gid_t> edges2;
   std::vector<agi::lid_t> degrees2;
@@ -174,7 +171,6 @@ agi::Ngraph* buildGraphParts() {
   }
   graph->constructEdges(edges2.size(),&edges2[0],
                                         &degrees2[0],&pins2[0]);
-  //graph->setEdgeWeights(weights,t2);
   for (int i=0;i<num_ghosts;i++) {
     printf("%d, %ld: %d %d\n",i,gids[i],owns[i],owners[gids[i]]);
   }
@@ -234,7 +230,7 @@ agi::Ngraph* buildHyperGraphParts() {
   graph->constructVerts(true,verts,weights);
   graph->constructEdges(edges,degrees,pins,weights);
   graph->constructGhosts(ghost_owners);
-  //graph->setEdgeWeights(weights,t);
+
   return graph;
 }
 
@@ -271,7 +267,6 @@ agi::Ngraph* buildHyperGraphLine() {
   }
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
-  //g->setEdgeWeights(weights,0);
   return g;
 }
 
@@ -304,7 +299,6 @@ agi::Ngraph* buildRequirementsGraph() {
   pins.push_back(1);
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
-  //g->setEdgeWeights(weights,0);
   return g;
 
 }
@@ -455,7 +449,6 @@ agi::Ngraph* buildDisconnected2Graph() {
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
   g->setCoords(cs);
-  //g->setEdgeWeights(weights,0);
   return g;
  
 }
@@ -490,6 +483,5 @@ agi::Ngraph* buildEmptyGraph() {
   
   std::vector<agi::wgt_t> weights;
   g->constructGraph(false,verts,weights,edges,degrees,pins,owners);
-  //g->setEdgeWeights(weights,0);
   return g;  
 }
