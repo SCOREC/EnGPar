@@ -50,12 +50,12 @@ namespace agi {
         sprintf(message,"%sCreating traditional graph\n",message);
       EnGPar_Log_Function(message);
     }
-  
+
     constructVerts(isHG,verts,wgts);
     std::vector<wgt_t> eWeights;
     constructEdges(edge_ids,degs,pins_to_verts,eWeights);
     constructGhosts(owns);
-  
+
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
@@ -94,7 +94,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
   }
 
   void Ngraph::constructVerts(bool isHG,lid_t num_verts,
@@ -129,7 +128,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
   }
 
   etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
@@ -186,7 +184,6 @@ namespace agi {
       degree_list[t][i]+=degree_list[t][i-1];
     }
     uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-  
     std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
     edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
     if (new_ghosts>0) {
@@ -200,7 +197,7 @@ namespace agi {
       else
         ghost_unmap = new gid_t[num_ghost_verts];
     }
-  
+
     for (lid_t i=0;i<(lid_t)edge_ids.size();i++) {
       for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
         lid_t u = pin_list[t][j];
@@ -235,7 +232,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-    
     return t;
   }
   etype Ngraph::constructEdges(gid_t num_edges, gid_t* edge_ids,
@@ -293,7 +289,6 @@ namespace agi {
       degree_list[t][i]+=degree_list[t][i-1];
     }
     uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-  
     std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
     edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
     if (new_ghosts>0) {
@@ -307,7 +302,7 @@ namespace agi {
       else
         ghost_unmap = new gid_t[num_ghost_verts];
     }
-  
+
     for (lid_t i=0;i<num_edges;i++) {
       for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
         lid_t u = pin_list[t][j];
@@ -342,7 +337,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
     return t;
   }
 
@@ -359,7 +353,7 @@ namespace agi {
     for (lid_t v = 0;v<num_ghost_verts;v++) {
       owners[v] = owns[ghost_unmap[v]];
     }
-  
+
     for (etype t = 0;t<num_types;t++)  {
       if (isHyperGraph) {
         gid_t nOwnedEdges=num_local_edges[t];
@@ -381,7 +375,6 @@ namespace agi {
         destroy(eitr);
         num_global_edges[t] = PCU_Add_Long(nOwnedEdges);
         num_global_pins[t] = PCU_Add_Long(nOwnedPins);
-      
       }
       else {
         num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
@@ -391,7 +384,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
   }
   void Ngraph::constructGhosts(lid_t num_ghosts,gid_t* vert_ids,part_t* owns) {
     if (EnGPar_Is_Log_Open()) {
@@ -410,7 +402,7 @@ namespace agi {
         continue;
       owners[lid] = owns[i];
     }
-  
+
     for (etype t = 0;t<num_types;t++)  {
       if (isHyperGraph) {
         gid_t nOwnedEdges=num_local_edges[t];
@@ -432,7 +424,6 @@ namespace agi {
         destroy(eitr);
         num_global_edges[t] = PCU_Add_Long(nOwnedEdges);
         num_global_pins[t] = PCU_Add_Long(nOwnedPins);
-      
       }
       else {
         num_global_edges[t] = PCU_Add_Long(num_local_edges[t]);
@@ -442,7 +433,6 @@ namespace agi {
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
   }
 
   Ngraph::~Ngraph() {
@@ -481,7 +471,6 @@ namespace agi {
       if (pin_list[i])
         delete [] pin_list[i];
       pin_list[i] = NULL;
-
       edge_mapping[i].clear();
     }
     if (local_unmap)
@@ -496,12 +485,10 @@ namespace agi {
     if (original_owners)
       delete [] original_owners;
     original_owners = NULL;
-
     vtx_mapping.clear();
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }  
-
   }
 
   void destroyGraph(Ngraph* g) {
