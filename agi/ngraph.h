@@ -42,7 +42,7 @@ public:
                       std::vector<gid_t>& verts,
                       std::vector<wgt_t>& weights);
   void constructVerts(bool isHG, lid_t num_verts,
-                      gid_t* verts, wgt_t* weights);
+                      gid_t* verts, wgt_t* weights = NULL);
   /** \brief Constructs an edge type and returns the id of the type
    * \param edge_ids list of global ids of edges that this part has
    * \param degs list of degrees of each edge (always 2 if 
