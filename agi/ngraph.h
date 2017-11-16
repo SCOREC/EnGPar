@@ -436,6 +436,7 @@ public:
   // \cond
   void migrate(Migration* plan);
   // \endcond
+  void repartition(part_t* partition);
   ///@}
   
 

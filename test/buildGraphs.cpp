@@ -171,9 +171,6 @@ agi::Ngraph* buildGraphParts() {
   }
   graph->constructEdges(edges2.size(),&edges2[0],
                                         &degrees2[0],&pins2[0]);
-  for (int i=0;i<num_ghosts;i++) {
-    printf("%d, %ld: %d %d\n",i,gids[i],owns[i],owners[gids[i]]);
-  }
   graph->constructGhosts(owners);
   graph->constructGhosts(num_ghosts,gids,owns);
   return graph;

@@ -56,6 +56,7 @@ make_exe(constructGraph constructGraph.cpp)
 make_exe(testAdjacentTraversal testAdjacentTraversal.cpp)
 make_exe(testEdgeTraversal edgeTraversal.cpp)
 make_exe(testMigration testMigration.cpp)
+make_exe(constructAndPartition constructAndPartition.cpp)
 make_exe(testTags testTags.cpp)
 make_exe(splitCommunicator splitCommunicator.cpp)
 

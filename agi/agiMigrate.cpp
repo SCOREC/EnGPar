@@ -388,4 +388,16 @@ namespace agi {
   }
 
 
+  void Ngraph::repartition(part_t* partition) {
+    Migration* plan = new Migration(this);
+    VertexIterator* itr = begin();
+    GraphVertex* vtx;
+    int i=0;
+    while ((vtx = iterate(itr))) {
+      plan->insert(std::make_pair(vtx,partition[i]));
+      ++i;
+    }
+    setOriginalOwners();
+    migrate(plan);
+  }
 }
