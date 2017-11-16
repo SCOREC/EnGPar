@@ -52,7 +52,8 @@ namespace agi {
     }
   
     constructVerts(isHG,verts,wgts);
-    constructEdges(edge_ids,degs,pins_to_verts);
+    std::vector<wgt_t> eWeights;
+    constructEdges(edge_ids,degs,pins_to_verts,eWeights);
     constructGhosts(owns);
   
     if (EnGPar_Is_Log_Open()) {
@@ -133,7 +134,8 @@ namespace agi {
 
   etype Ngraph::constructEdges(std::vector<gid_t>& edge_ids,
                                std::vector<lid_t>& degs,
-                               std::vector<gid_t>& pins_to_verts) {
+                               std::vector<gid_t>& pins_to_verts,
+                               std::vector<wgt_t>& e_weights) {
     etype t = addEdgeType();
     if (EnGPar_Is_Log_Open()) {
       char message[45];
@@ -145,7 +147,6 @@ namespace agi {
       degree_list[t][i] = 0;
     num_local_edges[t] = edge_ids.size();
     num_local_pins[t] = pins_to_verts.size();
-    edge_weights[t] = NULL;
     edge_unmap[t] = new gid_t[edge_ids.size()];
     pin_degree_list[t] = new lid_t[degs.size()+1];
     pin_degree_list[t][0]=0;
@@ -221,14 +222,25 @@ namespace agi {
       }
     }
     free(temp_counts);
+
+    //Set the weights of the edges
+    edge_weights[t] = new wgt_t[edge_ids.size()];
+    if (e_weights.size()==0)
+      for (lid_t i=0;i<(lid_t)edge_ids.size();i++) 
+        edge_weights[t][i] = 1;
+    else
+      for (lid_t i=0;i<(lid_t)e_weights.size();i++)
+        edge_weights[t][i] = e_weights[i];
+
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
-
+    
     return t;
   }
   etype Ngraph::constructEdges(gid_t num_edges, gid_t* edge_ids,
-                               lid_t* degs, gid_t* pins_to_verts) {
+                               lid_t* degs, gid_t* pins_to_verts,
+                               wgt_t* e_weights) {
     etype t = addEdgeType();
     if (EnGPar_Is_Log_Open()) {
       char message[45];
@@ -242,7 +254,6 @@ namespace agi {
     num_local_pins[t] = 0;
     for (lid_t i=0;i<num_edges;i++)
       num_local_pins[t]+=degs[i];
-    edge_weights[t] = NULL;
     edge_unmap[t] = new gid_t[num_edges];
     pin_degree_list[t] = new lid_t[num_edges+1];
     pin_degree_list[t][0]=0;
@@ -318,6 +329,16 @@ namespace agi {
       }
     }
     free(temp_counts);
+
+    //Set the weights of the edges
+    edge_weights[t] = new wgt_t[num_edges];
+    if (!e_weights)
+      for (lid_t i=0;i<num_edges;i++) 
+        edge_weights[t][i] = 1;
+    else
+      for (lid_t i=0;i<num_edges;i++)
+        edge_weights[t][i] = e_weights[i];
+
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }

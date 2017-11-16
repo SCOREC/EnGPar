@@ -217,8 +217,7 @@ namespace agi {
       std::vector<lid_t> degs;
       std::vector<gid_t> pins2v;
       readEdges(file,es,eWeights,degs,pins2v,t);
-      constructEdges(es,degs,pins2v);
-      setEdgeWeights(eWeights,t);
+      constructEdges(es,degs,pins2v,eWeights);
     }
     readGhosts(file,owns);
     constructGhosts(owns);

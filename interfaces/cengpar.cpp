@@ -35,7 +35,9 @@ void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
   std::vector<agi::gid_t> e(edges, edges + nedges);
   std::vector<agi::lid_t> d(degs, degs + nedges);
   std::vector<agi::gid_t> p(pins, pins + npins);
-  ng->constructEdges(e,d,p);
+  //TODO: use properly passed in weights
+  std::vector<agi::wgt_t> w;
+  ng->constructEdges(e,d,p,w);
 }
 
 void cengpar_constructGhosts(ngraph g, agi::gid_t* verts, agi::part_t* owners,

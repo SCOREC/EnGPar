@@ -345,8 +345,8 @@ namespace agi {
       setCoords(cs);
     for (int i=0;i<nt;i++) {
       constructEdges(ownedEdges[i].size(),&ownedEdges[i][0],
-                     &degrees[i][0],&pins[i][0]);
-      setEdgeWeights(edgeWeights[i],i);
+                     &degrees[i][0],&pins[i][0],&edgeWeights[i][0]);
+      //setEdgeWeights(edgeWeights[i],i);
     }
     constructGhosts(ghost_owners);
     setOriginalOwners(old_owners);

@@ -52,10 +52,12 @@ public:
    * Must be called after constructVerts and should be called once per edge type
    */
   etype constructEdges(std::vector<gid_t>& edge_ids,
-                      std::vector<lid_t>& degs,
-                      std::vector<gid_t>& pins_to_verts);
+                       std::vector<lid_t>& degs,
+                       std::vector<gid_t>& pins_to_verts,
+                       std::vector<wgt_t>& e_weights);
   etype constructEdges(gid_t num_edges, gid_t* edge_ids,
-                       lid_t* degs, gid_t* pins_to_verts);
+                       lid_t* degs, gid_t* pins_to_verts,
+                        wgt_t* e_weights = NULL);
   /** \brief Constructs the ghost information for all non local vertices connected by edges
    * \param owns mapping from global_id to owner for each ghosted vertex
    *
