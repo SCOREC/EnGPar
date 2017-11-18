@@ -30,13 +30,13 @@ void cengpar_constructVerts(ngraph g, bool isHg,
 }
 
 void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
-    agi::lid_t* degs, agi::gid_t* pins, int nedges, int npins) {
+    agi::lid_t* degs, agi::wgt_t* weights,
+    agi::gid_t* pins, int nedges, int npins) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   std::vector<agi::gid_t> e(edges, edges + nedges);
   std::vector<agi::lid_t> d(degs, degs + nedges);
+  std::vector<agi::wgt_t> w(weights, weights + nedges);
   std::vector<agi::gid_t> p(pins, pins + npins);
-  //TODO: use properly passed in weights
-  std::vector<agi::wgt_t> w;
   ng->constructEdges(e,d,p,w);
 }
 

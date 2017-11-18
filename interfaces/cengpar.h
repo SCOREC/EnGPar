@@ -22,7 +22,8 @@ void cengpar_constructVerts(ngraph g, bool isHg,
     agi::gid_t* verts, agi::wgt_t* weights, int nverts);
 
 void cengpar_constructEdges(ngraph g, agi::gid_t* edges,
-    agi::lid_t* degs, agi::gid_t* pins, int nedges, int npins);
+    agi::lid_t* degs, agi::wgt_t* weights, agi::gid_t* pins,
+    int nedges, int npins);
 
 void cengpar_constructGhosts(ngraph g, agi::gid_t* verts,
     agi::part_t* owners, int nghosts);

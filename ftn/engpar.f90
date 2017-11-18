@@ -59,16 +59,18 @@ module engpar
   !> @param graph(in/out) engpar graph
   !> @param edges(in) array of graph edge ids
   !> @param degs(in) array of graph edge degrees (number of vertices bounding each edge)
+  !> @param weights(in) array of graph edge weights
   !> @param pins(in) array of graph vertices bounding each edge
   !> @param nedges(in) number of graph edges
   !> @param npins(in) number of pins
   !---------------------------------------------------------------------------
-  subroutine cengpar_constructEdges(graph,edges,degs,pins,nedges,npins) &
+  subroutine cengpar_constructEdges(graph,edges,degs,weights,pins,nedges,npins) &
              bind(C, NAME='cengpar_constructEdges')
     use :: iso_c_binding
     type(c_ptr), value :: graph
     integer(AGI_GID_FT), intent(in), dimension(nedges) :: edges
     integer(AGI_LID_FT), intent(in), dimension(nedges) :: degs
+    real(AGI_WGT_FT), intent(in), dimension(nedges) :: weights
     integer(AGI_GID_FT), intent(in), dimension(npins) :: pins
     integer(C_INT), intent(in), value :: nedges
     integer(C_INT), intent(in), value :: npins
