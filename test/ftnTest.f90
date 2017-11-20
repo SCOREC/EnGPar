@@ -10,7 +10,7 @@ program main
   integer :: ierr, self
   integer(AGI_GID_FT), dimension(:), allocatable :: verts, edges, pins
   integer(AGI_LID_FT), dimension(:), allocatable :: degs
-  real(AGI_WGT_FT), dimension(:), allocatable :: weights
+  real(AGI_WGT_FT), dimension(:), allocatable :: weights, eweights
   integer(AGI_GID_FT), dimension(nghosts) :: ghostverts
   integer(AGI_PART_FT), dimension(nghosts):: ghostowners, parts
   type(c_ptr) :: graph
@@ -40,11 +40,13 @@ program main
   allocate(edges(nedges))
   allocate(pins(npins))
   allocate(degs(nedges))
+  allocate(eweights(nedges))
   if ( self == 0 ) then
     verts   = (/ 1,2,3,4 /)
     weights = (/ 1.0,1.0,1.0,1.0 /)
     edges   = (/ 1,2,3 /)
     degs    = (/ 2,2,2 /)
+    eweights = (/ 1.0,1.0,1.0 /)
     pins    = (/ 1,2,2,3,3,4 /)
     ghostverts = (/ 4 /)
     ghostowners = (/ 1 /)
@@ -53,12 +55,13 @@ program main
     weights = (/ 1.0,1.0,1.0,1.0,1.0,1.0 /)
     edges   = (/ 3,4,5,6,7 /)
     degs    = (/ 2,2,2,2,2 /)
+    eweights = (/ 1.0,1.0,1.0,1.0,1.0 /)
     pins    = (/ 3,4,4,5,5,6,6,7,7,8 /)
     ghostverts = (/ 3 /)
     ghostowners = (/ 0 /)
   end if
   call cengpar_constructVerts(graph, isHg, verts, weights, nverts)
-  call cengpar_constructEdges(graph, edges, degs, pins, nedges, npins)
+  call cengpar_constructEdges(graph, edges, degs, eweights, pins, nedges, npins)
   call cengpar_constructGhosts(graph, ghostverts, ghostowners, nghosts)
   call cengpar_checkValidity(graph);
   tol = 1.05
