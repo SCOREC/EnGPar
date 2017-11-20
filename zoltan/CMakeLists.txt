@@ -9,9 +9,6 @@ if (ENABLE_ZOLTAN)
   find_package(Zoltan MODULE REQUIRED)
 endif()
 
-include_directories(
-  ../agi
-  )
 
 if (ENABLE_ZOLTAN)
   set(ZOLTAN_SOURCE

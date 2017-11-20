@@ -1,8 +1,4 @@
 
-#Setting Version Number, Project Name
-cmake_minimum_required (VERSION 2.8)
-#project(EnGPar)
-
 set(CMAKE_MODULE_PATH 
    ${CMAKE_MODULE_PATH} 
    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/")
@@ -21,5 +17,11 @@ set(SUPPORT_HEADERS
   )
 
 add_library(engpar_support ${SOURCES})
+
+target_include_directories(engpar_support
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<INSTALL_INTERFACE:include>
+  )
 
 engpar_export_lib(engpar_support "${SUPPORT_HEADERS}")

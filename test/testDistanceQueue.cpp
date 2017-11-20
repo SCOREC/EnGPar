@@ -2,7 +2,7 @@
 #include <PCU.h>
 #include <engpar_support.h>
 #include "buildGraphs.h"
-#include "../partition/src/engpar_queue.h"
+#include "../partition/Diffusive/src/engpar_queue.h"
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();

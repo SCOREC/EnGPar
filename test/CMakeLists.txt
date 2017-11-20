@@ -1,6 +1,5 @@
 option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
 
-
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
@@ -12,11 +11,7 @@ if (ENABLE_KOKKOS)
   find_package(Kokkos MODULE REQUIRED)
 endif()
 include_directories(
-  ../support
-  ../agi
   ../zoltan
-  ../partition
-  ../interfaces
   ${ZOLTAN_INCLUDE_DIRS}
   ${PARMETIS_INCLUDE_DIRS}
   ${KOKKOS_INCLUDE_DIRS}
