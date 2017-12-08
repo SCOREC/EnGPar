@@ -124,6 +124,20 @@ mpi_test(testDistanceQueueSerial 1
 mpi_test(testDistanceQueueParallel 4
   ./testDistanceQueue)
 
+if (ENABLE_PARMETIS)
+  mpi_test(splitCube1to2 2
+    ./split
+    "${GRAPHS}/cube/cube"
+    2
+    cake)
+  
+  mpi_test(splitCube1to4 4
+    ./split
+    "${GRAPHS}/cube/cube"
+    4
+    cake)
+endif()
+  
 mpi_test(vtxBalanceCube 4
   ./vtxBalance
   "${GRAPHS}/cube/4/"

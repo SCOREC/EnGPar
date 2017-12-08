@@ -1,9 +1,14 @@
 option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
+option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
+message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
 
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
 
+if (ENABLE_PARMETIS)
+  find_package(Parmetis MODULE REQUIRED)
+endif()
 if (ENABLE_ZOLTAN)
   find_package(Zoltan MODULE REQUIRED)
 endif()
@@ -27,6 +32,8 @@ set(ALL_LIBS
   agi
   interfaces
   agi_zoltan
+  diffusive
+  multilevel
   engpar
 )
 
@@ -60,6 +67,7 @@ make_exe(buildBinaryGraph buildBinaryGraph.cpp)
 make_exe(testDistanceQueue testDistanceQueue.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
 make_exe(balance balance.cpp)
+make_exe(split split.cpp)
 
 if (ENABLE_PUMI)
   make_exe(render render.cpp)

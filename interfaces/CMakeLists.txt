@@ -1,7 +1,7 @@
 set(PACKAGE_VERSION "1.0")
 project(interfaces)
 
-set(DEP_LIBS agi)
+set(DEP_LIBS agi engpar)
 
 set(INTERFACE_SOURCES
   binGraph.cpp

@@ -4,15 +4,19 @@
 namespace agi {
   Migration::Migration(Ngraph* graph) {
     g = graph;
-    dest = g->createLongTag();
-    VertexIterator* vitr = g->begin();
-    GraphVertex* v;
-    while ((v = g->iterate(vitr))) {
-      g->setLongTag(dest,v,-1);
+    dest = NULL;
+    if (g->numLocalVtxs()!=0) {
+      dest = g->createLongTag();
+      VertexIterator* vitr = g->begin();
+      GraphVertex* v;
+      while ((v = g->iterate(vitr))) {
+        g->setLongTag(dest,v,-1);
+      }
     }
   }
   Migration::~Migration() {
-    g->destroyTag(dest);
+    if (dest)
+      g->destroyTag(dest);
   }
 
   lid_t Migration::size() const {

@@ -9,7 +9,7 @@
 namespace agi {
 
   void Ngraph::getResidence(GraphEdge* e, Peers& residence) const {
-    residence.clear();
+    //residence.clear();
     agi::PinIterator* pitr = pins(e);
     agi::GraphVertex* vtx;
     lid_t deg = degree(e);

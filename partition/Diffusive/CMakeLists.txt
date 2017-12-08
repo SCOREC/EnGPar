@@ -1,7 +1,3 @@
-set(PACKAGE_VERSION "1.0")
-project(Diffusive)
-
-
 set(ENGPAR_SOURCES
   engpar.cpp
   src/engpar_balancer.cpp
@@ -17,13 +13,13 @@ set(ENGPAR_HEADERS
   engpar.h
   )
 
-add_library(engpar ${ENGPAR_SOURCES})
+add_library(diffusive ${ENGPAR_SOURCES})
 
-target_include_directories(agi PUBLIC
+target_include_directories(diffusive PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
   $<INSTALL_INTERFACE:include>
   )
 
-target_link_libraries(engpar PUBLIC agi)
+target_link_libraries(diffusive PUBLIC agi)
 
-engpar_export_lib(engpar "${ENGPAR_HEADERS}")
+engpar_export_lib(diffusive "${ENGPAR_HEADERS}")
