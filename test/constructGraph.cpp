@@ -100,7 +100,7 @@ void testGraph() {
 void testHyperGraph() {
   if (!PCU_Comm_Self())
     printf("Testing HyperGraph\n");
-    agi::lid_t local_verts = 4;
+  agi::lid_t local_verts = 4;
   agi::lid_t local_edges = 3;
 
   agi::Ngraph* graph = buildHyperGraph();

@@ -4,13 +4,15 @@
 #include <binGraph.h>
 #include <engpar_split.h>
 #include <PCU.h>
+#include <sys/types.h>
+#include <unistd.h>
 bool switchToOriginals(int split_factor);
-void switchToAll();
+void switchToAll(agi::Ngraph* g, bool isOriginal);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  
+
   if (argc != 4) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <graph_file> <split_factor> <out_file>\n", argv[0]);
@@ -29,7 +31,7 @@ int main(int argc, char* argv[]) {
   }
   else
     plan = new agi::Migration(g);
-  switchToAll();
+  switchToAll(g,isOriginal);
   g->migrate(plan);
   engpar::evaluatePartition(g);
 
@@ -62,10 +64,16 @@ bool switchToOriginals(int split_factor) {
   return isOriginal;
 }
 
-void switchToAll()
+void switchToAll(agi::Ngraph* g, bool isOriginal)
 {
   MPI_Comm prevComm = PCU_Get_Comm();
-  PCU_Switch_Comm(MPI_COMM_WORLD);
+
+  //Expands the view of the graph from s parts to t parts
+  if (isOriginal)
+    engpar::expandParts(g,MPI_COMM_WORLD);
+  else
+    PCU_Switch_Comm(MPI_COMM_WORLD);
+
   MPI_Comm_free(&prevComm);
   PCU_Barrier();
 }

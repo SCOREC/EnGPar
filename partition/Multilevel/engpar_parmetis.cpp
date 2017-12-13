@@ -9,21 +9,19 @@
 namespace engpar {
   
 #ifdef HAS_PARMETIS
-  
   //TODO: generalize to any edge type
   agi::Migration* EnGPar_ParMETIS(agi::Ngraph* g, int target_parts) {
-    //Get a offset array of the vertices on each part
-    idx_t* my_vtxdist = new idx_t[PCU_Comm_Peers()+1];
+    //Get an offset array of the vertices on each part
+    idx_t* vtxdist = new idx_t[PCU_Comm_Peers()+1];
     for (int i = 0; i <= PCU_Comm_Self()+1; ++i) {
-      my_vtxdist[i] = 0;
+      vtxdist[i] = 0;
     }
     for (int i = PCU_Comm_Self()+1; i < PCU_Comm_Peers()+1; ++i) {
-      my_vtxdist[i] = g->numLocalVtxs();
+      vtxdist[i] = g->numLocalVtxs();
     }
-    idx_t* vtxdist = new idx_t[PCU_Comm_Peers()+1];
-    MPI_Allreduce(my_vtxdist, vtxdist, PCU_Comm_Peers(),
+
+    MPI_Allreduce(MPI_IN_PLACE, vtxdist, PCU_Comm_Peers()+1,
                   MPI_LONG, MPI_SUM, PCU_Get_Comm());
-    delete [] my_vtxdist;
     //Renumber the vertices based on the vtxdist array
     idx_t* gids = new idx_t[g->numLocalVtxs()];
     agi::VertexIterator* vitr = g->begin();
@@ -32,7 +30,6 @@ namespace engpar {
     PCU_Comm_Begin();
     int num_degs = 0;
     while((vtx = g->iterate(vitr))) {
-      assert(g->localID(vtx)==i);
       gids[i] = vtxdist[PCU_Comm_Self()] + i;
 
       //Get remotes
@@ -45,25 +42,24 @@ namespace engpar {
       }
       g->destroy(eitr);
       res.erase(PCU_Comm_Self());
-      gid_t vals[2];
+      agi::gid_t vals[2];
       vals[0] = g->globalID(vtx);
       vals[1] = gids[i];
       //Send new value of vertex to each remote copy
       agi::Peers::iterator itr;
-      for (itr = res.begin();itr!=res.end();itr++)
-        PCU_Comm_Pack(*itr,vals,sizeof(gid_t)*2);
-
+      for (itr = res.begin();itr!=res.end();itr++) {
+        PCU_Comm_Pack(*itr,vals,sizeof(agi::gid_t)*2);
+      }
       ++i;
     }
     PCU_Comm_Send();
     //Set the renumbering of the ghost vertices
-    std::unordered_map<gid_t,gid_t> ghost_gids;
+    std::unordered_map<agi::gid_t,agi::gid_t> ghost_gids;
     while(PCU_Comm_Receive()) {
-      gid_t vals[2];
-      PCU_Comm_Unpack(vals,sizeof(gid_t)*2);
+      agi::gid_t vals[2];
+      PCU_Comm_Unpack(vals,sizeof(agi::gid_t)*2);
       ghost_gids[vals[0]] = vals[1];
     }
-
 
     //Get the adjacency
     vitr=g->begin();
@@ -109,19 +105,6 @@ namespace engpar {
     idx_t edgecut;
     idx_t* new_partition = new idx_t[g->numLocalVtxs()];
     MPI_Comm comm = PCU_Get_Comm();
-    // printf("vtxdist: ");
-    // for (int i=0;i<PCU_Comm_Peers()+1;i++) {
-    //   printf("%d ",vtxdist[i]);
-    // }
-    // printf("\nxadj: ");
-    // for (int i=0;i<g->numLocalVtxs()+1;i++) {
-    //   printf("%d ",xadj[i]);
-    // }
-    // printf("\nadjncy: ");
-    // for (int i=0;i<num_degs;i++) {
-    //   printf("%d ",adjncy[i]);
-    // }
-    // printf("\n");
 
     //Create Partition
     ParMETIS_V3_PartKway(vtxdist,xadj,adjncy,vwgts,ewgts,
@@ -137,7 +120,6 @@ namespace engpar {
     i=0;
     vitr = g->begin();
     while((vtx = g->iterate(vitr))) {
-      // printf("%d %d\n",i,new_partition[i]);
       plan->insert(std::make_pair(vtx,new_partition[i++]));
     }
     delete [] new_partition;

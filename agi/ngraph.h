@@ -438,6 +438,7 @@ public:
   // \endcond
   void repartition(part_t* partition);
   ///@}
+  void changeOwners(int* newRanks);
   
 
  protected:

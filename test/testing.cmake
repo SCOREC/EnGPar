@@ -136,6 +136,19 @@ if (ENABLE_PARMETIS)
     "${GRAPHS}/cube/cube"
     4
     cake)
+
+    mpi_test(splitCube4to8 8
+    ./split
+    "${GRAPHS}/cube/4/"
+    2
+    cake)
+
+    mpi_test(splitTorus4to8 8
+    ./split
+    "${GRAPHS}/torus/4_01/"
+    2
+    cake)
+
 endif()
   
 mpi_test(vtxBalanceCube 4

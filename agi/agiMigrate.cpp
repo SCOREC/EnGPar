@@ -4,7 +4,7 @@
 #include <vector>
 #include <engpar_support.h>
 namespace agi {
-  // void phi() {if (PCU_Comm_Self()) printf("hi\n");}
+
   typedef std::unordered_set<GraphVertex*> VertexVector;
   //TODO: Make a vector by using a "tag" on the edges to detect added or not
   typedef std::unordered_set<GraphEdge*> EdgeVector;
@@ -22,10 +22,8 @@ namespace agi {
   }
 
   void Ngraph::updateGhostOwners(Migration* plan) {
-    
     PCU_Comm_Begin();
     Migration::iterator itr;
-    
     for (itr = plan->begin();itr!=plan->end();itr++) {
       GraphVertex* v = *itr;
       gid_t gid = globalID(v);
@@ -41,14 +39,12 @@ namespace agi {
       }
       destroy(gitr);
     }
-    
     PCU_Comm_Send();
     while (PCU_Comm_Receive()) {
       gid_t gid;
       part_t own;
       PCU_COMM_UNPACK(gid);
       PCU_COMM_UNPACK(own);
-
       lid_t lid = vtx_mapping[gid];
       if (lid>=num_local_verts) {
         owners[lid-num_local_verts]=own;
@@ -74,7 +70,7 @@ namespace agi {
 
     //For each edge type
     for (etype t = 0;t<g->numEdgeTypes();t++) {
-      //edges[t].reserve(verts.size());
+      edges[t].reserve(verts.size());
       VertexVector::iterator itr;
       //loop through the vertices being sent
       for (itr = verts.begin();itr!=verts.end();itr++) {
@@ -289,13 +285,10 @@ namespace agi {
 
   }
   void Ngraph::migrate(Migration* plan) {
-
     isHyperGraph = PCU_Max_Int(isHyperGraph);
     int nt = PCU_Max_Int(num_types);
     cleanup(this,plan);
-    
     updateGhostOwners(plan);
-    
     VertexVector affectedVerts;
     EdgeVector* affectedEdges = new EdgeVector[nt];
     //TODO: replace vectors with arrays to improve performance
@@ -307,7 +300,7 @@ namespace agi {
     std::vector<lid_t>* degrees = new std::vector<lid_t>[nt];
     std::vector<gid_t>* pins = new std::vector<gid_t>[nt];
     std::unordered_map<gid_t,part_t> ghost_owners;
-    
+
     //Presize the vectors to reduce the number of reallocations
     ownedVerts.reserve(num_local_verts);
     vertWeights.reserve(num_local_verts);
@@ -318,7 +311,6 @@ namespace agi {
       degrees[i].reserve(num_local_edges[i]);
       pins[i].reserve(num_local_pins[i]);
     }
-    
     getAffected(this,plan,affectedVerts,affectedEdges);
     addVertices(this,ownedVerts,affectedVerts,vertWeights,old_owners);
     std::unordered_set<gid_t>* addedEdges = new std::unordered_set<gid_t>[nt];
@@ -335,7 +327,6 @@ namespace agi {
     while (PCU_Comm_Receive()) {
       recvVertex(ownedVerts,vertWeights,old_owners);
     }
-    
     //Send and recieve coordinates
     coord_t* cs=NULL;
     bool hasC = PCU_Max_Int(hasCoords());

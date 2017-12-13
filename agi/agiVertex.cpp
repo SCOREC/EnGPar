@@ -75,8 +75,8 @@ void Ngraph::setOriginalOwners() {
     sprintf(message,"setOriginalOwners\n");
     EnGPar_Log_Function(message);
   }
-
-  assert(!original_owners);
+  if (original_owners)
+    return;
   original_owners = new part_t[num_local_verts];
   for (lid_t i=0;i<num_local_verts;i++)
     original_owners[i]=PCU_Comm_Self();
@@ -127,5 +127,10 @@ GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
 bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   return u==v;
 }
+
+  void Ngraph::changeOwners(int* newRanks) {
+    for (int i=0;i<num_ghost_verts;++i)
+      owners[i] = newRanks[owners[i]];
+  }
 
 }
