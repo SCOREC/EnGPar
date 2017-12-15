@@ -8,6 +8,7 @@
 #include "engpar_targets.h"
 #include "engpar_selector.h"
 #include "engpar_sd.h"
+#include "agiMigrationTimers.h"
 
 namespace engpar {
   wgt_t getMaxWeight(agi::Ngraph*, int);
@@ -17,7 +18,7 @@ namespace engpar {
     Balancer(agi::Ngraph* graph_, double factor_, int verbosity_,
              const char* name_);
     Balancer(Input* input_,int verbosity_,const char* name_);
-    virtual ~Balancer() {delete input;}
+    virtual ~Balancer() {delete input; delete migrTime;}
     virtual bool runStep(double tolerance);
     void balance(double tolerance);
     
@@ -30,6 +31,7 @@ namespace engpar {
     double times[2];
     double distance_time;
     int sideTol;
+    agi::MigrationTimers* migrTime;
   };
 }
 

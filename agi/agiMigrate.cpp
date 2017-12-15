@@ -3,6 +3,8 @@
 #include <unordered_set>
 #include <vector>
 #include <engpar_support.h>
+#include "agiMigrationTimers.h"
+
 namespace agi {
 
   typedef std::unordered_set<GraphVertex*> VertexVector;
@@ -284,7 +286,8 @@ namespace agi {
     }
 
   }
-  void Ngraph::migrate(Migration* plan) {
+  void Ngraph::migrate(Migration* plan, MigrationTimers* migrTime) {
+    double tmigr = PCU_Time();
     isHyperGraph = PCU_Max_Int(isHyperGraph);
     int nt = PCU_Max_Int(num_types);
     cleanup(this,plan);
@@ -318,6 +321,7 @@ namespace agi {
       addEdges(this,plan,ownedEdges[i],edgeWeights[i],degrees[i],pins[i],
                ghost_owners,addedEdges[i],i);
     //Send and recieve vertices
+    double tcomm = PCU_Time();
     Migration::iterator itr;
     PCU_Comm_Begin();
     for (itr = plan->begin();itr!=plan->end();itr++) {
@@ -355,6 +359,9 @@ namespace agi {
     }
     
     delete [] addedEdges;
+    if( migrTime ) migrTime->update("comm", PCU_Time() - tcomm);
+
+    double tbuild = PCU_Time();
     //Construct the migrated graph
     constructVerts(isHyperGraph,ownedVerts.size(),&ownedVerts[0],&vertWeights[0]);
     if (cs)
@@ -365,7 +372,8 @@ namespace agi {
     }
     constructGhosts(ghost_owners);
     setOriginalOwners(old_owners);
-    
+    if( migrTime ) migrTime->update("build", PCU_Time() - tbuild);
+
     delete [] affectedEdges;
     delete [] ownedEdges;
     delete [] edgeWeights;
@@ -373,6 +381,7 @@ namespace agi {
     delete [] pins;
     delete [] cs;
     delete plan;
+    if( migrTime ) migrTime->update("total", PCU_Time() - tmigr);
   }
 
   PartitionMap* Ngraph::getPartition() {

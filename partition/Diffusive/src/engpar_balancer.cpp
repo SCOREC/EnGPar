@@ -27,12 +27,14 @@ namespace engpar {
     times[0]=0;
     times[1]=0;
     distance_time=0;
+    migrTime = new agi::MigrationTimers;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
     agi::Balancer(input_->g,v,n), input(input_) {
     times[0]=0;
     times[1]=0;
     distance_time=0;
+    migrTime = new agi::MigrationTimers;
   }
   bool Balancer::runStep(double tolerance) {
     double time[2];
@@ -120,7 +122,7 @@ namespace engpar {
 
     time[1] = PCU_Time();
     if (numMigrate>0)
-      input->g->migrate(plan);
+      input->g->migrate(plan, migrTime);
     else
       delete plan;
     time[1] = PCU_Time()-time[1];
@@ -257,6 +259,14 @@ namespace engpar {
     }
     delete sd;
     time = PCU_Time()-time;
+
+
+    double maxComm = migrTime->processMax("comm");
+    double maxBuild = migrTime->processMax("build");
+    double maxTot = migrTime->processMax("total");
+    if (!PCU_Comm_Self()) {
+      fprintf(stderr, "max migration time (s) <total, comm, build> %f %f %f\n", maxTot, maxComm, maxBuild);
+    }
 
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);

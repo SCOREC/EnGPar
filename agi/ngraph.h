@@ -17,6 +17,8 @@ class EdgeIterator;
 class GraphIterator;
 class GraphTag;
 
+class MigrationTimers;
+
 /** \class Ngraph
  *  \brief An abstract graph used to represent the data passed into EnGPar
  *   \nosubgrouping
@@ -434,7 +436,7 @@ public:
   virtual PartitionMap* getPartition();
 
   // \cond
-  void migrate(Migration* plan);
+  void migrate(Migration* plan, MigrationTimers* mt = NULL);
   // \endcond
   void repartition(part_t* partition);
   ///@}

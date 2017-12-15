@@ -9,6 +9,7 @@ set(AGI_SOURCES
   agiTag.cpp
   agiBalancer.cpp
   agiMigration.cpp
+  agiMigrationTimers.cpp
   agiMigrate.cpp
   agiIO.cpp
   agiValid.cpp
