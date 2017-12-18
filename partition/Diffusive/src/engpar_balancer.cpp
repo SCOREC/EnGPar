@@ -280,10 +280,13 @@ namespace engpar {
     }
     if (verbosity >= 2) {
       double maxMigr = migrTime->processMax("total");
+      double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
         printf("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
-        printf("Distance Computation took %f seconds\n",distance_time);
+        printf("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
+        printf("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
+            distance_time, distance_time/time*100);
       }
     }
     if (EnGPar_Is_Log_Open())
