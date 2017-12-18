@@ -27,6 +27,16 @@ namespace agi {
     counts[idx]++;
   }
 
+  double MigrationTimers::getTime(std::string name) {
+    int idx = getTimerIdx(name);
+    return times[idx];
+  }
+
+  int MigrationTimers::getCount(std::string name) {
+    int idx = getTimerIdx(name);
+    return counts[idx];
+  }
+
   double MigrationTimers::processMax(std::string name) {
     int idx = getTimerIdx(name);
     return PCU_Max_Double(times[idx]);

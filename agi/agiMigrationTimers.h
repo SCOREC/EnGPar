@@ -15,6 +15,10 @@ namespace agi {
       void addTimer(std::string name);
       /// add val and incriment the call count for the timer 'name'
       void update(std::string name, double val);
+      /// get the accumulated time on the local process
+      double getTime(std::string name);
+      /// get the count on the local process
+      int getCount(std::string name);
       /// get the maximum accumulated time across all processes: max(time)
       double processMax(std::string name);
       /// get the maximum per call time across all processes: max(time/numCalls)
