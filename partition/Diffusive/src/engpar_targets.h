@@ -8,7 +8,7 @@ namespace engpar {
 
   class Targets : public Container<wgt_t> {
   public:
-    Targets(Input* in, Sides* s, Weights* targetW, int sideTol,
+    Targets(DiffusiveInput* in, Sides* s, Weights* targetW, int sideTol,
             Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;
       for (itr = s->begin();itr!=s->end();itr++) {
@@ -32,7 +32,7 @@ namespace engpar {
       }
     }
   };
-  Targets* makeTargets(Input* in, Sides* s, Weights* tW,int sT,
+  Targets* makeTargets(DiffusiveInput* in, Sides* s, Weights* tW,int sT,
                        Weights** cWs,std::vector<wgt_t>& cTs);
 }
 

@@ -10,7 +10,7 @@ namespace engpar {
   
   class Weights : public Container<wgt_t> {
   public:
-    Weights(Input* in,Sides* s, int target_dimension) {
+    Weights(DiffusiveInput* in,Sides* s, int target_dimension) {
       //calculate the total weight of the vertices
       my_weight = getWeight(in->g,target_dimension);
       //Share weight with all neighbors
@@ -31,8 +31,8 @@ namespace engpar {
     wgt_t my_weight;
   };
 
-  Weights* makeVtxWeights(Input* in, Sides* s);
-  Weights* makeWeights(Input* in, Sides* s,int target);
+  Weights* makeVtxWeights(DiffusiveInput* in, Sides* s);
+  Weights* makeWeights(DiffusiveInput* in, Sides* s,int target);
 }
 
 #endif

@@ -1,10 +1,10 @@
 set(ENGPAR_SOURCES
   engpar.cpp
+  engpar_diffusive_input.cpp
   src/engpar_balancer.cpp
   src/engpar_vtxBalancer.cpp
   src/engpar_queue.cpp
   src/engpar_selector.cpp
-  src/engpar_input.cpp
   src/engpar_make.cpp
   src/engpar_sd.cpp
   )

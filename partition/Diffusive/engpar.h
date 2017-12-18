@@ -3,7 +3,7 @@
 #include <agiBalancer.h>
 #include <ngraph.h>
 #include <vector>
-#include "engpar_input.h"
+#include "engpar_diffusive_input.h"
 
 /** \file engpar.h
     \brief Diffusive Load Balancing APIs

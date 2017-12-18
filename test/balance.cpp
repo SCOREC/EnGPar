@@ -40,21 +40,14 @@ int main(int argc, char* argv[]) {
   }
   engpar::evaluatePartition(g);
 
-  engpar::Input* input = new engpar::Input(g);
-  input->priorities.push_back(0);
-  input->tolerances.push_back(1.1);
+  double step_factor = 0.1;
+  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(0,1.1);
   if (argc==3) {
-    input->priorities.push_back(1);
-    input->tolerances.push_back(1.1);
+    input->addPriority(1,1.1);
   }
-  input->priorities.push_back(-1);
-  input->tolerances.push_back(1.1);
+  input->addPriority(-1,1.1);
 
-  input->step_factor=.1;
-  if (g->isHyper())
-    input->useDistanceQueue=true;
-  else
-    input->useDistanceQueue=false;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input,2);
   balancer->balance(1.1);

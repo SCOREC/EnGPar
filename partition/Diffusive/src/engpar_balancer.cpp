@@ -22,8 +22,7 @@ namespace engpar {
   
   Balancer::Balancer(agi::Ngraph* g, double f, int v, const char* n) :
     agi::Balancer(g,v,n) {
-    input = new Input(g);
-    input->step_factor = f;
+    input = createDiffusiveInput(g,f);
     times[0]=0;
     times[1]=0;
     distance_time=0;
@@ -37,6 +36,7 @@ namespace engpar {
     migrTime = new agi::MigrationTimers;
   }
   bool Balancer::runStep(double tolerance) {
+    DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     double time[2];
     time[0] = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
@@ -47,10 +47,10 @@ namespace engpar {
     sd->push(imb);
     if (sd->isFull()&&sd->slope()>0)
       return false;
-    Sides* sides = makeSides(input);
+    Sides* sides = makeSides(inp);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
-    Weights* targetWeights = makeWeights(input, sides,target_dimension);
+    Weights* targetWeights = makeWeights(inp, sides,target_dimension);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
@@ -58,10 +58,10 @@ namespace engpar {
     if (completed_dimensions.size()>0) {
       completedWs= new Weights*[completed_dimensions.size()];
       for (unsigned int i=0;i<completed_dimensions.size();i++) {
-        completedWs[i] = makeWeights(input,sides,completed_dimensions[i]);
+        completedWs[i] = makeWeights(inp,sides,completed_dimensions[i]);
       }
     }
-    Targets* targets = makeTargets(input,sides,targetWeights,sideTol,
+    Targets* targets = makeTargets(inp,sides,targetWeights,sideTol,
                                    completedWs,completed_weights);
     delete sides;
     if (completedWs) {
@@ -75,13 +75,13 @@ namespace engpar {
       printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq;
     double t = PCU_Time();
-    if (input->useDistanceQueue) {
+    if (inp->useDistanceQueue) {
       pq = createDistanceQueue(input->g);
     }
     else 
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
-    Selector* selector = makeSelector(input,pq,&completed_dimensions,
+    Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
     agi::Migration* plan = new agi::Migration(input->g);
     wgt_t planW = 0.0;
@@ -150,28 +150,29 @@ namespace engpar {
     return true; //not done balancing
   }
   void Balancer::balance(double) {
+    DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     if (EnGPar_Is_Log_Open()) {
       char message[1000];
       sprintf(message,"balance() : \n");
       //Log the input parameters
       sprintf(message,"%s priorities :",message);
-      for (unsigned int i=0;i<input->priorities.size();i++)
-        sprintf(message,"%s %d",message,input->priorities[i]);
+      for (unsigned int i=0;i<inp->priorities.size();i++)
+        sprintf(message,"%s %d",message,inp->priorities[i]);
       sprintf(message,"%s\n",message);
-      if (input->tolerances.size()>0) {
+      if (inp->tolerances.size()>0) {
         sprintf(message,"%s tolerances :",message);
-        for (unsigned int i=0;i<input->tolerances.size();i++)
-          sprintf(message,"%s %f",message,input->tolerances[i]);
+        for (unsigned int i=0;i<inp->tolerances.size();i++)
+          sprintf(message,"%s %f",message,inp->tolerances[i]);
         sprintf(message,"%s\n",message);
       }
-      sprintf(message,"%s maxIterations : %d\n",message,input->maxIterations);
+      sprintf(message,"%s maxIterations : %d\n",message,inp->maxIterations);
       sprintf(message,"%s maxIterationsPerType : %d\n",
-              message,input->maxIterationsPerType);
-      sprintf(message,"%s step_factor : %f\n",message,input->step_factor);
-      sprintf(message,"%s sides_edge_type : %d\n",message,input->sides_edge_type);
+              message,inp->maxIterationsPerType);
+      sprintf(message,"%s step_factor : %f\n",message,inp->step_factor);
+      sprintf(message,"%s sides_edge_type : %d\n",message,inp->sides_edge_type);
       sprintf(message,"%s selection_edge_type : %d\n",
-              message,input->selection_edge_type);
-      sprintf(message,"%s countGhosts : %d\n",message,input->countGhosts);
+              message,inp->selection_edge_type);
+      sprintf(message,"%s countGhosts : %d\n",message,inp->countGhosts);
       
       EnGPar_Log_Function(message);
     }
@@ -183,18 +184,18 @@ namespace engpar {
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
     unsigned int index=0;
-    target_dimension = input->priorities[index];
+    target_dimension = inp->priorities[index];
     
     //Construct Stagnation detection
     sd = new SDSlope;
     
     //Set imbalance tolerance
     double tol=1.1;
-    if (input->tolerances.size()>index)
-      tol = input->tolerances[index];
+    if (inp->tolerances.size()>index)
+      tol = inp->tolerances[index];
     
     //Set side tolerance
-    Sides* sides = makeSides(input);
+    Sides* sides = makeSides(inp);
     sideTol = averageSides(sides);
     delete sides;
     
@@ -208,11 +209,11 @@ namespace engpar {
     int inner_steps=0;
     double time = PCU_Time();
     double targetTime=PCU_Time();
-    while (step++<input->maxIterations) {
+    while (step++<inp->maxIterations) {
       //runStep(tol) balances the current dimension.
       //Advance to the next dimension if the current dimesion is balanced
       //or the maximum per dimension iterations is reached.
-      if (!runStep(tol) || inner_steps++ >= input->maxIterationsPerType) {
+      if (!runStep(tol) || inner_steps++ >= inp->maxIterationsPerType) {
         // Set the imbalance limit for the higher priority dimension
         // while balancing lower priority dimensions to be the larger of
         // the specified imbalance (tgtMaxW) or, if it wasn't reached, the
@@ -232,19 +233,19 @@ namespace engpar {
         targetTime=PCU_Time();
         
         index++;
-        if (index==input->priorities.size())
+        if (index==inp->priorities.size())
           break;
         inner_steps=0;
         //Set new target criteria
-        target_dimension=input->priorities[index];
+        target_dimension=inp->priorities[index];
         //Recreate stagnation detection
         delete sd;
         sd = new SDSlope;
         //Set new tolerance
-        if (input->tolerances.size()>index)
-          tol = input->tolerances[index];        
+        if (inp->tolerances.size()>index)
+          tol = inp->tolerances[index];        
         //Set side tolerance
-        Sides* sides = makeSides(input);
+        Sides* sides = makeSides(inp);
         sideTol = averageSides(sides);
         delete sides;
 
@@ -271,12 +272,12 @@ namespace engpar {
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
-        if(step==input->maxIterations)
+        if(step==inp->maxIterations)
           printf("EnGPar ran to completion in %d iterations in %f seconds\n",
-                 input->maxIterations, time);
+                 inp->maxIterations, time);
         else
           printf("EnGPar converged in %lu iterations in %f seconds\n",
-                 step-input->priorities.size(),time);
+                 step-inp->priorities.size(),time);
       }
     }
     if (verbosity >= 2) {

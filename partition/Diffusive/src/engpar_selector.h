@@ -16,7 +16,7 @@ namespace engpar {
 
   class Selector {
   public:
-    Selector(Input* in_, Queue* queue,
+    Selector(DiffusiveInput* in_, Queue* queue,
              std::vector<int>* cd, std::vector<double>* cw) :
       in(in_), g(in_->g),
       q(queue),
@@ -37,7 +37,7 @@ namespace engpar {
     double weight(const EdgeSet&);
     void combineSets(EdgeSet&,const EdgeSet&);
 
-    Input* in;
+    DiffusiveInput* in;
     agi::Ngraph* g;
     Sending sending;
     Queue* q;
@@ -45,7 +45,7 @@ namespace engpar {
     std::vector<double>* completed_weights;
   };
 
-  Selector* makeSelector(Input* in,Queue* q,
+  Selector* makeSelector(DiffusiveInput* in,Queue* q,
                          std::vector<int>* cd,
                          std::vector<double>* cw );
 }

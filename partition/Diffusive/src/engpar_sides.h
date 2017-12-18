@@ -8,7 +8,7 @@
 namespace engpar {
   class Sides : public Container<int>  {
   public:
-    Sides(Input* in) {
+    Sides(DiffusiveInput* in) {
       agi::Ngraph* graph = in->g;
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = graph->begin(in->sides_edge_type);
@@ -28,7 +28,7 @@ namespace engpar {
     }
   };
 
-  Sides* makeSides(Input* in);
+  Sides* makeSides(DiffusiveInput* in);
 }
 
 #endif

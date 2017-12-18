@@ -269,7 +269,7 @@ namespace engpar {
   }
 
 
-  Selector* makeSelector(Input* in,Queue* q,
+  Selector* makeSelector(DiffusiveInput* in,Queue* q,
                          std::vector<int>* cd,
                          std::vector<double>* cw ) {
     return new Selector(in,q,cd,cw);

@@ -10,7 +10,8 @@ namespace engpar {
   public:
     VtxBalancer(agi::Ngraph* g, double f, int v)
       : Balancer(g,f,v,"Vtx") {
-      input->priorities.push_back(-1);
+      DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
+      inp->priorities.push_back(-1);
     }
     ~VtxBalancer() {}
   };

@@ -6,8 +6,7 @@
 #include <PCU.h>
 #include <sys/types.h>
 #include <unistd.h>
-bool switchToOriginals(int split_factor);
-void switchToAll(agi::Ngraph* g, bool isOriginal);
+void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -21,22 +20,33 @@ int main(int argc, char* argv[]) {
     assert(false);
   }
 
-  bool isOriginal = switchToOriginals(atoi(argv[2]));
+  //Application code:
+  bool isOriginal = false;
+  MPI_Comm newComm;
+  int split_factor = atoi(argv[2]);
+  switchToOriginals(split_factor, isOriginal,newComm);
+  printf("Switched to originals\n");
+
+  //Calls to EnGPar:
   agi::Ngraph* g = agi::createEmptyGraph();
-  agi::Migration* plan;
+
+  //Create the input (this sets up the communicators, so this must be done first)
+  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,split_factor);
+  
   if (isOriginal) {
+    //Only the original parts will construct the graph
     g->loadFromFile(argv[1]);
-    engpar::evaluatePartition(g);
-    plan =engpar::split(g,atoi(argv[2]),engpar::GLOBAL_PARMETIS);
   }
-  else
-    plan = new agi::Migration(g);
-  switchToAll(g,isOriginal);
-  g->migrate(plan);
+
+  engpar::evaluatePartition(g);
+  engpar::split(input,engpar::GLOBAL_PARMETIS);
   engpar::evaluatePartition(g);
 
+  //Application continues:
+  MPI_Comm_free(&newComm);
+
   g->saveToFile(argv[3]);
-  
+
   agi::destroyGraph(g);
   EnGPar_Finalize();
   MPI_Finalize();
@@ -44,11 +54,11 @@ int main(int argc, char* argv[]) {
 }
 
 
-bool switchToOriginals(int split_factor) {
+void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm) {
   int self = PCU_Comm_Self();
   int group;
   int groupRank;
-  bool isOriginal = self%split_factor==0;
+  isOriginal = self%split_factor==0;
 
   if (isOriginal) {
     group=0;
@@ -58,22 +68,5 @@ bool switchToOriginals(int split_factor) {
     group = 1;
     groupRank = 0;
   }
-  MPI_Comm groupComm;
-  MPI_Comm_split(MPI_COMM_WORLD,group,groupRank,&groupComm);
-  PCU_Switch_Comm(groupComm);
-  return isOriginal;
-}
-
-void switchToAll(agi::Ngraph* g, bool isOriginal)
-{
-  MPI_Comm prevComm = PCU_Get_Comm();
-
-  //Expands the view of the graph from s parts to t parts
-  if (isOriginal)
-    engpar::expandParts(g,MPI_COMM_WORLD);
-  else
-    PCU_Switch_Comm(MPI_COMM_WORLD);
-
-  MPI_Comm_free(&prevComm);
-  PCU_Barrier();
+  MPI_Comm_split(MPI_COMM_WORLD,group,groupRank,&newComm);
 }

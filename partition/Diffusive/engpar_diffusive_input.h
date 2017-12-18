@@ -1,17 +1,15 @@
-#ifndef __ENGPAR_INPUT_H__
-#define __ENGPAR_INPUT_H__
+#ifndef __ENGPAR_DIFFUSIVE_INPUT_H__
+#define __ENGPAR_DIFFUSIVE_INPUT_H__
 
 #include <ngraph.h>
+#include "../engpar_input.h"
 namespace engpar {
-
-
-  class Input {
+  
+  class DiffusiveInput : public Input {
   public:
-    Input(agi::Ngraph*);
-    ~Input() {};
+    DiffusiveInput(agi::Ngraph*);
 
-    /** \brief The graph being balanced */
-    agi::Ngraph* g;
+    void addPriority(int type, double tolerance);
 
     /** \brief The order of graph entities to be balanced 
      *
@@ -64,7 +62,6 @@ namespace engpar {
      */
     bool useDistanceQueue;
   };
-    
 }
 
 #endif

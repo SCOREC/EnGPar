@@ -11,6 +11,7 @@ endif()
 
 set(ENGPAR_SOURCES
   engpar_split.cpp
+  engpar_input.cpp
   )
 
 set(ENGPAR_HEADERS

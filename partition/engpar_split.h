@@ -3,6 +3,7 @@
 
 #include <ngraph.h>
 #include <mpi.h>
+#include "engpar_input.h"
 namespace engpar {
 
   enum SPLIT_METHOD {
@@ -10,7 +11,7 @@ namespace engpar {
     LOCAL_PARMETIS
   };
 
-  agi::Migration* split(agi::Ngraph* g, int split_factor, SPLIT_METHOD method);
+  void split(Input*, SPLIT_METHOD method);
 
 
   void expandParts(agi::Ngraph* g, MPI_Comm newComm);

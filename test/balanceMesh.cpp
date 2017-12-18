@@ -55,20 +55,14 @@ int main(int argc, char* argv[]) {
   }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
-  
-  engpar::Input* input = new engpar::Input(g);
-  input->priorities.push_back(0);
-  input->tolerances.push_back(tol);
+  double step_factor = .1;
+  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(0,tol);
   if (isMultiEdge) {
-    input->priorities.push_back(1);
-    input->tolerances.push_back(tol);
+    input->addPriority(1,tol);
   }
-  input->priorities.push_back(-1);
-  input->tolerances.push_back(tol);
+  input->addPriority(-1,tol);
 
-  input->step_factor=.1;
-
-  input->useDistanceQueue=true;
   //Create the balancer
   int verbosity = 1;
   agi::Balancer* balancer = engpar::makeBalancer(input, verbosity);
