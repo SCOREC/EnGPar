@@ -19,9 +19,13 @@ namespace engpar {
     for (int i = PCU_Comm_Self()+1; i < PCU_Comm_Peers()+1; ++i) {
       vtxdist[i] = g->numLocalVtxs();
     }
+    if (sizeof(idx_t) == sizeof(int)) 
+      MPI_Allreduce(MPI_IN_PLACE, vtxdist, PCU_Comm_Peers()+1,
+                    MPI_INT, MPI_SUM, PCU_Get_Comm());
+    else
+      MPI_Allreduce(MPI_IN_PLACE, vtxdist, PCU_Comm_Peers()+1,
+                    MPI_LONG, MPI_SUM, PCU_Get_Comm());
 
-    MPI_Allreduce(MPI_IN_PLACE, vtxdist, PCU_Comm_Peers()+1,
-                  MPI_LONG, MPI_SUM, PCU_Get_Comm());
     //Renumber the vertices based on the vtxdist array
     idx_t* gids = new idx_t[g->numLocalVtxs()];
     agi::VertexIterator* vitr = g->begin();
