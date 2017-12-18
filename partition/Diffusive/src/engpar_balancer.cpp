@@ -180,6 +180,11 @@ namespace engpar {
       return;
     }
 
+    //Setup the migration timers
+    migrTime->addTimer("comm");
+    migrTime->addTimer("build");
+    migrTime->addTimer("total");
+
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
     unsigned int index=0;
