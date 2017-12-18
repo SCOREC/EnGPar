@@ -3,6 +3,42 @@
 #include <PCU.h>
 #include "../engpar.h"
 #include <engpar_support.h>
+
+namespace {
+  void printMigrationStats(agi::MigrationTimers* migrTime) {
+    double maxComm = migrTime->processMax("comm");
+    double maxBuild = migrTime->processMax("build");
+    double maxTot = migrTime->processMax("total");
+    double localTime[3];
+    int count = migrTime->getCount("comm");
+    localTime[0] = migrTime->getTime("comm");
+    localTime[1] = migrTime->getTime("build");
+    localTime[2] = migrTime->getTime("total");
+    double ratios[4], globalRatios[4];
+    ratios[0] = localTime[0]/localTime[1]; // comm/build
+    ratios[1] = localTime[0]/localTime[2]; // comm/total
+    ratios[2] = localTime[1]/localTime[2]; // build/total
+    ratios[3] = (localTime[0]+localTime[1])/localTime[2]; // (comm+build)/total
+    for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
+    PCU_Max_Doubles(globalRatios,4);
+    if (!PCU_Comm_Self() && count) {
+      fprintf(stderr, "max migration time (s) "
+          "<total, comm, build> = <%f, %f, %f>\n",
+          maxTot, maxComm, maxBuild);
+      fprintf(stderr, "max migration ratios "
+          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+    }
+    for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
+    PCU_Min_Doubles(globalRatios,4);
+    if (!PCU_Comm_Self() && count) {
+      fprintf(stderr, "min migration ratios "
+          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+    }
+  }
+}
+
 namespace engpar {
 
   wgt_t getMaxWeight(agi::Ngraph* g, int dimension) {
@@ -260,13 +296,6 @@ namespace engpar {
     time = PCU_Time()-time;
 
 
-    double maxComm = migrTime->processMax("comm");
-    double maxBuild = migrTime->processMax("build");
-    double maxTot = migrTime->processMax("total");
-    if (!PCU_Comm_Self()) {
-      fprintf(stderr, "max migration time (s) <total, comm, build> %f %f %f\n", maxTot, maxComm, maxBuild);
-    }
-
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
@@ -279,6 +308,7 @@ namespace engpar {
       }
     }
     if (verbosity >= 2) {
+      printMigrationStats(migrTime);
       double maxMigr = migrTime->processMax("total");
       double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
