@@ -4,24 +4,37 @@
 
 namespace agi {
   MigrationTimers::MigrationTimers() {
-    times = new double[3];
-    counts = new int[3];
-    names = new std::string[3];
-    nameToIdx["comm"] = 0;
-    nameToIdx["build"] = 1;
-    nameToIdx["total"] = 2;
+    int initSize = 16;
+    times.reserve(initSize);
+    counts.reserve(initSize);
+    names.reserve(initSize);
   }
 
   MigrationTimers::~MigrationTimers() {
-    delete [] times;
-    delete [] counts;
-    delete [] names;
+  }
+
+  void MigrationTimers::addTimer(std::string name) {
+    int idx = nameToIdx.size()+1;
+    nameToIdx[name] = idx;
+    names.push_back(name);
+    counts.push_back(0);
+    times.push_back(0);
   }
 
   void MigrationTimers::update(std::string name, double val) {
     int idx = getTimerIdx(name);
     times[idx] += val;
     counts[idx]++;
+  }
+
+  double MigrationTimers::getTime(std::string name) {
+    int idx = getTimerIdx(name);
+    return times[idx];
+  }
+
+  int MigrationTimers::getCount(std::string name) {
+    int idx = getTimerIdx(name);
+    return counts[idx];
   }
 
   double MigrationTimers::processMax(std::string name) {

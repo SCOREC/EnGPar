@@ -3,6 +3,42 @@
 #include <PCU.h>
 #include "../engpar.h"
 #include <engpar_support.h>
+
+namespace {
+  void printMigrationStats(agi::MigrationTimers* migrTime) {
+    double maxComm = migrTime->processMax("comm");
+    double maxBuild = migrTime->processMax("build");
+    double maxTot = migrTime->processMax("total");
+    double localTime[3];
+    int count = migrTime->getCount("comm");
+    localTime[0] = migrTime->getTime("comm");
+    localTime[1] = migrTime->getTime("build");
+    localTime[2] = migrTime->getTime("total");
+    double ratios[4], globalRatios[4];
+    ratios[0] = localTime[0]/localTime[1]; // comm/build
+    ratios[1] = localTime[0]/localTime[2]; // comm/total
+    ratios[2] = localTime[1]/localTime[2]; // build/total
+    ratios[3] = (localTime[0]+localTime[1])/localTime[2]; // (comm+build)/total
+    for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
+    PCU_Max_Doubles(globalRatios,4);
+    if (!PCU_Comm_Self() && count) {
+      fprintf(stderr, "max migration time (s) "
+          "<total, comm, build> = <%f, %f, %f>\n",
+          maxTot, maxComm, maxBuild);
+      fprintf(stderr, "max migration ratios "
+          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+    }
+    for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
+    PCU_Min_Doubles(globalRatios,4);
+    if (!PCU_Comm_Self() && count) {
+      fprintf(stderr, "min migration ratios "
+          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+    }
+  }
+}
+
 namespace engpar {
 
   wgt_t getMaxWeight(agi::Ngraph* g, int dimension) {
@@ -23,22 +59,19 @@ namespace engpar {
   Balancer::Balancer(agi::Ngraph* g, double f, int v, const char* n) :
     agi::Balancer(g,v,n) {
     input = createDiffusiveInput(g,f);
-    times[0]=0;
-    times[1]=0;
+    totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
     agi::Balancer(input_->g,v,n), input(input_) {
-    times[0]=0;
-    times[1]=0;
+    totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
   }
   bool Balancer::runStep(double tolerance) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
-    double time[2];
-    time[0] = PCU_Time();
+    double stepTime = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
     //Check for completition of criteria
     if (imb < tolerance)
@@ -104,7 +137,7 @@ namespace engpar {
     delete targets;
     delete selector;
     
-    time[0] = PCU_Time()-time[0];
+    stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
     if (verbosity>=3) {
@@ -120,28 +153,25 @@ namespace engpar {
       delete [] counts;
     }
 
-    time[1] = PCU_Time();
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
     else
       delete plan;
-    time[1] = PCU_Time()-time[1];
     
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
-        printf("  Step took %f seconds\n",time[0]);
+        printf("  Step took %f seconds\n",stepTime);
         printf("  Imbalances <v, e0, ...>: ");
       }
       printImbalances(input->g);
-      times[0]+=time[0];      
+      totStepTime+=stepTime;
     }
     if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
           printf("    Slope: %f\n",sd->slope());
-        printf("    Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
+        printf("    Migrating %d vertices took %f seconds\n",numMigrate, migrTime->getTime("total"));
       }
-      times[1]+=time[1];
     }
 
     if (numMigrate == 0)
@@ -180,6 +210,11 @@ namespace engpar {
       printf("EnGPar ran in serial, nothing to do exiting...\n");
       return;
     }
+
+    //Setup the migration timers
+    migrTime->addTimer("comm");
+    migrTime->addTimer("build");
+    migrTime->addTimer("total");
 
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
@@ -262,13 +297,6 @@ namespace engpar {
     time = PCU_Time()-time;
 
 
-    double maxComm = migrTime->processMax("comm");
-    double maxBuild = migrTime->processMax("build");
-    double maxTot = migrTime->processMax("total");
-    if (!PCU_Comm_Self()) {
-      fprintf(stderr, "max migration time (s) <total, comm, build> %f %f %f\n", maxTot, maxComm, maxBuild);
-    }
-
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
@@ -281,11 +309,15 @@ namespace engpar {
       }
     }
     if (verbosity >= 2) {
-      times[1] = PCU_Max_Double(times[1]);
+      printMigrationStats(migrTime);
+      double maxMigr = migrTime->processMax("total");
+      double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
-        printf("Migration took %f%% of the total time\n",times[1]/time*100);
-        printf("Distance Computation took %f seconds\n",distance_time);
+        printf("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
+        printf("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
+        printf("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
+            distance_time, distance_time/time*100);
       }
     }
     if (EnGPar_Is_Log_Open())

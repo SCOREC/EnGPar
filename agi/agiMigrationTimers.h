@@ -2,6 +2,7 @@
 #define AGI_MIGRTIMERS
 
 #include <string>
+#include <vector>
 #include <map>
 
 namespace agi {
@@ -9,8 +10,15 @@ namespace agi {
     public:
       MigrationTimers();
       ~MigrationTimers();
+      /// add a new timer - the selected name must be used in
+      /// subsequent api calls exactly as entered here
+      void addTimer(std::string name);
       /// add val and incriment the call count for the timer 'name'
       void update(std::string name, double val);
+      /// get the accumulated time on the local process
+      double getTime(std::string name);
+      /// get the count on the local process
+      int getCount(std::string name);
       /// get the maximum accumulated time across all processes: max(time)
       double processMax(std::string name);
       /// get the maximum per call time across all processes: max(time/numCalls)
@@ -21,9 +29,9 @@ namespace agi {
       double perCallProcessAvg(std::string name);
 
     private:
-      double* times;
-      int* counts;
-      std::string* names;
+      std::vector<double> times;
+      std::vector<int> counts;
+      std::vector<std::string> names;
       std::map<std::string,int> nameToIdx;
       /// -1 on failure, >= 0 on success
       int getTimerIdx(std::string);
