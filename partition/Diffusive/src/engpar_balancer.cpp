@@ -24,21 +24,18 @@ namespace engpar {
     agi::Balancer(g,v,n) {
     input = new Input(g);
     input->step_factor = f;
-    times[0]=0;
-    times[1]=0;
+    totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
     agi::Balancer(input_->g,v,n), input(input_) {
-    times[0]=0;
-    times[1]=0;
+    totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
   }
   bool Balancer::runStep(double tolerance) {
-    double time[2];
-    time[0] = PCU_Time();
+    double stepTime = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
     //Check for completition of criteria
     if (imb < tolerance)
@@ -104,7 +101,7 @@ namespace engpar {
     delete targets;
     delete selector;
     
-    time[0] = PCU_Time()-time[0];
+    stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
     if (verbosity>=3) {
@@ -120,28 +117,25 @@ namespace engpar {
       delete [] counts;
     }
 
-    time[1] = PCU_Time();
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
     else
       delete plan;
-    time[1] = PCU_Time()-time[1];
     
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
-        printf("  Step took %f seconds\n",time[0]);
+        printf("  Step took %f seconds\n",stepTime);
         printf("  Imbalances <v, e0, ...>: ");
       }
       printImbalances(input->g);
-      times[0]+=time[0];      
+      totStepTime+=stepTime;
     }
     if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
           printf("    Slope: %f\n",sd->slope());
-        printf("    Migrating %d vertices took %f seconds\n",numMigrate,time[1]);
+        printf("    Migrating %d vertices took %f seconds\n",numMigrate, migrTime->getTime("total"));
       }
-      times[1]+=time[1];
     }
 
     if (numMigrate == 0)
@@ -285,10 +279,10 @@ namespace engpar {
       }
     }
     if (verbosity >= 2) {
-      times[1] = PCU_Max_Double(times[1]);
+      double maxMigr = migrTime->processMax("total");
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
-        printf("Migration took %f%% of the total time\n",times[1]/time*100);
+        printf("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
         printf("Distance Computation took %f seconds\n",distance_time);
       }
     }

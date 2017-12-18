@@ -28,7 +28,7 @@ namespace engpar {
     std::vector<int> completed_dimensions;
     std::vector<wgt_t> completed_weights;
     Input* input;
-    double times[2];
+    double totStepTime;
     double distance_time;
     int sideTol;
     agi::MigrationTimers* migrTime;
