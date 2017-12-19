@@ -99,7 +99,7 @@ namespace engpar {
       ++i;
     }
     delete [] gids;
-    idx_t wgtflag=0;
+    idx_t wgtflag=2;
     idx_t numflag=0;
     idx_t ncon=1;
     idx_t nparts = target_parts;
