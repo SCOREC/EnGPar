@@ -16,7 +16,7 @@ namespace engpar {
     if (inp->isOriginal) {
       input->g->setOriginalOwners();
       if (method ==GLOBAL_PARMETIS) {
-        plan = EnGPar_ParMETIS(input->g,PCU_Comm_Peers()*inp->split_factor);
+        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor);
       }
       else if (method == LOCAL_PARMETIS) {
         //Set communicator to self

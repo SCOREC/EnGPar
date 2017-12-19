@@ -3,6 +3,8 @@
 #include <PCU.h>
 #include <unordered_map>
 #include <stdexcept>
+#include <ngraph.h>
+#include <engpar_split_input.h>
 #ifdef HAS_PARMETIS
 #include <parmetis.h>
 #endif
@@ -10,7 +12,8 @@ namespace engpar {
   
 #ifdef HAS_PARMETIS
   //TODO: generalize to any edge type
-  agi::Migration* EnGPar_ParMETIS(agi::Ngraph* g, int target_parts) {
+  agi::Migration* EnGPar_ParMETIS(SplitInput* input, int target_parts) {
+    agi::Ngraph* g = input->g;
     //Get an offset array of the vertices on each part
     idx_t* vtxdist = new idx_t[PCU_Comm_Peers()+1];
     for (int i = 0; i <= PCU_Comm_Self()+1; ++i) {
@@ -38,7 +41,7 @@ namespace engpar {
 
       //Get remotes
       agi::Peers res;
-      agi::EdgeIterator* eitr = g->edges(vtx);
+      agi::EdgeIterator* eitr = g->edges(vtx,input->edge_type);
       agi::GraphEdge* edge;
       while ((edge = g->iterate(eitr))) {
         g->getResidence(edge,res);
@@ -72,10 +75,11 @@ namespace engpar {
     xadj[0] = 0;
     i=0;
     int deg=0;
-    idx_t* vwgts = NULL;
+    idx_t* vwgts = new idx_t[g->numLocalVtxs()];
     idx_t* ewgts = NULL;
     while ((vtx = g->iterate(vitr))) {
-      agi::GraphIterator* gitr = g->adjacent(vtx);
+      vwgts[i] = g->weight(vtx);
+      agi::GraphIterator* gitr = g->adjacent(vtx,input->edge_type);
       agi::GraphVertex* other;
       while ((other = g->iterate(gitr))) {
         if (other==vtx)
@@ -100,7 +104,7 @@ namespace engpar {
     idx_t ncon=1;
     idx_t nparts = target_parts;
     real_t* tpwgts = new real_t[nparts];
-    real_t ubvec = 1.05;
+    real_t ubvec = input->tolerance;
     for (i=0;i<nparts;i++) {
       tpwgts[i] = 1.0/nparts;
     }
@@ -118,6 +122,7 @@ namespace engpar {
     delete [] vtxdist;
     delete [] xadj;
     delete [] adjncy;
+    delete [] vwgts;
     delete [] tpwgts;
     //Make the migration plan
     agi::Migration* plan = new agi::Migration(g);

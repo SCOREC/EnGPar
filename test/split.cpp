@@ -30,8 +30,12 @@ int main(int argc, char* argv[]) {
   //Calls to EnGPar:
   agi::Ngraph* g = agi::createEmptyGraph();
 
-  //Create the input (this sets up the communicators, so this must be done first)
-  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,split_factor);
+  //Create the input (this sets up the internal communicators,
+  //                    so this must be done before graph construction.)
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                  split_factor,tolerance,t);
   
   if (isOriginal) {
     //Only the original parts will construct the graph

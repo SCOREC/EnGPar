@@ -20,7 +20,8 @@ namespace engpar {
   Input* createDiffusiveInput(agi::Ngraph* g, double step_factor);
   Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
                           MPI_Comm largeComm, bool isPartOfSmall,
-                          int split_factor);
+                          int split_factor,double tolerance,
+                          agi::etype adj_type = 0);
 }
 
 #endif

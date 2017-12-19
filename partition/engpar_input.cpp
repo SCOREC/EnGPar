@@ -10,12 +10,16 @@ namespace engpar {
     return input;
   }
 
-  Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm, bool isPartOfSmall, int split_factor) {
+  Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
+                          bool isPartOfSmall, int split_factor,double tolerance,
+                          agi::etype adj_type) {
     SplitInput* input = new SplitInput(g);
     input->smallComm=smallComm;
     input->largeComm=largeComm;
     input->isOriginal = isPartOfSmall;
     input->split_factor = split_factor;
+    input->tolerance = tolerance;
+    input->edge_type = adj_type;
     PCU_Switch_Comm(smallComm);
     return input;
   }

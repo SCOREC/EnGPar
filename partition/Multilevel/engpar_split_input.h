@@ -11,11 +11,16 @@ namespace engpar {
       smallComm = largeComm = MPI_COMM_WORLD;
       isOriginal=true;
       split_factor = 1;
+      tolerance = 1.05;
+      edge_type = 0;
     }
     MPI_Comm smallComm;
     MPI_Comm largeComm;
     bool isOriginal;
     int split_factor;
+    double tolerance;
+    agi::etype edge_type;
+    
   };
 }
 
