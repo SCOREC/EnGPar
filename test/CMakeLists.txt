@@ -68,6 +68,7 @@ make_exe(testDistanceQueue testDistanceQueue.cpp)
 make_exe(vtxBalance vtxBalance.cpp)
 make_exe(balance balance.cpp)
 make_exe(split split.cpp)
+make_exe(splitAndBalance splitAndBalance.cpp)
 
 if (ENABLE_PUMI)
   make_exe(render render.cpp)

@@ -129,25 +129,37 @@ if (ENABLE_PARMETIS)
     ./split
     "${GRAPHS}/cube/cube"
     2
-    cake)
+    cake/)
   
   mpi_test(splitCube1to4 4
     ./split
     "${GRAPHS}/cube/cube"
     4
-    cake)
+    cake/)
 
-    mpi_test(splitCube4to8 8
+  mpi_test(splitCube4to8 8
     ./split
     "${GRAPHS}/cube/4/"
     2
-    cake)
+    cake/)
 
-    mpi_test(splitTorus4to8 8
+  mpi_test(splitTorus4to8 8
     ./split
     "${GRAPHS}/torus/4_01/"
     2
-    cake)
+    cake/)
+
+  mpi_test(splitAndBalanceCube 8
+    ./splitAndBalance
+    "${GRAPHS}/cube/4/"
+    2
+    cake/)
+
+  mpi_test(splitAndBalanceTorus 8
+    ./splitAndBalance
+    "${GRAPHS}/torus/4_01/"
+    2
+    cake/)
 
 endif()
   

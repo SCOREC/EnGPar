@@ -33,18 +33,43 @@ int main(int argc, char* argv[]) {
   //                    so this must be done before graph construction.)
   double tolerance = 1.05;
   agi::etype t = 0;
-  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                   split_factor,tolerance,t);
   
   if (isOriginal) {
     //Only the original parts will construct the graph
     g->loadFromFile(argv[1]);
+    if (!PCU_Comm_Self())
+      printf("\nBefore Split\n");
+    engpar::evaluatePartition(g);
   }
 
+  engpar::split(input_s,engpar::GLOBAL_PARMETIS);
+  if (!PCU_Comm_Self())
+    printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
-  engpar::split(input,engpar::GLOBAL_PARMETIS);
-  engpar::evaluatePartition(g);
+  
+  //Create the input for diffusive load balancing (vtx>element)
+  double step_factor = 0.1;
+  engpar::Input* input_d = engpar::createDiffusiveInput(g,step_factor);
+  input_d->addPriority(0,1.03);
+  input_d->addPriority(-1,1.03);
+  if (!PCU_Comm_Self())
+    printf("\n");
 
+  //Create and run the balancer
+  agi::Balancer* balancer = engpar::makeBalancer(input_d,0);
+  balancer->balance(1.1);
+
+  if (!PCU_Comm_Self())
+    printf("\nAfter Balancing\n");
+  engpar::evaluatePartition(g);
+  //Destroy balancer
+  delete balancer;
+
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+  
   //Application continues:
   MPI_Comm_free(&newComm);
 
