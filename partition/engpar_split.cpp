@@ -12,7 +12,7 @@ namespace engpar {
       }
       assert(false);
     }
-    agi::Migration* plan;
+    agi::Migration* plan = NULL;
     if (inp->isOriginal) {
       input->g->setOriginalOwners();
       if (method ==GLOBAL_PARMETIS) {
