@@ -136,7 +136,7 @@ namespace engpar {
 
   }
 #else
-  agi::Migration* EnGPar_ParMETIS(agi::Ngraph*, int) {
+  agi::Migration* EnGPar_ParMETIS(SplitInput*, int) {
     throw std::runtime_error("ParMETIS not found\n");
   }
 #endif
