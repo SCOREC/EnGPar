@@ -231,7 +231,7 @@ namespace engpar {
           in1->seeds[in1->numSeeds++] = i;
       }
     }
-    printf("%d %ld\n",PCU_Comm_Self(),in1->numSeeds);
+
     if (in1->numSeeds==0) {
       Queue* q = new Queue;
       delete in1;
