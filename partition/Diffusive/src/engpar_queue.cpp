@@ -208,7 +208,7 @@ namespace engpar {
     Inputs* in1 = new Inputs;
     in1->seeds = new agi::lid_t[pg->num_local_edges[t]];
     //If run in serial use edge 2 for the seed
-    if (PCU_Comm_Peers()==1)
+    if (g->numGhostVtxs()==0)
        in1->seeds[in1->numSeeds++]=2;
     //Otherwise use all edges that are shared across part boundaries
     else if (pg->isHyperGraph) {
@@ -231,9 +231,10 @@ namespace engpar {
           in1->seeds[in1->numSeeds++] = i;
       }
     }
-
+    printf("%d %ld\n",PCU_Comm_Self(),in1->numSeeds);
     if (in1->numSeeds==0) {
       Queue* q = new Queue;
+      delete in1;
       return q;
     }
     
