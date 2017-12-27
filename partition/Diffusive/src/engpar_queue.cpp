@@ -231,7 +231,7 @@ namespace engpar {
           in1->seeds[in1->numSeeds++] = i;
       }
     }
-
+    printf("%d %ld\n",PCU_Comm_Self(),in1->numSeeds);
     if (in1->numSeeds==0) {
       Queue* q = new Queue;
       delete in1;
@@ -301,7 +301,7 @@ namespace engpar {
           }
           if (addition>0) {
             for (agi::lid_t j=start_seed;j<in2->numSeeds;j++) {
-              int l2 = in2->labels[j];
+              int l2 = in2->labels[in2->seeds[j]];
               if (l2<0)
                 continue;
               while (l2!=in2->parents[l2])
