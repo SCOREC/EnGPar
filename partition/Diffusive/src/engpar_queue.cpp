@@ -99,6 +99,7 @@ namespace engpar {
   
   //Visit function for second traversal (uses disjoint sets)
   bool distance_visit(Inputs* i,agi::lid_t source, agi::lid_t dest) {
+    printf("Visiting %ld from %ld\n",dest,source);
     int label = i->labels[source];
     int min_dist = i->visited[source];
     if (label==-1)
@@ -112,6 +113,8 @@ namespace engpar {
       i->set_size[label]++;
       return true;
     }
+    if (dest ==2046)
+      printf("2046: %d, %d\n",i->visited[dest],i->labels[dest]);
     int l2 = i->labels[dest];
     while(l2!=i->parents[l2]) 
       l2=i->parents[l2];
@@ -201,8 +204,9 @@ namespace engpar {
     return level;
   }
 
-  Queue* createDistanceQueue(agi::Ngraph* g) {  
+  Queue* createDistanceQueue(agi::Ngraph* g) {
     agi::PNgraph* pg = g->publicize();
+    printf("There are %ld edges\n",pg->num_local_edges[0]);
     agi::etype t = 0;
     //Setup Inputs for first BFS traversal
     Inputs* in1 = new Inputs;
@@ -307,7 +311,7 @@ namespace engpar {
               while (l2!=in2->parents[l2])
                 l2 = in2->parents[l2];
               if (l2==l)
-                in2->visited[j]+=addition;
+                in2->visited[in2->seeds[j]]+=addition;
             }
           }
           addition+=in2->set_size[l];
