@@ -124,6 +124,16 @@ mpi_test(testDistanceQueueSerial 1
 mpi_test(testDistanceQueueParallel 4
   ./testDistanceQueue)
 
+# aero mesh tests
+mpi_test(testDistanceQueueAero25114 1
+  ./testDistanceQueue "${GRAPHS}/aero1Belm/graph128Ki_25114")
+mpi_test(testDistanceQueueAero88637 1
+  ./testDistanceQueue "${GRAPHS}/aero1Belm/graph128Ki_88637")
+mpi_test(testDistanceQueueAero81334 1
+  ./testDistanceQueue "${GRAPHS}/aero1Belm/afterMigr_81334")
+mpi_test(testDistanceQueueAero1457 1
+  ./testDistanceQueue "${GRAPHS}/aero1Belm/afterMigr_1457")
+
 if (ENABLE_PARMETIS)
   mpi_test(splitCube1to2 2
     ./split

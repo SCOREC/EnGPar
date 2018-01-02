@@ -1,17 +1,7 @@
-option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
-option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
-
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
 
-if (ENABLE_PARMETIS)
-  find_package(Parmetis MODULE REQUIRED)
-endif()
-if (ENABLE_ZOLTAN)
-  find_package(Zoltan MODULE REQUIRED)
-endif()
 if (ENABLE_KOKKOS)
   find_package(Kokkos MODULE REQUIRED)
 endif()

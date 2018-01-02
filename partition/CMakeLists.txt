@@ -1,13 +1,6 @@
-option(ENABLE_PARMETIS "Enable ParMETIS interface [ON|OFF]" OFF)
-message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
-
 add_subdirectory(Diffusive)
 
 add_subdirectory(Multilevel)
-
-if (ENABLE_PARMETIS)
-  find_package(Parmetis MODULE REQUIRED)
-endif()
 
 set(ENGPAR_SOURCES
   engpar_split.cpp
@@ -29,7 +22,6 @@ target_link_libraries(engpar PUBLIC agi diffusive multilevel)
 
 
 if (ENABLE_PARMETIS)
-  message(${PARMETIS_INCLUDE_DIRS})
   target_include_directories(engpar PRIVATE
     ${PARMETIS_INCLUDE_DIRS}
     )
