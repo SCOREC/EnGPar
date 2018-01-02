@@ -109,7 +109,7 @@ namespace engpar {
     Queue* pq;
     double t = PCU_Time();
     if (inp->useDistanceQueue) {
-      pq = createDistanceQueue(input->g);
+      pq = createDistanceQueue(inp);
     }
     else 
       pq = createIterationQueue(input->g);

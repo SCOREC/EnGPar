@@ -56,11 +56,17 @@ namespace engpar {
      */
     bool countGhosts;
 
-    /** \brief If the distance based iteration queue should be used
+    /** \brief If the distance based iteration queue should be used.
      *
      * defaults to false (for now)
      */
     bool useDistanceQueue;
+
+    /** \brief Whether to use the push bfs or pull bfs.
+     *
+     * defaults to false
+     */
+    bool bfsPush;
   };
 }
 

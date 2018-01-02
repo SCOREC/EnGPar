@@ -201,7 +201,8 @@ namespace engpar {
     return level;
   }
 
-  Queue* createDistanceQueue(agi::Ngraph* g) {
+  Queue* createDistanceQueue(DiffusiveInput* input) {
+    agi::Ngraph* g = input->g;
     agi::PNgraph* pg = g->publicize();
     agi::etype t = 0;
     //Setup Inputs for first BFS traversal
@@ -242,8 +243,10 @@ namespace engpar {
       in1->visited[i] = -1;
     }
     //Run first BFS using depth visit operation
-    bfs_push(g,t,0,0,depth_visit,in1);
-    
+    if (input->bfsPush)
+      bfs_push(g,t,0,0,depth_visit,in1);
+    else
+      bfs_pull(g,t,0,0,depth_visit,in1);
     //Setup inputs to second BFS traversal
     Inputs* in2 = new Inputs;
     in2->visited = new int[pg->num_local_edges[t]];
@@ -287,8 +290,10 @@ namespace engpar {
         in2->labels[in2->seeds[i]] = i-start_seed;
       }
       //Run the bfs using the distance visit operation
-      depth = bfs_push(g,t,start_seed,depth,distance_visit,in2);
-
+      if (input->bfsPush)
+        depth = bfs_push(g,t,start_seed,depth,distance_visit,in2);
+      else
+        depth = bfs_pull(g,t,start_seed,depth,distance_visit,in2);
       //Correct the distance when there are multiple disjoint sets
       int addition=0;
       if (in2->num_sets>1) {

@@ -2,6 +2,7 @@
 #include <PCU.h>
 #include <engpar_support.h>
 #include "buildGraphs.h"
+#include "../partition/Diffusive/engpar_diffusive_input.h"
 #include "../partition/Diffusive/src/engpar_queue.h"
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -19,7 +20,9 @@ int main(int argc, char* argv[]) {
   }
   PCU_Barrier();
 
-  engpar::Queue* q = engpar::createDistanceQueue(g);
+  engpar::Input* input = engpar::createDiffusiveInput(g,0);
+  engpar::DiffusiveInput* inp = static_cast<engpar::DiffusiveInput*>(input);
+  engpar::Queue* q = engpar::createDistanceQueue(inp);
   if (!PCU_Comm_Self()) {
     for (unsigned int i=0;i<q->size();i++)
       printf("%d %ld\n",PCU_Comm_Self(),g->globalID((*q)[i]));

@@ -3,5 +3,5 @@
 
 namespace engpar {
   Queue* createIterationQueue(agi::Ngraph*);
-  Queue* createDistanceQueue(agi::Ngraph*);
+  Queue* createDistanceQueue(DiffusiveInput*);
 }
