@@ -1,8 +1,4 @@
-option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
-
 if (ENABLE_PARMETIS)
-  find_package(Parmetis MODULE REQUIRED)
   add_definitions(-DHAS_PARMETIS)
 endif()
 
@@ -22,7 +18,6 @@ target_include_directories(multilevel PUBLIC
   )
 
 if (ENABLE_PARMETIS)
-  message(${PARMETIS_INCLUDE_DIRS})
   target_include_directories(multilevel PRIVATE
     ${PARMETIS_INCLUDE_DIRS}
     )

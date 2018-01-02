@@ -1,14 +1,6 @@
-option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_ZOLTAN: " ${ENABLE_ZOLTAN})
-
 set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/")
-
-if (ENABLE_ZOLTAN)
-  find_package(Zoltan MODULE REQUIRED)
-endif()
-
 
 if (ENABLE_ZOLTAN)
   set(ZOLTAN_SOURCE
