@@ -105,9 +105,6 @@ agi::Ngraph* buildGraphParts() {
   agi::lid_t local_verts = 4;
   agi::gid_t global_verts = 4*PCU_Comm_Peers();
   std::vector<agi::gid_t> verts;
-  agi::gid_t gids[50];
-  agi::part_t owns[50];
-  agi::lid_t num_ghosts=0;
   std::unordered_map<agi::gid_t,agi::part_t> owners;
   std::vector<agi::gid_t> edges;
   std::vector<agi::lid_t> degrees;
@@ -125,8 +122,6 @@ agi::Ngraph* buildGraphParts() {
     pins.push_back((e+1)%global_verts);
     if (i==local_verts-1&&PCU_Comm_Peers()>1) {
       if ((PCU_Comm_Self()+1)%PCU_Comm_Peers()!=PCU_Comm_Self()) {
-        gids[num_ghosts] = (e+1)%global_verts;
-        owns[num_ghosts++] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
         owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
       }
     }
@@ -135,8 +130,6 @@ agi::Ngraph* buildGraphParts() {
       degrees.push_back(2);
       pins.push_back((e+1)%global_verts);
       if ((PCU_Comm_Self()+1)%PCU_Comm_Peers()!=PCU_Comm_Self()) {
-        gids[num_ghosts] = e;
-        owns[num_ghosts++] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
         owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
       }
       pins.push_back(e);
@@ -171,7 +164,7 @@ agi::Ngraph* buildGraphParts() {
   }
   graph->constructEdges(edges2.size(),&edges2[0],
                                         &degrees2[0],&pins2[0]);
-  graph->constructGhosts(num_ghosts,gids,owns);
+  graph->constructGhosts(owners);
   return graph;
 }
 
