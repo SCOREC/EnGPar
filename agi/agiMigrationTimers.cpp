@@ -19,6 +19,7 @@ namespace agi {
     names.push_back(name);
     counts.push_back(0);
     times.push_back(0);
+    times[idx] = 0; // valgrind does not think times[idx] was initialized...
   }
 
   void MigrationTimers::update(std::string name, double val) {
@@ -62,7 +63,10 @@ namespace agi {
   }
 
   int MigrationTimers::getTimerIdx(std::string name) {
-    assert( nameToIdx.count(name) );
+    if( !nameToIdx.count(name) ) {
+      fprintf(stderr, "%s timer %s not found... call addTimer before use... exiting\n");
+      exit(EXIT_FAILURE);
+    }
     return nameToIdx[name];
   }
 } //end namespace
