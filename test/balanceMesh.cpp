@@ -103,10 +103,10 @@ int main(int argc, char* argv[]) {
   PCU_Max_Doubles(times,4);
   
   if (!PCU_Comm_Self()) {
-    printf("Total Time: %f\n",times[4]);
-    printf("Construct Time: %f\n",times[0]);
-    printf("Balancing Time: %f\n",times[1]);
-    printf("Repartition Time: %f\n",times[2]);
+    printf("Total Time (s): %f\n",times[4]);
+    printf("Construct N-Graph from Mesh Time (s): %f\n",times[0]);
+    printf("EnGPar Balancing Time (s): %f\n",times[1]);
+    printf("Mesh Repartition Time (s): %f\n",times[2]);
   }
   
   //Destroy graph
