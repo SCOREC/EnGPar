@@ -70,7 +70,8 @@ int main(int argc, char* argv[]) {
 
   //Migration of original data structure
   if (argc>2) {
-    g->getPartition();
+    agi::PartitionMap* map = g->getPartition();
+    delete map;
   }
   
   //Destroy graph

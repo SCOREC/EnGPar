@@ -48,6 +48,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
+  delete input_s;
   
   //Create the input for diffusive load balancing (vtx>element)
   double step_factor = 0.1;

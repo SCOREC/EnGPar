@@ -28,6 +28,7 @@ int main(int argc, char* argv[]) {
       printf("%d %ld\n",PCU_Comm_Self(),g->globalID((*q)[i]));
   }
   delete q;
+  delete input;
   
   if (g->hasCoords()) {
     std::string filename = "graph";
