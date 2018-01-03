@@ -6,34 +6,36 @@
 
 namespace {
   void printMigrationStats(agi::MigrationTimers* migrTime) {
+    double maxSetup = migrTime->processMax("setup");
     double maxComm = migrTime->processMax("comm");
     double maxBuild = migrTime->processMax("build");
     double maxTot = migrTime->processMax("total");
-    double localTime[3];
-    int count = migrTime->getCount("comm");
-    localTime[0] = migrTime->getTime("comm");
-    localTime[1] = migrTime->getTime("build");
-    localTime[2] = migrTime->getTime("total");
+    double localTime[4];
+    localTime[0] = migrTime->getTime("setup");
+    localTime[1] = migrTime->getTime("comm");
+    localTime[2] = migrTime->getTime("build");
+    localTime[3] = migrTime->getTime("total");
     double ratios[4], globalRatios[4];
-    ratios[0] = localTime[0]/localTime[1]; // comm/build
-    ratios[1] = localTime[0]/localTime[2]; // comm/total
-    ratios[2] = localTime[1]/localTime[2]; // build/total
-    ratios[3] = (localTime[0]+localTime[1])/localTime[2]; // (comm+build)/total
+    ratios[0] = localTime[0]/localTime[3]; // setup/total
+    ratios[1] = localTime[1]/localTime[3]; // comm/total
+    ratios[2] = localTime[2]/localTime[3]; // build/total
+    ratios[3] = (localTime[0]+localTime[1]+localTime[2])/localTime[3]; // (setup+comm+build)/total
     for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
     PCU_Max_Doubles(globalRatios,4);
+    int count = migrTime->getCount("comm");
     if (!PCU_Comm_Self() && count) {
       fprintf(stderr, "max migration time (s) "
-          "<total, comm, build> = <%f, %f, %f>\n",
-          maxTot, maxComm, maxBuild);
+          "<total, setup, comm, build> = <%f, %f, %f, %f>\n",
+          maxTot, maxSetup, maxComm, maxBuild);
       fprintf(stderr, "max migration ratios "
-          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
           globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
     for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
     PCU_Min_Doubles(globalRatios,4);
     if (!PCU_Comm_Self() && count) {
       fprintf(stderr, "min migration ratios "
-          "<comm/build, comm/total, build/total, (comm+build)/total> = <%f, %f, %f, %f>\n",
+          "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
           globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
   }
@@ -212,6 +214,7 @@ namespace engpar {
     }
 
     //Setup the migration timers
+    migrTime->addTimer("setup");
     migrTime->addTimer("comm");
     migrTime->addTimer("build");
     migrTime->addTimer("total");

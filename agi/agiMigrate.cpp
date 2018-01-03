@@ -320,6 +320,7 @@ namespace agi {
     for (etype i=0;i<nt;i++)
       addEdges(this,plan,ownedEdges[i],edgeWeights[i],degrees[i],pins[i],
                ghost_owners,addedEdges[i],i);
+    if( migrTime ) migrTime->update("setup", PCU_Time() - tmigr);
     //Send and recieve vertices
     double tcomm = PCU_Time();
     Migration::iterator itr;
