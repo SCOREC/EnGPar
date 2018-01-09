@@ -1,8 +1,15 @@
 #!/bin/bash -x
 
+#load system modules
 source /usr/local/etc/bash_profile
 module load cmake/latest
 module load pumi
+
+#update this repo
+git pull
+
+#update the mesh and graph repos
+git submodule update
 
 #cdash output root
 cd /lore/diamog/cdash

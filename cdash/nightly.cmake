@@ -115,8 +115,8 @@ SET(CONFIGURE_OPTIONS
   "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
   "-DIS_TESTING=ON"
-  "-DMESHES=/users/diamog/meshes"
-  "-DGRAPHS=/users/diamog/graphs"
+  "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
+  "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
   
 )
 message(STATUS "configure options ${CONFIGURE_OPTIONS}")
