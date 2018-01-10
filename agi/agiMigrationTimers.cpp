@@ -64,7 +64,8 @@ namespace agi {
 
   int MigrationTimers::getTimerIdx(std::string name) {
     if( !nameToIdx.count(name) ) {
-      fprintf(stderr, "%s timer %s not found... call addTimer before use... exiting\n");
+      fprintf(stderr, "%s timer %s not found... call addTimer before use... exiting\n",
+          __func__, name.c_str());
       exit(EXIT_FAILURE);
     }
     return nameToIdx[name];
