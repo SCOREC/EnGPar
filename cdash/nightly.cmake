@@ -117,8 +117,10 @@ SET(CONFIGURE_OPTIONS
   "-DIS_TESTING=ON"
   "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
   "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
-  
-)
+  "-DVALGRIND=valgrind"
+  "-DVALGRIND_ARGS=--log-file=vg.%p;--error-exitcode=1;--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
+  )
+
 message(STATUS "configure options ${CONFIGURE_OPTIONS}")
 build_subproject(master "${CONFIGURE_OPTIONS}")
 test_subproject(master)
