@@ -112,6 +112,7 @@ SET(CONFIGURE_MASTER
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DENABLE_PARMETIS=ON"
   "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
   "-DIS_TESTING=ON"
@@ -131,6 +132,7 @@ SET(CONFIGURE_VALGRIND
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
   "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
+  "-DENABLE_PARMETIS=ON"
   "-DIS_TESTING=ON"
   "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
   "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
@@ -140,6 +142,25 @@ SET(CONFIGURE_VALGRIND
 message(STATUS "configure options ${CONFIGURE_VALGRIND}")
 build_subproject(memcheck "${CONFIGURE_VALGRIND}")
 test_subproject(memcheck)
+
+SET(CONFIGURE_NOPUMI
+  "-DCMAKE_C_COMPILER=mpicc"
+  "-DCMAKE_CXX_COMPILER=mpicxx"
+  "-DCMAKE_C_FLAGS=${flags}"
+  "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
+  "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DENABLE_PARMETIS=OFF"
+  "-DENABLE_ZOLTAN=ON"
+  "-DENABLE_PUMI=OFF"
+  "-DSCOREC_PREFIX=/usr/local/pumi/core/"
+  "-DIS_TESTING=ON"
+  "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
+  "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
+  )
+
+message(STATUS "configure options ${CONFIGURE_NOPUMI}")
+build_subproject(no_pumi "${CONFIGURE_NOPUMI}")
+test_subproject(no_pumi)
 
 
 message("DONE")
