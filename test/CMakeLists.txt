@@ -65,6 +65,7 @@ if (ENABLE_PUMI)
   make_exe(testFileIO testFileIO.cpp)
   make_exe(buildMeshGraph buildMeshGraph.cpp)
   make_exe(balanceMesh balanceMesh.cpp)
+  make_exe(splitAndBalanceMesh splitAndBalanceMesh.cpp)
 endif()
 
 if (ZOLTAN_FOUND)

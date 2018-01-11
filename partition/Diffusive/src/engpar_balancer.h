@@ -15,7 +15,7 @@ namespace engpar {
   wgt_t getAvgWeight(agi::Ngraph*, int);
   class Balancer : public agi::Balancer{
   public:
-    Balancer(agi::Ngraph* graph_, double factor_, int verbosity_,
+    Balancer(agi::Ngraph*& graph_, double factor_, int verbosity_,
              const char* name_);
     Balancer(Input* input_,int verbosity_,const char* name_);
     virtual ~Balancer() {delete input; delete migrTime;}

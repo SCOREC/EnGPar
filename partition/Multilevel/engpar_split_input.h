@@ -7,7 +7,7 @@
 namespace engpar {
   class SplitInput : public Input {
   public:
-    SplitInput(agi::Ngraph* g_) : Input(g_) {
+    SplitInput(agi::Ngraph*& g_) : Input(g_) {
       smallComm = largeComm = MPI_COMM_WORLD;
       isOriginal=true;
       split_factor = 1;

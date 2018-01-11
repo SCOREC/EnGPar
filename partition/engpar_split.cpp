@@ -14,7 +14,6 @@ namespace engpar {
     }
     agi::Migration* plan = NULL;
     if (inp->isOriginal) {
-      input->g->setOriginalOwners();
       if (method ==GLOBAL_PARMETIS) {
         plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor);
       }
@@ -28,7 +27,7 @@ namespace engpar {
       plan = new agi::Migration(inp->g);
     }
     PCU_Switch_Comm(inp->largeComm);
-
+    input->g->setOriginalOwners();
     inp->g->migrate(plan);
   }
 

@@ -58,7 +58,7 @@ namespace engpar {
     return tot / PCU_Comm_Peers();
   }
   
-  Balancer::Balancer(agi::Ngraph* g, double f, int v, const char* n) :
+  Balancer::Balancer(agi::Ngraph*& g, double f, int v, const char* n) :
     agi::Balancer(g,v,n) {
     input = createDiffusiveInput(g,f);
     totStepTime=0;
