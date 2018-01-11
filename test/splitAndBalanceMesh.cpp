@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
 
   if (argc != 5) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <model> <mesh> <mesh/engpar parmetis (0/1)> <split_factor>\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <pumi/engpar parmetis (0/1)> <split_factor>\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
@@ -101,8 +101,8 @@ int main(int argc, char* argv[]) {
   }
   else
     m->migrate(plan);
-
-  printf("\n");
+  if (!PCU_Comm_Self())
+    printf("\n");
   Parma_PrintPtnStats(m, "");
   
   
