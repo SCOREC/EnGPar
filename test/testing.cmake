@@ -170,7 +170,23 @@ if (ENABLE_PARMETIS)
     "${GRAPHS}/torus/4_01/"
     2
     cake/)
+  IF(ENABLE_PUMI)
+    mpi_test(splitAndBalanceMeshPUMI 8
+      ./splitAndBalanceMesh
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      0
+      2
+      )
+    mpi_test(splitAndBalanceMeshEnGPar 8
+      ./splitAndBalanceMesh
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      1
+      2
+      )
 
+  endif()
 endif()
   
 mpi_test(vtxBalanceCube 4
