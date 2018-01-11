@@ -106,7 +106,24 @@ endmacro(setup_repo)
 
 
 set(flags "-O2 -g -Wall -Wextra")
-SET(CONFIGURE_OPTIONS
+SET(CONFIGURE_MASTER
+  "-DCMAKE_C_COMPILER=mpicc"
+  "-DCMAKE_CXX_COMPILER=mpicxx"
+  "-DCMAKE_C_FLAGS=${flags}"
+  "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
+  "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DENABLE_PUMI=ON"
+  "-DSCOREC_PREFIX=/usr/local/pumi/core/"
+  "-DIS_TESTING=ON"
+  "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
+  "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
+  )
+
+message(STATUS "configure options ${CONFIGURE_MASTER}")
+build_subproject(master "${CONFIGURE_MASTER}")
+test_subproject(master)
+
+SET(CONFIGURE_VALGRIND
   "-DCMAKE_C_COMPILER=mpicc"
   "-DCMAKE_CXX_COMPILER=mpicxx"
   "-DCMAKE_C_FLAGS=${flags}"
@@ -120,9 +137,9 @@ SET(CONFIGURE_OPTIONS
   "-DVALGRIND=valgrind"
   "-DVALGRIND_ARGS=--log-file=vg.%p;--leak-check=full;--error-exitcode=1;--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
   )
+message(STATUS "configure options ${CONFIGURE_VALGRIND}")
+build_subproject(memcheck "${CONFIGURE_VALGRIND}")
+test_subproject(memcheck)
 
-message(STATUS "configure options ${CONFIGURE_OPTIONS}")
-build_subproject(master "${CONFIGURE_OPTIONS}")
-test_subproject(master)
 
 message("DONE")

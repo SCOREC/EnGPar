@@ -3,6 +3,7 @@
 #load system modules
 source /usr/local/etc/bash_profile
 module load cmake/latest
+module load valgrind
 module load pumi
 
 #update this repo
