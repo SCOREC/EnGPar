@@ -15,6 +15,8 @@
 #include <apfPartition.h>
 #include <pcu_util.h>
 
+#define EDGE_TYPE 2
+
 void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
 MPI_Comm splitGraph(agi::Ngraph*&, apf::Mesh2*&, char* model, char* mesh, int split_factor);
 void splitMesh(agi::Ngraph*&, apf::Mesh2*&, int argc, char* argv[]);
@@ -145,7 +147,7 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
     //Only the original parts will construct the graph
     gmi_register_mesh();
     m = apf::loadMdsMesh(model,mesh);
-    g = agi::createAPFGraph(m,3,0);
+    g = agi::createAPFGraph(m,3,EDGE_TYPE);
     if (!PCU_Comm_Self())
       printf("\nBefore Split\n");
     engpar::evaluatePartition(g);
@@ -220,8 +222,13 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
   switchToAll();
   m = apf::repeatMdsMesh(m, model, plan, partitionFactor);
 
+  if (!PCU_Comm_Self())
+    printf("\n");
+  Parma_PrintPtnStats(m, "");
+  if (!PCU_Comm_Self())
+    printf("\n");  
   //Switch to graph
-  g = agi::createAPFGraph(m,3,0);
+  g = agi::createAPFGraph(m,3,EDGE_TYPE);
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
