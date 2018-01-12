@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
   double total_time = PCU_Time()- start_time;
   total_time = PCU_Max_Double(total_time);
   if (!PCU_Comm_Self())
-    printf("Total time to split and balance is: %.4f seconds\n",PCU_Comm_Peers()/split_factor,PCU_Comm_Peers(),total_time);
+    printf("Total time to split and balance is: %.4f seconds\n",total_time);
   
   //Ensure the graph is still valid
   agi::checkValidity(g);
@@ -198,7 +198,7 @@ void switchToAll()
   MPI_Comm_free(&prevComm);
   PCU_Barrier();
 }
-void getConfig(int argc, char** argv)
+void getConfig(int, char** argv)
 {
   modelFile = argv[1];
   meshFile = argv[2];
