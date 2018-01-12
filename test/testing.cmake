@@ -170,6 +170,12 @@ if (ENABLE_PARMETIS)
     "${GRAPHS}/torus/4_01/"
     2
     cake/)
+  mpi_test(splitAndBalanceEqualParts 4
+    ./splitAndBalance
+    "${GRAPHS}/torus/4/"
+    1
+    cake/)
+
   IF(ENABLE_PUMI)
     mpi_test(splitAndBalanceMeshPUMI 8
       ./splitAndBalanceMesh
