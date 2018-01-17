@@ -23,10 +23,6 @@ int main(int argc, char* argv[]) {
   engpar::Input* input = engpar::createDiffusiveInput(g,0);
   engpar::DiffusiveInput* inp = static_cast<engpar::DiffusiveInput*>(input);
   engpar::Queue* q = engpar::createDistanceQueue(inp);
-  if (!PCU_Comm_Self()) {
-    for (unsigned int i=0;i<q->size();i++)
-      printf("%d %ld\n",PCU_Comm_Self(),g->globalID((*q)[i]));
-  }
   delete q;
   delete input;
   
