@@ -112,6 +112,8 @@ SET(CONFIGURE_MASTER
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DCMAKE_Fortran_COMPILER=mpifort"
+  "-DENGPAR_FORTRAN_INTERFACE=ON"
   "-DENABLE_PARMETIS=ON"
   "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
@@ -130,6 +132,8 @@ SET(CONFIGURE_VALGRIND
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
+  "-DCMAKE_Fortran_COMPILER=mpifort"
+  "-DENGPAR_FORTRAN_INTERFACE=ON"
   "-DENABLE_PUMI=ON"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"
   "-DENABLE_PARMETIS=ON"
@@ -137,7 +141,7 @@ SET(CONFIGURE_VALGRIND
   "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
   "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
   "-DVALGRIND=valgrind"
-  "-DVALGRIND_ARGS=--log-file=vg.%p;--leak-check=full;--error-exitcode=1;--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
+  "-DVALGRIND_ARGS=--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
   )
 message(STATUS "configure options ${CONFIGURE_VALGRIND}")
 build_subproject(memcheck "${CONFIGURE_VALGRIND}")
@@ -149,7 +153,9 @@ SET(CONFIGURE_NOPUMI
   "-DCMAKE_C_FLAGS=${flags}"
   "-DCMAKE_CXX_FLAGS=${flags} -std=c++11"
   "-DCMAKE_EXE_LINKER_FLAGS=-ldl ${flags} -pthread"
-  "-DENABLE_PARMETIS=OFF"
+  "-DCMAKE_Fortran_COMPILER=mpifort"
+  "-DENGPAR_FORTRAN_INTERFACE=ON"
+  "-DENABLE_PARMETIS=ON"
   "-DENABLE_ZOLTAN=ON"
   "-DENABLE_PUMI=OFF"
   "-DSCOREC_PREFIX=/usr/local/pumi/core/"

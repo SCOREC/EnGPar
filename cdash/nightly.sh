@@ -19,7 +19,7 @@ cd /lore/diamog/cdash
 rm -rf build/
 
 #run nightly test script
-ctest -VV -D Nightly -S /lore/diamog/cdash/repos/EnGPar/cdash/nightly.cmake &> /lore/diamog/cdash/repos/EnGPar/cdash/cmake_log.txt
+ctest -VV -D Nightly -S /lore/diamog/cdash/repos/EnGPar/cdash/nightly.cmake
 
 #EnGPar repository built by nightly.cmake
 buildDir=/lore/diamog/cdash/build/master/
