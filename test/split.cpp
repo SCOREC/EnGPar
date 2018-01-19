@@ -44,7 +44,6 @@ int main(int argc, char* argv[]) {
   engpar::evaluatePartition(g);
   engpar::split(input,engpar::GLOBAL_PARMETIS);
   engpar::evaluatePartition(g);
-  delete input;
 
   //Application continues:
   MPI_Comm_free(&newComm);

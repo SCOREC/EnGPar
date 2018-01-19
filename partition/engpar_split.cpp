@@ -29,6 +29,7 @@ namespace engpar {
     PCU_Switch_Comm(inp->largeComm);
     input->g->setOriginalOwners();
     inp->g->migrate(plan);
+    delete input;
   }
 
   void expandParts(agi::Ngraph* g, MPI_Comm newComm) {
