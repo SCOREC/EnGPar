@@ -13,6 +13,7 @@ namespace engpar {
       split_factor = 1;
       tolerance = 1.05;
       edge_type = 0;
+      other_ranks = NULL;
     }
     MPI_Comm smallComm;
     MPI_Comm largeComm;
@@ -20,7 +21,7 @@ namespace engpar {
     int split_factor;
     double tolerance;
     agi::etype edge_type;
-    
+    agi::part_t* other_ranks;
   };
 }
 

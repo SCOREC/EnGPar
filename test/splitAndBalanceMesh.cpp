@@ -160,7 +160,6 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
   }
 
   engpar::split(input_s,engpar::GLOBAL_PARMETIS);
-  delete input_s;
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
