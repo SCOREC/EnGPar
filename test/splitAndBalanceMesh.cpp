@@ -99,7 +99,11 @@ int main(int argc, char* argv[]) {
     delete map;
   if (use_engpar_parmetis) {
     gmi_register_mesh();
-    gmi_model* model = gmi_load(argv[1]);
+    gmi_model* model;
+    if (m) 
+      model = m->getModel();
+    else
+      model = gmi_load(argv[1]);
     m = apf::repeatMdsMesh(m,model,plan,split_factor);
 
     PCU_Barrier();
