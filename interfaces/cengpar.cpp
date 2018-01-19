@@ -63,6 +63,7 @@ void cengpar_balanceVertices(ngraph g, double tol, double stepfactor, int verbos
   agi::Ngraph* ng = (agi::Ngraph*)g;
   agi::Balancer* b = engpar::makeVtxBalancer(ng, stepfactor, verbosity);
   b->balance(tol);
+  delete b;
 }
 
 void cengpar_getPartition(ngraph g, agi::gid_t* verts,
@@ -78,4 +79,5 @@ void cengpar_getPartition(ngraph g, agi::gid_t* verts,
     parts[i] = itr->second;
     i++;
   }
+  delete ptn;
 }
