@@ -176,28 +176,46 @@ namespace engpar {
     int level=start_depth;
     for (agi::lid_t i=start_seed;i<in->numSeeds;i++) 
       in->visited[in->seeds[i]] = level;
+
+    agi::lid_t* current_vtxs = new agi::lid_t[pg->num_local_verts];
+    agi::lid_t num_cv = pg->num_local_verts;
+    for (agi::lid_t i=0;i<pg->num_local_verts;i++)
+      current_vtxs[i] = i;
+    agi::lid_t* next_vtxs = new agi::lid_t[pg->num_local_verts];
+    agi::lid_t num_nv = 0;
     int num_updates;
     //Implemented for HG
     do {
       num_updates=0;
-      for (agi::lid_t i=0;i<pg->num_local_verts;i++) {
+      for (agi::lid_t i=0;i<num_cv;i++) {
         int source = -1;
-        for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
+        agi::lid_t v = current_vtxs[i];
+        for (agi::lid_t j=pg->degree_list[t][v];j<pg->degree_list[t][v+1];j++){
           agi::lid_t edge = pg->edge_list[t][j];
           if (in->visited[edge] != -1 &&
               (source == -1 || in->visited[edge] < in->visited[source]))
             source = edge;
         }
         if (source!=-1&&in->visited[source]==level) {
-          for (agi::lid_t j=pg->degree_list[t][i];j<pg->degree_list[t][i+1];j++){
+          for (agi::lid_t j=pg->degree_list[t][v];j<pg->degree_list[t][v+1];j++){
             agi::lid_t edge = pg->edge_list[t][j];
             num_updates+=visit(in,source,edge);
           }
         }
+        else {
+          next_vtxs[num_nv++] = v;
+        }
       }
+      agi::lid_t* tmp = current_vtxs;
+      current_vtxs = next_vtxs;
+      next_vtxs = tmp;
+      num_cv = num_nv;
+      num_nv =0;
       level++;
     }
     while (num_updates);
+    delete [] current_vtxs;
+    delete [] next_vtxs;
     return level;
   }
 
