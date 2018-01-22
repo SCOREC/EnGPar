@@ -106,7 +106,7 @@ namespace agi {
         *p = '/';
       }
   }
-  void Ngraph::saveToFile(char* prefix) {
+  void Ngraph::saveToFile(const char* prefix) {
     char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
     mkdir_r(filename);
@@ -190,7 +190,7 @@ namespace agi {
     }
   }
 
-  void Ngraph::loadFromFile(char* prefix) {
+  void Ngraph::loadFromFile(const char* prefix) {
     char filename[256];
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
     struct pcu_file* file = pcu_fopen(filename,false,false);
