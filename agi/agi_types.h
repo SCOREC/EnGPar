@@ -9,5 +9,7 @@
 #define AGI_WGT_FT  C_DOUBLE
 #define AGI_PART_T  int32_t
 #define AGI_PART_FT C_INT32_T
+#define AGI_EDGE_T  int32_t
+#define AGI_EDGE_FT C_INT32_T
 
 #endif

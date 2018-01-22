@@ -2,6 +2,7 @@
 #include "engpar_support.h"
 #include "ngraph.h"
 #include "engpar.h"
+#include "engpar_split.h"
 
 void cengpar_initialize() {
   EnGPar_Initialize();
@@ -13,12 +14,50 @@ void cengpar_finalize() {
 
 void cengpar_setftncommunicator(MPI_Fint fcomm) {
   MPI_Comm comm = MPI_Comm_f2c(fcomm);
-  PCU_Switch_Comm(comm);
+  EnGPar_Switch_Comm(comm);
 }
 
 ngraph cengpar_createEmptyGraph() {
   agi::Ngraph* ng = agi::createEmptyGraph();
+  if(!PCU_Comm_Self())
+    fprintf(stderr, "%s %d graph %p\n", __func__, PCU_Comm_Self(), (void*)ng);
   return (ngraph)ng;
+}
+
+engparInput cengpar_createSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
+    bool isOrig, int splitFactor, double tol, agi::etype t) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  //fprintf(stderr, "%s %d graph %p\n", __func__, PCU_Comm_Self(), (void*)ng);
+  engpar::Input* input = engpar::createSplitInput(ng,smallComm,largeComm,
+                                                  isOrig,splitFactor,tol,t);
+  //fprintf(stderr, "%s %d input %p\n", __func__, PCU_Comm_Self(), (void*)input);
+  if(isOrig)
+    fprintf(stderr, "%s peers %d input %p input->g %p graph %p\n", __func__, PCU_Comm_Peers(), (void*)input, (void*)(input->g), (void*)ng);
+  return (engparInput)input;
+}
+
+void cengpar_loadFromFile(ngraph g, const char fileName[]) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  ng->loadFromFile(fileName);
+}
+
+void cengpar_saveToFile(ngraph g, const char fileName[]) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  ng->saveToFile(fileName);
+}
+
+void cengpar_evaluatePartition(ngraph g) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  engpar::evaluatePartition(ng);
+}
+
+void cengpar_split(engparInput in, const char method[]) {
+  engpar::Input* input = (engpar::Input*)in;
+  std::map<std::string,int> methods;
+  methods["GLOBAL_PARMETIS"] = engpar::GLOBAL_PARMETIS;
+  methods["LOCAL_PARMETIS"] = engpar::LOCAL_PARMETIS;
+  assert( methods.count(method) );
+  engpar::split(input, (engpar::SPLIT_METHOD)methods[method]);
 }
 
 void cengpar_constructVerts(ngraph g, bool isHg,

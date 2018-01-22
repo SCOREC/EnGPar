@@ -13,8 +13,21 @@ void cengpar_finalize();
 void cengpar_setftncommunicator(MPI_Fint fcomm);
 
 typedef void* ngraph;
+typedef void* engparInput;
 
 ngraph cengpar_createEmptyGraph();
+
+engparInput cengpar_createSplitInput(ngraph g,
+    MPI_Fint smallComm, MPI_Fint largeComm,
+    bool isOrig, int splitFactor, double tol, agi::etype t);
+
+void cengpar_loadFromFile(ngraph g, const char fileName[]);
+
+void cengpar_saveToFile(ngraph g, const char fileName[]);
+
+void cengpar_evaluatePartition(ngraph g);
+
+void cengpar_split(engparInput in, const char method[]);
 
 void cengpar_destroyGraph(ngraph g);
 
