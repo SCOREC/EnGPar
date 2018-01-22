@@ -135,6 +135,12 @@ namespace engpar {
   */
   int bfs_push(agi::Ngraph* g, agi::etype t, agi::lid_t start_seed,
                int start_depth,visitFn visit, Inputs* in) {
+    agi::GraphTag* processed = g->createIntTag(-1);
+    agi::GraphVertex* v;
+    agi::VertexIterator* vitr = g->begin();
+    while ((v = g->iterate(vitr))) {
+      g->setIntTag(processed,v,0);
+    }
     for (agi::lid_t i=start_seed;i<in->numSeeds;i++) 
       in->visited[in->seeds[i]] = start_depth;
     agi::PNgraph* pg = g->publicize();
@@ -146,6 +152,9 @@ namespace engpar {
       while ((bridge = g->iterate(pitr))) {
         if (g->owner(bridge)!=PCU_Comm_Self())
           continue;
+        int process = g->getIntTag(processed,bridge);
+        if (process)
+          continue;
         agi::EdgeIterator* eitr = g->edges(bridge);
         agi::GraphEdge* dest;
         while ((dest = g->iterate(eitr))) {
@@ -154,9 +163,11 @@ namespace engpar {
           visit(in,g->localID(source),g->localID(dest));
         }
         g->destroy(eitr);
+        g->setIntTag(processed,bridge,1);
       }
       g->destroy(pitr);
     }
+    g->destroyTag(processed);
     return in->visited[in->seeds[in->numSeeds-1]];
   }
   
