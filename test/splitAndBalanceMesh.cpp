@@ -15,8 +15,6 @@
 #include <apfPartition.h>
 #include <pcu_util.h>
 
-#define EDGE_TYPE 2
-
 void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
 MPI_Comm splitGraph(agi::Ngraph*&, apf::Mesh2*&, char* model, char* mesh, int split_factor);
 void splitMesh(agi::Ngraph*&, apf::Mesh2*&, int argc, char* argv[]);
@@ -146,7 +144,7 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
   //Create the input (this sets up the internal communicators,
   //                    so this must be done before graph construction.)
   double tolerance = 1.1;
-  agi::etype t = 0;
+  agi::etype t = 1;
   engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                   split_factor,tolerance,t);
   
@@ -154,7 +152,8 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
     //Only the original parts will construct the graph
     gmi_register_mesh();
     m = apf::loadMdsMesh(model,mesh);
-    g = agi::createAPFGraph(m,3,EDGE_TYPE);
+    int dims[2] = {0,2};
+    g = agi::createAPFGraph(m,3,dims,2);
     if (!PCU_Comm_Self())
       printf("\nBefore Split\n");
     engpar::evaluatePartition(g);
@@ -167,6 +166,8 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
+
+  g->removeEdges(t);
   return newComm;
 }
 
@@ -234,7 +235,7 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\n");  
   //Switch to graph
-  g = agi::createAPFGraph(m,3,EDGE_TYPE);
+  g = agi::createAPFGraph(m,3,0);
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
