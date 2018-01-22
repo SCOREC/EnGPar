@@ -439,6 +439,36 @@ namespace agi {
     destroyData();
   }
 
+
+  void Ngraph::removeEdges(etype t) {
+    if (EnGPar_Is_Log_Open()) {
+      char message[45];
+      sprintf(message,"destroyEdges %d\n",t);
+      EnGPar_Log_Function(message);
+    }
+
+    num_local_edges[t] = 0;
+    num_local_pins[t] = 0;
+    num_global_edges[t] = 0;
+    num_global_pins[t] = 0;
+
+    delete [] edge_weights[t];
+    edge_weights[t] = NULL;
+    delete [] degree_list[t];
+    degree_list[t] =NULL;
+    delete [] edge_list[t];
+    edge_list[t] = NULL;
+    delete [] pin_degree_list[t];
+    pin_degree_list[t] = NULL;
+    delete [] pin_list[t];
+    pin_list[t] = NULL;
+    edge_mapping[t].clear();
+    delete [] edge_unmap[t];
+    edge_unmap[t] = NULL;
+    if (t==num_types-1)
+      num_types--;
+  }
+  
   void Ngraph::destroyData() {
     if (EnGPar_Is_Log_Open()) {
       char message[45];

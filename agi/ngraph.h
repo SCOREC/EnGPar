@@ -86,6 +86,13 @@ public:
                       std::vector<lid_t>& degs,
                       std::vector<gid_t>& pins_to_verts,
                       std::unordered_map<gid_t,part_t>& owns);
+  /** \brief Removes all edges of type t from the graph.
+   * \param t the edge type to be removed
+   *
+   * The function removes the memory of an edge type. This is useful to reduce the memory needed to transfer during migrations if the edges are no longer needed.
+   */
+  void removeEdges(etype t);
+  
   // \cond
   PNgraph* publicize() {return this;}
   virtual ~Ngraph();
