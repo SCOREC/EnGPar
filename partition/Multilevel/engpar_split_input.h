@@ -20,6 +20,7 @@ namespace engpar {
     bool isOriginal;
     int split_factor;
     double tolerance;
+    agi::part_t self;
     agi::etype edge_type;
     agi::part_t* other_ranks;
   };

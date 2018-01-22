@@ -13,16 +13,16 @@ namespace engpar {
       assert(false);
     }
     agi::Migration* plan = NULL;
+    inp->self = PCU_Comm_Self();
     if (inp->isOriginal) {
       if (method ==GLOBAL_PARMETIS) {
-        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor);
+        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor,false);
       }
       else if (method == LOCAL_PARMETIS) {
         assert(inp->other_ranks);
         //Set communicator to self
         PCU_Switch_Comm(MPI_COMM_SELF);
-        plan = EnGPar_ParMETIS(inp,inp->split_factor);
-        printf("Plan Size: %lu\n", plan->size());
+        plan = EnGPar_ParMETIS(inp,inp->split_factor,true);
         agi::Migration::iterator itr;
         for (itr = plan->begin();itr!=plan->end();itr++) {
           plan->insert(std::make_pair(*itr,inp->other_ranks[plan->get(*itr)]));

@@ -159,6 +159,18 @@ if (ENABLE_PARMETIS)
     2
     cake/)
 
+  mpi_test(localSplit1to4 4
+    ./local_split
+    "${GRAPHS}/cube/cube"
+    4
+    cake/)
+
+  mpi_test(localSplit4to8 8
+    ./local_split
+    "${GRAPHS}/torus/4/"
+    2
+    cake/)
+
   mpi_test(splitAndBalanceCube 8
     ./splitAndBalance
     "${GRAPHS}/cube/4/"

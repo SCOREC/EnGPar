@@ -52,6 +52,8 @@ int main(int argc, char* argv[]) {
   assert(PCU_Get_Comm()==MPI_COMM_WORLD);
   engpar::evaluatePartition(g);
 
+  delete [] others;
+  
   //Application continues:
   MPI_Comm_free(&newComm);
 
