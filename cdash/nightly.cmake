@@ -141,7 +141,7 @@ SET(CONFIGURE_VALGRIND
   "-DMESHES=/lore/diamog/cdash/repos/EnGPar/pumi-meshes/"
   "-DGRAPHS=/lore/diamog/cdash/repos/EnGPar/EnGPar-graphs/"
   "-DVALGRIND=valgrind"
-  "-DVALGRIND_ARGS=--log-file=vg.%p;--leak-check=full;--error-exitcode=1;--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
+  "-DVALGRIND_ARGS=--log-file=vg.%p\;--leak-check=full\;--error-exitcode=1\;--suppressions=/lore/diamog/cdash/repos/EnGPar/mpich3.supp"
   )
 message(STATUS "configure options ${CONFIGURE_VALGRIND}")
 build_subproject(memcheck "${CONFIGURE_VALGRIND}")
