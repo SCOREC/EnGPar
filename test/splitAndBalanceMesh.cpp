@@ -141,13 +141,8 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
   switchToOriginals(split_factor, isOriginal,newComm);
 
   //Calls to EnGPar:
-  //Create the input (this sets up the internal communicators,
-  //                    so this must be done before graph construction.)
-  double tolerance = 1.1;
-  agi::etype t = 1;
-  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
-  
+  EnGPar_Switch_Comm(newComm);
+
   if (isOriginal) {
     //Only the original parts will construct the graph
     gmi_register_mesh();
@@ -159,8 +154,14 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
     engpar::evaluatePartition(g);
   }
   else {
-      g = agi::createEmptyGraph();
+    g = agi::createEmptyGraph();
   }
+
+  //Create the input
+  double tolerance = 1.1;
+  agi::etype t = 1; //Mesh Faces
+  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                  split_factor,tolerance,t);
 
   engpar::split(input_s,engpar::GLOBAL_PARMETIS);
   if (!PCU_Comm_Self())

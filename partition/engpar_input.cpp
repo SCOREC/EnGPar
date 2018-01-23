@@ -4,13 +4,13 @@
 #include <PCU.h>
 namespace engpar {
   
-  Input* createDiffusiveInput(agi::Ngraph*& g,double f) {
+  Input* createDiffusiveInput(agi::Ngraph* g,double f) {
     DiffusiveInput* input = new DiffusiveInput(g);
     input->step_factor = f;
     return input;
   }
 
-  Input* createSplitInput(agi::Ngraph*& g, MPI_Comm smallComm, MPI_Comm largeComm,
+  Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
                           bool isPartOfSmall, int split_factor,double tolerance,
                           agi::etype adj_type, agi::part_t* others) {
     SplitInput* input = new SplitInput(g);

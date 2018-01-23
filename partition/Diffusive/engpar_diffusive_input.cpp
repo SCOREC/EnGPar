@@ -1,7 +1,7 @@
 #include "engpar_diffusive_input.h"
 namespace engpar {
 
-  DiffusiveInput::DiffusiveInput(agi::Ngraph*& g_) : Input(g_) {
+  DiffusiveInput::DiffusiveInput(agi::Ngraph* g_) : Input(g_) {
     maxIterations = 1000;
     maxIterationsPerType = 100;
     step_factor=0.1;
@@ -12,7 +12,7 @@ namespace engpar {
       useDistanceQueue = true;
     else
       useDistanceQueue = false;
-    bfsPush = false;
+    bfsPush = true;
   }
 
   void DiffusiveInput::addPriority(int type, double tolerance) {

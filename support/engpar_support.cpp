@@ -23,6 +23,12 @@ void EnGPar_Finalize() {
   if (handlingPCU &&PCU_Comm_Initialized())
     PCU_Comm_Free();
 }
+
+void EnGPar_Switch_Comm(MPI_Comm comm) {
+  PCU_Switch_Comm(comm);
+}
+
+
 FILE* old_stdout=NULL;
 FILE* old_stderr=NULL;
 void EnGPar_Debug_Open(std::string s) {

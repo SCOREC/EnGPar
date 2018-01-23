@@ -26,20 +26,22 @@ int main(int argc, char* argv[]) {
   int split_factor = atoi(argv[2]);
   switchToOriginals(split_factor, isOriginal,newComm);
 
+  //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
+  EnGPar_Switch_Comm(newComm);
+
   //Calls to EnGPar:
   agi::Ngraph* g = agi::createEmptyGraph();
-
-  //Create the input (this sets up the internal communicators,
-  //                    so this must be done before graph construction.)
-  double tolerance = 1.05;
-  agi::etype t = 0;
-  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
   
   if (isOriginal) {
     //Only the original parts will construct the graph
     g->loadFromFile(argv[1]);
   }
+
+  //Create the input
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                  split_factor,tolerance,t);
 
   engpar::evaluatePartition(g);
   engpar::split(input,engpar::GLOBAL_PARMETIS);

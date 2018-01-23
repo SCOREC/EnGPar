@@ -5,6 +5,9 @@
 void EnGPar_Initialize();
 void EnGPar_Finalize();
 
+void EnGPar_Switch_Comm(MPI_Comm);
+
+
 void EnGPar_Debug_Open(std::string mode="o");
 void EnGPar_Debug_Close();
 
