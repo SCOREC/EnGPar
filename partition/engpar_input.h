@@ -8,20 +8,20 @@ namespace engpar {
 
   class Input {
   public:
-  Input(agi::Ngraph*& g_) : g(g_) {}
+  Input(agi::Ngraph* g_) : g(g_) {}
     virtual ~Input() {};
 
     virtual void addPriority(int, double) {}
     /** \brief The graph being balanced */
-    agi::Ngraph*& g;
+    agi::Ngraph* g;
   };
 
 
-  Input* createDiffusiveInput(agi::Ngraph*& g, double step_factor);
-  Input* createSplitInput(agi::Ngraph*& g, MPI_Comm smallComm,
+  Input* createDiffusiveInput(agi::Ngraph* g, double step_factor);
+  Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
                           MPI_Comm largeComm, bool isPartOfSmall,
                           int split_factor,double tolerance,
-                          agi::etype adj_type = 0);
+                          agi::etype adj_type = 0, agi::part_t* others = NULL);
 }
 
 #endif

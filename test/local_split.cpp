@@ -1,5 +1,7 @@
 #include <engpar_support.h>
 #include <engpar.h>
+#include <engpar_input.h>
+#include <binGraph.h>
 #include <engpar_split.h>
 #include <PCU.h>
 #include <sys/types.h>
@@ -17,58 +19,40 @@ int main(int argc, char* argv[]) {
     EnGPar_Finalize();
     assert(false);
   }
-
+  
   //Application code:
   bool isOriginal = false;
   MPI_Comm newComm;
   int split_factor = atoi(argv[2]);
   switchToOriginals(split_factor, isOriginal,newComm);
 
-  //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
-  EnGPar_Switch_Comm(newComm);
-
   //Calls to EnGPar:
   agi::Ngraph* g = agi::createEmptyGraph();
+
+  //Create the input (this sets up the internal communicators,
+  //                    so this must be done before graph construction.)
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  int my_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+  agi::part_t* others = new agi::part_t[split_factor];
+  for (int i=0;i<split_factor;i++) {
+    others[i] = my_rank+i;
+  }
+  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                  split_factor,tolerance,t,others);
   
   if (isOriginal) {
     //Only the original parts will construct the graph
     g->loadFromFile(argv[1]);
-    if (!PCU_Comm_Self())
-      printf("\nBefore Split\n");
     engpar::evaluatePartition(g);
   }
-
-  //Create the input
-  double tolerance = 1.05;
-  agi::etype t = 0;
-  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
-  //Perform split
-  engpar::split(input_s,engpar::GLOBAL_PARMETIS);
-  if (!PCU_Comm_Self())
-    printf("\nAfter Split\n");
-  engpar::evaluatePartition(g);
   
-  //Create the input for diffusive load balancing (vtx>element)
-  double step_factor = 0.1;
-  engpar::Input* input_d = engpar::createDiffusiveInput(g,step_factor);
-  input_d->addPriority(0,1.03);
-  input_d->addPriority(-1,1.03);
-  if (!PCU_Comm_Self())
-    printf("\n");
-
-  //Create and run the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input_d,0);
-  balancer->balance(1.1);
-
-  if (!PCU_Comm_Self())
-    printf("\nAfter Balancing\n");
+  engpar::split(input,engpar::LOCAL_PARMETIS);
+  assert(PCU_Get_Comm()==MPI_COMM_WORLD);
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
 
-  //Ensure the graph is still valid
-  agi::checkValidity(g);
+  delete [] others;
   
   //Application continues:
   MPI_Comm_free(&newComm);

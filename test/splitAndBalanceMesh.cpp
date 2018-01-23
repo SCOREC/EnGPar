@@ -15,8 +15,6 @@
 #include <apfPartition.h>
 #include <pcu_util.h>
 
-#define EDGE_TYPE 2
-
 void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
 MPI_Comm splitGraph(agi::Ngraph*&, apf::Mesh2*&, char* model, char* mesh, int split_factor);
 void splitMesh(agi::Ngraph*&, apf::Mesh2*&, int argc, char* argv[]);
@@ -95,10 +93,17 @@ int main(int argc, char* argv[]) {
     m->end(mitr);
     delete map;
   }
+  else
+    delete map;
   if (use_engpar_parmetis) {
     gmi_register_mesh();
-    gmi_model* model = gmi_load(argv[1]);
+    gmi_model* model;
+    if (m) 
+      model = m->getModel();
+    else
+      model = gmi_load(argv[1]);
     m = apf::repeatMdsMesh(m,model,plan,split_factor);
+
     PCU_Barrier();
   }
   else
@@ -136,31 +141,34 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
   switchToOriginals(split_factor, isOriginal,newComm);
 
   //Calls to EnGPar:
-  //Create the input (this sets up the internal communicators,
-  //                    so this must be done before graph construction.)
-  double tolerance = 1.1;
-  agi::etype t = 0;
-  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
-  
+  EnGPar_Switch_Comm(newComm);
+
   if (isOriginal) {
     //Only the original parts will construct the graph
     gmi_register_mesh();
     m = apf::loadMdsMesh(model,mesh);
-    g = agi::createAPFGraph(m,3,EDGE_TYPE);
+    int dims[2] = {0,2};
+    g = agi::createAPFGraph(m,3,dims,2);
     if (!PCU_Comm_Self())
       printf("\nBefore Split\n");
     engpar::evaluatePartition(g);
   }
   else {
-      g = agi::createEmptyGraph();
+    g = agi::createEmptyGraph();
   }
 
+  //Create the input
+  double tolerance = 1.1;
+  agi::etype t = 1; //Mesh Faces
+  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                  split_factor,tolerance,t);
+
   engpar::split(input_s,engpar::GLOBAL_PARMETIS);
-  delete input_s;
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
+
+  g->removeEdges(t);
   return newComm;
 }
 
@@ -228,7 +236,7 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\n");  
   //Switch to graph
-  g = agi::createAPFGraph(m,3,EDGE_TYPE);
+  g = agi::createAPFGraph(m,3,0);
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);

@@ -24,7 +24,7 @@ namespace engpar {
    * \param verbosity The level of output.
    * \return The balancer, use balancer->run to run the operations
    */
-  agi::Balancer* makeVtxBalancer(agi::Ngraph* g, double stepFactor=0.1,
+  agi::Balancer* makeVtxBalancer(agi::Ngraph*& g, double stepFactor=0.1,
                                         int verbosity=0);
   /** \brief Makes a diffusive load balancer based on the input parameters provided
    * \param input A list of input parameters provided by the user

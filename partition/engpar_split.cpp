@@ -13,13 +13,21 @@ namespace engpar {
       assert(false);
     }
     agi::Migration* plan = NULL;
+    inp->self = PCU_Comm_Self();
     if (inp->isOriginal) {
       if (method ==GLOBAL_PARMETIS) {
-        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor);
+        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor,false);
       }
       else if (method == LOCAL_PARMETIS) {
+        assert(inp->other_ranks);
         //Set communicator to self
-        //return EnGPar_ParMETIS(input->g,inp->split_factor);
+        PCU_Switch_Comm(MPI_COMM_SELF);
+        plan = EnGPar_ParMETIS(inp,inp->split_factor,true);
+        agi::Migration::iterator itr;
+        for (itr = plan->begin();itr!=plan->end();itr++) {
+          plan->insert(std::make_pair(*itr,inp->other_ranks[plan->get(*itr)]));
+        }
+        PCU_Switch_Comm(inp->smallComm);
       }
       expandParts(inp->g,inp->largeComm);
     }
@@ -29,6 +37,7 @@ namespace engpar {
     PCU_Switch_Comm(inp->largeComm);
     input->g->setOriginalOwners();
     inp->g->migrate(plan);
+    delete input;
   }
 
   void expandParts(agi::Ngraph* g, MPI_Comm newComm) {

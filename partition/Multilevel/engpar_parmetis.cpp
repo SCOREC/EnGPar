@@ -12,7 +12,7 @@ namespace engpar {
   
 #ifdef HAS_PARMETIS
   //TODO: generalize to any edge type
-  agi::Migration* EnGPar_ParMETIS(SplitInput* input, int target_parts) {
+  agi::Migration* EnGPar_ParMETIS(SplitInput* input, int target_parts, bool isLocal) {
     agi::Ngraph* g = input->g;
     //Get an offset array of the vertices on each part
     idx_t* vtxdist = new idx_t[PCU_Comm_Peers()+1];
@@ -44,8 +44,19 @@ namespace engpar {
       agi::EdgeIterator* eitr = g->edges(vtx,input->edge_type);
       agi::GraphEdge* edge;
       while ((edge = g->iterate(eitr))) {
-        g->getResidence(edge,res);
-        num_degs+=g->degree(edge)-1;
+        if (isLocal) {
+          agi::PinIterator* pitr = g->pins(edge);
+          agi::GraphVertex* other;
+          while ((other = g->iterate(pitr)))
+            if (g->owner(other)==input->self)
+              num_degs++;
+	  g->destroy(pitr);
+        }
+        else {
+          g->getResidence(edge,res);
+          num_degs+=g->degree(edge)-1;
+
+        }
       }
       g->destroy(eitr);
       res.erase(PCU_Comm_Self());
@@ -84,15 +95,14 @@ namespace engpar {
       while ((other = g->iterate(gitr))) {
         if (other==vtx)
           continue;
-        if (g->owner(other)==PCU_Comm_Self()) {
+        if (g->owner(other)==input->self) {
           agi::lid_t lidv = g->localID(other);
           adjncy[deg++] = gids[lidv]; 
         }
-        else {
+        else if (!isLocal) {
           agi::gid_t gidv = g->globalID(other);
           adjncy[deg++] = ghost_gids[gidv];
         }
-        
       }
       g->destroy(gitr);
       xadj[i + 1] = deg;

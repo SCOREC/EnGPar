@@ -7,7 +7,7 @@ namespace engpar {
   
   class DiffusiveInput : public Input {
   public:
-    DiffusiveInput(agi::Ngraph*&);
+    DiffusiveInput(agi::Ngraph*);
 
     void addPriority(int type, double tolerance);
 

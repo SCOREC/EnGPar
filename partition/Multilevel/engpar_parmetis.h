@@ -7,7 +7,7 @@ namespace agi {
 }
 namespace engpar {
   class SplitInput;
-  agi::Migration* EnGPar_ParMETIS(SplitInput*,int target_parts);
+  agi::Migration* EnGPar_ParMETIS(SplitInput*,int target_parts, bool isLocal);
 
 }
 #endif
