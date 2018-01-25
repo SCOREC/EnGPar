@@ -6,6 +6,11 @@ module engpar
   use :: iso_c_binding
 #include "agi_types.h"
   public
+  integer, parameter :: ENGPAR_GID_T  = AGI_GID_FT
+  integer, parameter :: ENGPAR_LID_T  = AGI_LID_FT
+  integer, parameter :: ENGPAR_WGT_T  = AGI_WGT_FT
+  integer, parameter :: ENGPAR_PART_T = AGI_PART_FT
+  integer, parameter :: ENGPAR_EDGE_T = AGI_EDGE_FT
   interface
   !---------------------------------------------------------------------------
   !> @brief initialize engar, call this before any other engpar api
