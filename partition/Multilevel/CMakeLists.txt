@@ -25,3 +25,5 @@ if (ENABLE_PARMETIS)
     ${PARMETIS_LIBRARIES}
     )
 endif()
+
+engpar_export_lib(multilevel "")
