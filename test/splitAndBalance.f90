@@ -65,10 +65,9 @@ program main
   use iso_c_binding
   implicit none
   include 'mpif.h'
-#include "../agi/agi_types.h"
 
   integer :: ierr, self
-  integer(AGI_EDGE_FT) :: edgeType
+  integer(ENGPAR_EDGE_T) :: edgeType
   type(c_ptr) :: graph, splitInput
   logical(C_BOOL) :: inSmall
   real(C_DOUBLE) :: tol, stepfactor
