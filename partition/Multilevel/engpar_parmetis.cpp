@@ -143,10 +143,9 @@ namespace engpar {
     }
     delete [] new_partition;
     return plan;
-
   }
 #else
-  agi::Migration* EnGPar_ParMETIS(SplitInput*, int) {
+  agi::Migration* EnGPar_ParMETIS(SplitInput*, int, bool) {
     throw std::runtime_error("ParMETIS not found\n");
   }
 #endif

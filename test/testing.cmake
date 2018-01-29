@@ -264,4 +264,6 @@ endif()
 
 if(ENGPAR_FORTRAN_INTERFACE)
   mpi_test(ftnTest 2 ./ftnTest)
+  mpi_test(splitAndBalanceFtn 4 ./splitAndBalanceFtn
+    ${GRAPHS}/cube/cube ${GRAPHS}/cube/cube_4p) 
 endif()

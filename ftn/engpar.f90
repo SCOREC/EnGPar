@@ -6,6 +6,11 @@ module engpar
   use :: iso_c_binding
 #include "agi_types.h"
   public
+  integer, parameter :: ENGPAR_GID_T  = AGI_GID_FT
+  integer, parameter :: ENGPAR_LID_T  = AGI_LID_FT
+  integer, parameter :: ENGPAR_WGT_T  = AGI_WGT_FT
+  integer, parameter :: ENGPAR_PART_T = AGI_PART_FT
+  integer, parameter :: ENGPAR_EDGE_T = AGI_EDGE_FT
   interface
   !---------------------------------------------------------------------------
   !> @brief initialize engar, call this before any other engpar api
@@ -37,6 +42,71 @@ module engpar
     use :: iso_c_binding
     type(c_ptr) cengpar_createEmptyGraph
   end function
+  !---------------------------------------------------------------------------
+  !> @brief create input for splitting
+  !> @param graph(in) engpar graph
+  !> @param smallComm(in) small mpi communicator
+  !> @param largeComm(in) large mpi communicator
+  !> @param isOrig(in) true if process is part of the small communicator
+  !> @param splitFactor(in) = |large comm| / |small comm|
+  !> @param tol(in) target imbalance tolerance used for splitting
+  !> @param edgeType(in) mesh entity dimension used to create graph edges
+  !> @return input for splitting
+  !---------------------------------------------------------------------------
+  function cengpar_createSplitInput(graph,smallComm,largeComm,isOrig,splitFactor,tol,edgeType) &
+             bind(C, NAME='cengpar_createSplitInput')
+    use :: iso_c_binding
+    type(c_ptr) :: cengpar_createSplitInput
+    type(c_ptr), value :: graph
+    integer(c_int), value :: smallComm
+    integer(c_int), value :: largeComm
+    logical(c_bool), intent(in), value :: isOrig
+    integer(c_int), value :: splitFactor
+    real(c_double), value :: tol
+    integer(AGI_EDGE_FT), value :: edgeType
+  end function
+  !---------------------------------------------------------------------------
+  !> @brief load graph from file
+  !> @param graph(in/out) empty engpar graph
+  !> @param fileName (in) path to graph file to load (prefix only, no '_#.bgd')
+  !---------------------------------------------------------------------------
+  subroutine cengpar_loadFromFile(graph,fileName) &
+             bind(C, NAME='cengpar_loadFromFile')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    character(c_char), intent(in) :: fileName(*)
+  end subroutine
+  !---------------------------------------------------------------------------
+  !> @brief save graph to file
+  !> @param graph(in) engpar graph
+  !> @param fileName (in) path to save graph file (prefix only, no '_#.bgd')
+  !---------------------------------------------------------------------------
+  subroutine cengpar_saveToFile(graph,fileName) &
+             bind(C, NAME='cengpar_saveToFile')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+    character(c_char), intent(in) :: fileName(*)
+  end subroutine
+  !---------------------------------------------------------------------------
+  !> @brief print partition info
+  !> @param graph(in) engpar graph
+  !---------------------------------------------------------------------------
+  subroutine cengpar_evaluatePartition(graph) &
+             bind(C, NAME='cengpar_evaluatePartition')
+    use :: iso_c_binding
+    type(c_ptr), value :: graph
+  end subroutine
+  !---------------------------------------------------------------------------
+  !> @brief split the graph
+  !> @param input (in/out) split input created with 'cengpar_createSplitInput'
+  !> @param splitMethod (in) string matching one of the engpar_split.h enums
+  !---------------------------------------------------------------------------
+  subroutine cengpar_split(input,splitMethod) &
+             bind(C, NAME='cengpar_split')
+    use :: iso_c_binding
+    type(c_ptr), value :: input
+    character(c_char), intent(in) :: splitMethod(*)
+  end subroutine
   !---------------------------------------------------------------------------
   !> @brief construct vertices
   !> @param graph(in/out) empty engpar graph

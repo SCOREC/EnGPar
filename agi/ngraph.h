@@ -103,14 +103,14 @@ public:
    *
    * One file is made per process
    */
-  void saveToFile(char* prefix);
+  void saveToFile(const char* prefix);
   //TODO: put checks for number of files = number of processes
   /** \brief Loads the graph connectivity information from prefix_#.bgd
    * \param prefix The prefix of the name of the file(s)
    *
    * There should be one file per process
    */
-  void loadFromFile(char* prefix);
+  void loadFromFile(const char* prefix);
   ///@}
 
 

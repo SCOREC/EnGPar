@@ -1,5 +1,5 @@
-#ifndef __ZOLTAN_CUT_VERTEX__
-#define __ZOLTAN_CUT_VERTEX__
+#ifndef __ENGPAR_PARMETIS__
+#define __ENGPAR_PARMETIS__
 
 
 namespace agi {
