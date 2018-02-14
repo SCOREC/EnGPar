@@ -88,6 +88,14 @@ namespace agi {
       }
       g->destroy(eitr);
     }
+    //Ensure all ghost vertices have valid owners
+    GhostIterator* g_itr = g->beginGhosts();
+    GraphVertex* gv;
+    while ((gv = g->iterate(g_itr))) {
+      assert(g->owner(gv)!=PCU_Comm_Self());
+      assert(g->owner(gv)<PCU_Comm_Peers());
+    }
+    
     return true;
   }
   

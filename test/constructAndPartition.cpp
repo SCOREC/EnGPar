@@ -38,7 +38,10 @@ void testGraphParts() {
 
   agi::part_t partition[4];
 
-  for (int i=0;i<4;i++)
+  for (int i=0;i<2;i++)
+    partition[i] = PCU_Comm_Self();
+  
+  for (int i=2;i<4;i++)
     partition[i] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
 
   graph->repartition(partition);
@@ -56,7 +59,10 @@ void testHyperGraphParts() {
 
   agi::part_t partition[4];
 
-  for (int i=0;i<4;i++)
+  for (int i=0;i<2;i++)
+    partition[i] = PCU_Comm_Self();
+  
+  for (int i=2;i<4;i++)
     partition[i] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
 
   graph->repartition(partition);
