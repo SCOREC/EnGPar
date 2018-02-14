@@ -12,6 +12,7 @@ namespace agi {
 class GraphVertex;
 class GraphEdge;
 class VertexIterator;
+class GhostIterator;
 class PinIterator;
 class EdgeIterator;
 class GraphIterator;
@@ -369,10 +370,14 @@ public:
   
   /** \name Iterator Traversal*/
   ///@{
-  /** \brief Creates an iterator over all vertices
+  /** \brief Creates an iterator over local vertices
    * \return an iterator over all vertices in the graph
    */
   VertexIterator* begin() const;
+  /** \brief Creates an iterator over ghost vertices
+   * \return an iterator over ghost vertices in the graph
+   */  
+  GhostIterator* beginGhosts() const;
   // \cond 
   GraphVertex* findGID(gid_t gid) const;
   // \endcond
@@ -383,9 +388,15 @@ public:
   EdgeIterator* begin(etype t) const;
   /** \brief Iterates the vertex iterator
    * \param vitr a vertex iterator
-   * \return the current graph vertex
+   * \return the current vertex
    */
   GraphVertex* iterate(VertexIterator*& vitr) const;
+  /** \brief Iterates the ghost vertex iterator
+   * \param vitr a ghost vertex iterator
+   * \return the current ghost vertex
+   */
+  GraphVertex* iterate(GhostIterator*& vitr) const;
+
   /** \brief Iterates the edge iterator
    * \param eitr the edge iterator
    * \return the current graph edge

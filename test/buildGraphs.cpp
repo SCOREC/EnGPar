@@ -23,14 +23,12 @@ agi::Ngraph* buildGraph() {
     pins.push_back(e);
     pins.push_back((e+1)%global_verts);
     if (i==local_verts-1&&PCU_Comm_Peers()>1) {
-      owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
-      
+      owners[(e+1)%global_verts] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();      
     }
     else {
       edges.push_back(e*2+1);
       degrees.push_back(2);
       pins.push_back((e+1)%global_verts);
-      owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
       pins.push_back(e);
     }
   }
@@ -40,9 +38,8 @@ agi::Ngraph* buildGraph() {
     degrees.push_back(2);
     pins.push_back((e+1)%global_verts);
     pins.push_back(e);
+    owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1) % PCU_Comm_Peers();
   }
-  //  owners[first_vert] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
-  //owners[last_vert] = (PCU_Comm_Self()+1)%PCU_Comm_Peers();
   std::vector<agi::wgt_t> weights;
   graph->constructGraph(false,verts,weights,edges,degrees,pins,owners);
   return graph;

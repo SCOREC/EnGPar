@@ -93,6 +93,18 @@ void testGraph() {
     }
     graph->destroy(gitr);
   }
+
+  agi::GhostIterator* g_itr = graph->beginGhosts();
+  agi::GraphVertex* gv;
+  int total =0;
+  while ((gv = graph->iterate(g_itr))) {
+    assert(graph->localID(gv)>=graph->numLocalVtxs());
+    printf("%d %ld %ld %d\n",PCU_Comm_Self(),graph->localID(gv),graph->globalID(gv),graph->owner(gv));
+    assert(graph->owner(gv)!=PCU_Comm_Self());
+    total++;
+  }
+  assert(total==graph->numGhostVtxs());
+  
   agi::destroyGraph(graph);
 
 }
@@ -166,6 +178,17 @@ void testHyperGraph() {
     i++;
   }
   graph->destroy(eitr);
+
+  agi::GhostIterator* g_itr = graph->beginGhosts();
+  agi::GraphVertex* gv;
+  int total =0;
+  while ((gv = graph->iterate(g_itr))) {
+    assert(graph->localID(gv)>=graph->numLocalVtxs());
+    assert(graph->owner(gv)!=PCU_Comm_Self());
+    total++;
+  }
+  assert(total==graph->numGhostVtxs());
+
   agi::destroyGraph(graph);
 }
 

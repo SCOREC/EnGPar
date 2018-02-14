@@ -7,6 +7,9 @@ namespace agi {
   VertexIterator* Ngraph::begin() const {
     return reinterpret_cast<VertexIterator*>((char*)1);
   }
+  GhostIterator* Ngraph::beginGhosts() const {
+    return reinterpret_cast<GhostIterator*>((char*)num_local_verts+1);
+  }
   GraphVertex* Ngraph::findGID(gid_t gid) const {
     return reinterpret_cast<GraphVertex*>((char*)(vtx_mapping.find(gid)->second));
   }
@@ -27,6 +30,17 @@ namespace agi {
     itr = reinterpret_cast<VertexIterator*>((char*)(index+1));
     return vtx;
   }
+  GraphVertex* Ngraph::iterate(GhostIterator*& itr) const {
+    lid_t index = (uintptr_t)(itr);
+    if (index==num_local_verts+num_ghost_verts+1)  {
+      itr=NULL;
+      return NULL;
+    }
+    GraphVertex* vtx = reinterpret_cast<GraphVertex*>((lid_t*)index);
+    itr = reinterpret_cast<GhostIterator*>((char*)(index+1));
+    return vtx;
+  }
+
   GraphEdge* Ngraph::iterate(EdgeIterator*& itr) const {
     if (itr->loc>=itr->end)
       return NULL;
