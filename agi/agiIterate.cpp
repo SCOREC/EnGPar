@@ -11,7 +11,7 @@ namespace agi {
     return reinterpret_cast<GhostIterator*>((char*)num_local_verts+1);
   }
   GraphVertex* Ngraph::findGID(gid_t gid) const {
-    return reinterpret_cast<GraphVertex*>((char*)(vtx_mapping.find(gid)->second));
+    return reinterpret_cast<GraphVertex*>((char*)(vtx_mapping.find(gid)->second)+1);
   }
 
   EdgeIterator* Ngraph::begin(etype t) const {
