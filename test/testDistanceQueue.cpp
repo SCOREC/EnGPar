@@ -26,11 +26,6 @@ int main(int argc, char* argv[]) {
   delete q;
   delete input;
   
-  if (g->hasCoords()) {
-    std::string filename = "graph";
-    agi::writeVTK(g,filename.c_str());
-  }
-
   agi::destroyGraph(g);
 
   PCU_Barrier();
