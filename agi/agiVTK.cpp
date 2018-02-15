@@ -96,6 +96,7 @@ namespace agi {
         if (g->owner(v)==PCU_Comm_Self())
           fprintf(f,"%ld %ld\n",g->localID(e)+g->numLocalVtxs(),g->localID(v));
       }
+      g->destroy(pitr);
     }
     g->destroy(eitr);
     int off=0;
@@ -108,6 +109,7 @@ namespace agi {
         if (g->owner(v)==PCU_Comm_Self())
           fprintf(f," %d\n",off+=2);
       }
+      g->destroy(pitr);
     }
     g->destroy(eitr);
     fprintf(f,"\n</DataArray>\n<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
@@ -119,6 +121,7 @@ namespace agi {
         if (g->owner(v)==PCU_Comm_Self())
           fprintf(f," %d\n",3);
       }
+      g->destroy(pitr);
     }
     g->destroy(eitr);
     
@@ -185,7 +188,9 @@ namespace agi {
       while ((v = g->iterate(pitr))) {
         total+=(g->owner(v)==PCU_Comm_Self());
       }
+      g->destroy(pitr);
     }
+    g->destroy(eitr);
     return total;
   }
   void writeVTK(Ngraph* g, const char* prefix,GraphTag* tag,etype t) {
