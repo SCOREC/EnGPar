@@ -179,6 +179,7 @@ namespace agi {
     }
     fprintf(f,"</PointData>\n");
   }
+  
   gid_t getNumCells(Ngraph* g) {
     gid_t total = 0;
     EdgeIterator* eitr = g->begin(0);
@@ -193,6 +194,41 @@ namespace agi {
     }
     g->destroy(eitr);
     return total;
+  }
+
+  void writePPoints(FILE* pf) {
+    fprintf(pf,"<PPoints>\n");
+    fprintf(pf,"<PDataArray NumberOfComponents=\"3\" type=\"Float64\" format=\"ascii\" Name=\"Points\"/>\n");
+    fprintf(pf,"</PPoints>\n");
+
+  }
+  void writePPointData(FILE* pf, GraphTag* tag, etype t) {
+    fprintf(pf,"<PPointData>\n");
+    fprintf(pf,"<PDataArray type=\"Int32\" Name=\"Part\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
+    fprintf(pf,"<PDataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
+    if (tag!=NULL&&t!=NO_TYPE) {
+      fprintf(pf,"<PDataArray type=\"Int32\" Name=\"Tag\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
+    }
+    fprintf(pf,"</PPointData>\n");
+  }
+
+  void writePSources(FILE* pf, const char* prefix) {
+    char filename[256];
+    for (int i=0;i<PCU_Comm_Peers();i++) {
+      sprintf(filename,"%s%d.vtu",prefix,i);
+      fprintf(pf,"<Piece Source=\"%s\"/>\n",filename);
+    }
+  }
+  
+  void writePVTU(FILE* pf,const char* prefix, GraphTag* tag, etype t) {
+      fprintf(pf,"<VTKFile type=\"PUnstructuredGrid\">\n");
+      fprintf(pf,"<PUnstructuredGrid GhostLevel=\"0\">\n");
+      writePPoints(pf);
+      writePPointData(pf,tag,t);
+      writePSources(pf,prefix);
+      fprintf(pf,"</PUnstructuredGrid>\n");
+      fprintf(pf,"</VTKFile>\n");
+
   }
   void writeVTK(Ngraph* g, const char* prefix,GraphTag* tag,etype t) {
     char filename[256];
@@ -210,5 +246,13 @@ namespace agi {
     fprintf(f,"</UnstructuredGrid>\n");
     fprintf(f,"</VTKFile>\n");
     fclose(f);
+
+    if (!PCU_Comm_Self()) {
+      char pfilename[256];
+      sprintf(pfilename,"%s.pvtu",prefix);
+      FILE* pf = fopen(pfilename,"w");
+      writePVTU(pf,prefix,tag,t);
+      fclose(pf);
+    }
   }
 }
