@@ -82,6 +82,7 @@ namespace agi {
     }
     g->destroy(eitr);
     fprintf(f,"\n</DataArray>\n</Points>\n");
+    delete [] ghost_cs;
   }
 
   void writeCells(Ngraph* g, FILE* f) {
