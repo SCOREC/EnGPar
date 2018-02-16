@@ -4,7 +4,7 @@
 #include "ssg_types.h"
 
 namespace ssg {
-
+  agi::Ngraph* convertFromAGI(agi::Ngraph*, lid_t C, lid_t sigma);
   class SellCSigma : public agi::Ngraph {
 
   public:

@@ -25,6 +25,7 @@ set(ALL_LIBS
   diffusive
   multilevel
   engpar
+  ssg
 )
 
 if(ENABLE_PUMI)
@@ -60,6 +61,7 @@ make_exe(balance balance.cpp)
 make_exe(split split.cpp)
 make_exe(local_split local_split.cpp)
 make_exe(splitAndBalance splitAndBalance.cpp)
+make_exe(ngraphToSsg ngraphToSsg.cpp)
 
 if (ENABLE_PUMI)
   make_exe(render render.cpp)
