@@ -1,58 +1,65 @@
 #include "sellCSigma.h"
 #include <cstring>
+#include <algorithm>
+
 namespace ssg {
 
-  agi::Ngraph* convertFromAGI(agi::Ngraph* old, lid_t C, lid_t sigma) {
-    agi::Ngraph* g = new SellCSigma(C,sigma);
-    g->isHyperGraph = old->isHyperGraph;
-    g->num_types = old->num_types;
-    g->num_local_verts = old->num_local_verts;
-    g->num_global_verts = old->num_global_verts;
-    g->num_ghost_verts = old->num_ghost_verts;
+  SellCSigma::SellCSigma(agi::Ngraph* g, lid_t c, lid_t sig) : agi::Ngraph() {
+    C=c;
+    sigma = sig;
+
+    PNgraph* old = g->publicize();
+    
+    isHyperGraph = old->isHyperGraph;
+    num_types = old->num_types;
+    num_local_verts = old->num_local_verts;
+    num_global_verts = old->num_global_verts;
+    num_ghost_verts = old->num_ghost_verts;
 
     //Get Edge Counts
     for (etype t=0;t<num_types;t++) {
-      g->num_local_edges[t] = old->num_local_edges[t];
-      g->num_global_edges[t] = old->num_global_edges[t];
-      g->num_local_pins[t] = old->num_local_pins[t];
-      g->num_global_pins[t] = old->num_global_pins[t];
+      num_local_edges[t] = old->num_local_edges[t];
+      num_global_edges[t] = old->num_global_edges[t];
+      num_local_pins[t] = old->num_local_pins[t];
+      num_global_pins[t] = old->num_global_pins[t];
     }
 
     //Apply sigma sorting
     etype sort_type = 0;
     //Sort each block of sigma vertices
-    //temporary container for degree_list (pair of <deg,local id>
-    std::pair<lid_t,lid_t>* degree_list = new std::pair<lid_t,lid_t>[g->num_local_verts];
+    typedef std::pair<lid_t,lid_t> pair_t;
+    //temporary container for degree_list (pair of <deg,local id>)
+    pair_t* temp_degree_list = new pair_t[num_local_verts];
     agi::GraphVertex* v;
-    agi::VertexIterator* vitr = old->begin();
+    agi::VertexIterator* vitr = g->begin();
     int count=0;
-    while ((v = old->iterate(vitr))) {
-      degree_list[count].first = old->degree(v,sort_type);
-      degree_list[count++].second = old->localID(v);
+    while ((v = g->iterate(vitr))) {
+      temp_degree_list[count].first = g->degree(v,sort_type);
+      temp_degree_list[count++].second = g->localID(v);
     }
 
     if (sigma>1) {
       lid_t i;
-      for (i =0;i<g->num_local_verts-sigma,i+=sigma)
-        std::sort(degree_list+i,degree_list+i+sigma,operator>);
-      std::sort(degree_list+i,degree_list+num_local_verts,operator>);
+      for (i =0;i<num_local_verts-sigma;i+=sigma)
+        std::sort(temp_degree_list+i,temp_degree_list+i+sigma,std::greater<pair_t>());
+      std::sort(temp_degree_list+i,temp_degree_list+num_local_verts,std::greater<pair_t>());
     }
 
     //Set gid->lid and lid->gid containers
-    g->local_unmap = new gid_t[num_local_verts];
-    for (lid_t i=0;i<g->num_local_verts;i++) {
-      g->local_unmap[i] = old->local_unmap[degree_list[i].second];
-      g->vtx_mapping[g->local_unmap[i]] = i;
+    local_unmap = new gid_t[num_local_verts];
+    for (lid_t i=0;i<num_local_verts;i++) {
+      local_unmap[i] = old->local_unmap[temp_degree_list[i].second];
+      vtx_mapping[local_unmap[i]] = i;
     }
     
-    //TODO: Reorder theses
+    //TODO: Reorder these and determine if necessary
     /*
     if (old->original_owners)
-      memcpy(g->original_owners,old->original_owners,g->num_local_verts);
+      memcpy(original_owners,old->original_owners,num_local_verts);
     if (old->local_weights)
-      memcpy(g->local_weights,old->local_weights,g->num_local_verts);
+      memcpy(local_weights,old->local_weights,num_local_verts);
     if (old->local_coords)
-      memcpy(g->local_coords,old->local_coords,g->num_local_verts);
+      memcpy(local_coords,old->local_coords,num_local_verts);
     */
     
     for (etype t=0;t<num_types;t++) {
@@ -60,41 +67,44 @@ namespace ssg {
 
       //TODO: Reorder these
       if (old->edge_weights[t])
-        memcpy(g->edge_weights[t],old->edge_weights[t],g->num_local_edges[t]);
+        memcpy(edge_weights[t],old->edge_weights[t],num_local_edges[t]);
 
       //Get the degrees of each block of C vertices
-      lid_t numBlocks = g->num_local_verts / C + (g->num_local_verts % C != 0);
-      g->degree_list[t] = new lid_t[numBlocks+1];
+      lid_t numBlocks = num_local_verts / C + (num_local_verts % C != 0);
+      degree_list[t] = new lid_t[numBlocks+1];
       lid_t total = 0;
-      g->degree_list[t]=0;
-      for (lid_t i =0;i<numBlocks,i++) {
-        g->degree_list[t][i+1] = 0;
-        for (lid_t j = i * C; j < (i + 1) * C && j < g->num_local_verts; j++)
-          g->degree_list[t][i+1] = std::max(g->degree_list[t][i+1],degree_list[j].first);
-        total=(g->degree_list[t][i+1]+=total);
+      degree_list[t]=0;
+      for (lid_t i =0;i<numBlocks;i++) {
+        degree_list[t][i+1] = 0;
+        for (lid_t j = i * C; j < (i + 1) * C && j < num_local_verts; j++)
+          degree_list[t][i+1] = std::max(degree_list[t][i+1],temp_degree_list[j].first);
+        total=(degree_list[t][i+1]+=total);
       }
       
       //build the padded edge_list
-      g->edge_list[t] = new lid_t[total*C];
+      edge_list[t] = new lid_t[total*C];
       int index =0;
-      for (lid_t i =0;i<numBlocks,i++) {
-        for (lid_t deg = g->degree_list[t][i];deg < g->degree_list[t][i+1];deg++) {
+      for (lid_t i =0;i<numBlocks;i++) {
+        for (lid_t deg = degree_list[t][i];deg < degree_list[t][i+1];deg++) {
           for (lid_t j = i * C; j < (i + 1) * C; j++) {
             //if there is a edge at this location
-            if (j<g->num_local_verts && deg<degree_list[j].first) {
-              lid_t old_lid = degree_list[j].second;
-              lid_t ind = old->degree_list[old_lid]+deg;
+            if (j<num_local_verts && deg<temp_degree_list[j].first) {
+              lid_t old_lid = temp_degree_list[j].second;
+              lid_t ind = old->degree_list[t][old_lid]+deg;
               //NOTE: this isnt quite right yet, but easier to test this way
-              g->edge_list[t][index++] = old->edge_list[ind];
+              edge_list[t][index++] = old->edge_list[t][ind];
             }
             //else add padding
             else
-              g->edge_list[t][index++] = -1;
+              edge_list[t][index++] = -1;
           }
         }
       }
-      delete [] degree_list;
+      delete [] temp_degree_list;
     }
-    return g;
   }
+  agi::Ngraph* convertFromAGI(agi::Ngraph* old, lid_t C, lid_t sigma) {
+    return new SellCSigma(old,C,sigma);
+  }
+
 }

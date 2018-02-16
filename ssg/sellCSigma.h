@@ -12,8 +12,8 @@ namespace ssg {
     
   protected:
 
-    SellCSigma() {throw 1};
-    SellCSigma(lid_t c,lid_t sig) {C=c;sigma=sig;}
+    SellCSigma() {throw 1;}
+    SellCSigma(agi::Ngraph*,lid_t c,lid_t sig);
     lid_t C;
     lid_t sigma;
   };

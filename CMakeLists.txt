@@ -91,6 +91,8 @@ add_subdirectory(support)
 
 add_subdirectory(agi)
 
+add_subdirectory(ssg)
+
 add_subdirectory(zoltan)
 
 add_subdirectory(partition)
