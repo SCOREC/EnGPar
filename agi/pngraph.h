@@ -20,6 +20,18 @@ class PNgraph {
    */
   bool isHyperGraph;
 
+  /** \brief A flag for if the SellCSigma layout is being used
+   */
+  bool isSellCSigma;;
+
+  /** \brief The number of vertex chunks when using SellCSigma
+   */
+  int chunk_size;
+
+  /** \brief The number of vertex chunks when using SellCSigma
+   */
+  int num_vtx_chunks;
+
   /** \brief The number of edge types
    */
   int num_types;

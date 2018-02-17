@@ -3,9 +3,9 @@
 #include <algorithm>
 
 namespace ssg {
-
   SellCSigma::SellCSigma(agi::Ngraph* g, lid_t c, lid_t sig) : agi::Ngraph() {
-    C=c;
+    isSellCSigma = true;
+    chunk_size=C=c;
     sigma = sig;
 
     PNgraph* old = g->publicize();
@@ -61,6 +61,7 @@ namespace ssg {
     if (old->local_coords)
       memcpy(local_coords,old->local_coords,num_local_verts);
     */
+    num_vtx_chunks = num_local_verts / C + (num_local_verts % C != 0);
     
     for (etype t=0;t<num_types;t++) {
       //TODO: Sigma sort edges
@@ -72,11 +73,10 @@ namespace ssg {
       }
 
       //Get the degrees of each block of C vertices
-      lid_t numBlocks = num_local_verts / C + (num_local_verts % C != 0);
-      degree_list[t] = new lid_t[numBlocks+1];
+      degree_list[t] = new lid_t[num_vtx_chunks+1];
       lid_t total = 0;
       degree_list[t][0] = 0;
-      for (lid_t i =0;i<numBlocks;i++) {
+      for (lid_t i =0;i<num_vtx_chunks;i++) {
         degree_list[t][i+1] = 0;
         for (lid_t j = i * C; j < (i + 1) * C && j < num_local_verts; j++)
           degree_list[t][i+1] = std::max(degree_list[t][i+1],temp_degree_list[j].first);
@@ -86,7 +86,7 @@ namespace ssg {
       //build the padded edge_list
       edge_list[t] = new lid_t[total*C];
       int index =0;
-      for (lid_t i =0;i<numBlocks;i++) {
+      for (lid_t i =0;i<num_vtx_chunks;i++) {
         for (lid_t deg = degree_list[t][i];deg < degree_list[t][i+1];deg++) {
           for (lid_t j = i * C; j < (i + 1) * C; j++) {
             //if there is a edge at this location
