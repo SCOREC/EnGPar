@@ -134,6 +134,9 @@ mpi_test(testDistanceQueueAero81334 1
 mpi_test(testDistanceQueueAero1457 1
   ./testDistanceQueue "${GRAPHS}/aero1Belm/afterMigr_1457")
 
+mpi_test(ngraphToSsgAero25114 1
+  ./ngraphToSsg "${GRAPHS}/aero1Belm/graph128Ki_25114")
+
 if (ENABLE_PARMETIS)
   mpi_test(splitCube1to2 2
     ./split
