@@ -74,6 +74,7 @@ namespace ssg {
         temp_pindeg_list[count].first = g->degree(e);
         temp_pindeg_list[count++].second = g->localID(e);
       }
+      g->destroy(eitr);
 
       if (sigma>1) {
         lid_t i;
@@ -139,7 +140,7 @@ namespace ssg {
         pin_degree_list[t] = new lid_t[num_edge_chunks[t]+1];
         total = 0;
         pin_degree_list[t][0] = 0;
-        for (lid_t i =0;i<num_vtx_chunks;i++) {
+        for (lid_t i =0;i<num_edge_chunks[t];i++) {
           pin_degree_list[t][i+1] = 0;
           for (lid_t j = i * C; j < (i + 1) * C && j < num_local_edges[t]; j++)
             pin_degree_list[t][i+1] = std::max(pin_degree_list[t][i+1],temp_pindeg_list[j].first);

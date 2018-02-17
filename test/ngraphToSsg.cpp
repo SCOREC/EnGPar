@@ -39,7 +39,7 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
         // loop over chunk 'rows' 
         for (agi::lid_t i = 0; i < pg->chunk_size; i++) {
           agi::lid_t vtx = chunkStart+i;
-          if (chunk*pg->chunk_size+i>pg->num_local_verts)
+          if (chunk*pg->chunk_size+i >= pg->num_local_verts)
             printf("    vtx %ld gid:-1\n", i);
           else
             printf("    vtx %ld gid:%ld\n", i,pg->local_unmap[chunk*pg->chunk_size+i]);
