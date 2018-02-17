@@ -64,7 +64,29 @@ namespace ssg {
     num_vtx_chunks = num_local_verts / C + (num_local_verts % C != 0);
     
     for (etype t=0;t<num_types;t++) {
-      //TODO: Sigma sort edges
+      pair_t* temp_pindeg_list = new pair_t[num_local_edges[t]];
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->begin(t);
+      int count=0;
+      while ((e = g->iterate(eitr))) {
+        temp_pindeg_list[count].first = g->degree(e);
+        temp_pindeg_list[count++].second = g->localID(e);
+      }
+
+      if (sigma>1) {
+        lid_t i;
+        for (i =0;i<num_local_edges[t]-sigma;i+=sigma)
+          std::sort(temp_pindeg_list+i,temp_pindeg_list+i+sigma,std::greater<pair_t>());
+        std::sort(temp_pindeg_list+i,temp_pindeg_list+num_local_edges[t],std::greater<pair_t>());
+      }
+      
+      
+      //Set gid->lid and lid->gid containers
+      edge_unmap[t] = new gid_t[num_local_edges[t]];
+      for (lid_t i=0;i<num_local_edges[t];i++) {
+        edge_unmap[t][i] = old->edge_unmap[t][temp_pindeg_list[i].second];
+        edge_mapping[t][edge_unmap[t][i]] = i;
+      }
 
       //TODO: Reorder these
       if (old->edge_weights[t]) {
@@ -94,7 +116,12 @@ namespace ssg {
               lid_t old_lid = temp_degree_list[j].second;
               lid_t ind = old->degree_list[t][old_lid]+deg;
               //NOTE: this isnt quite right yet, but easier to test this way
-              edge_list[t][index++] = old->edge_list[t][ind];
+              lid_t new_lid;
+              if (isHyperGraph)
+                new_lid = edge_mapping[t][old->edge_unmap[t][old->edge_list[t][ind]]];
+              else
+                new_lid = vtx_mapping[old->local_unmap[old->edge_list[t][ind]]];
+              edge_list[t][index++] = new_lid;
             }
             //else add padding
             else

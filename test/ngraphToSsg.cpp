@@ -10,7 +10,7 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
   printf("\n---- start %s ----\n", name);
   printf("isSellCSigma  %d\n", pg->isSellCSigma);
   printf("isHyperGraph  %d\n", pg->isHyperGraph);
-  printf("num verts %d\n", pg->num_local_verts);
+  printf("num verts %ld\n", pg->num_local_verts);
   printf("num types %d\n", pg->num_types);
   if( pg->isSellCSigma ) {
     printf("num vtx-to-edge chunks  %d\n", pg->num_vtx_chunks);
@@ -18,46 +18,54 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
   }
   for (agi::etype t=0;t<pg->num_types;t++) {
     printf("type %d\n", t);
-    printf("  num edges %d\n", pg->num_local_edges[t]);
-    printf("  num pins  %d\n", pg->num_local_pins[t]);
+    printf("  num edges %ld\n", pg->num_local_edges[t]);
+    printf("  num pins  %ld\n", pg->num_local_pins[t]);
     if( pg->isSellCSigma ) {
       // SellCSigma
-      printf("    degree_list[t][0] %d\n", pg->degree_list[t][0]);
+      printf("    degree_list[t][0] %ld\n", pg->degree_list[t][0]);
       for(agi::lid_t chunk = 0; chunk < pg->num_vtx_chunks; chunk++) {
-        printf("    degree_list[t][%d] %d\n", chunk+1, pg->degree_list[t][chunk+1]);
+        printf("    degree_list[t][%ld] %ld\n", chunk+1, pg->degree_list[t][chunk+1]);
       }
       agi::lid_t chunkStart = 0;
       // loop over chunks
       for(agi::lid_t chunk = 0; chunk < pg->num_vtx_chunks; chunk++) {
         agi::lid_t maxChunkDeg = pg->degree_list[t][chunk+1] - pg->degree_list[t][chunk];
-        printf("    chunkStart %d maxChunkDegree %d\n", chunkStart, maxChunkDeg);
+        printf("    chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
         agi::lid_t chunkSize = pg->chunk_size*maxChunkDeg;
         // write the chunk
         printf("    chunk values\n");
         for (agi::lid_t i = chunkStart; i < chunkStart+chunkSize; i++)
-          printf("      %d\n", pg->edge_list[t][i]);
+          printf("      %ld\n", pg->edge_list[t][i]);
         // loop over chunk 'rows' 
         for (agi::lid_t i = 0; i < pg->chunk_size; i++) {
           agi::lid_t vtx = chunkStart+i;
-          printf("    vtx %d\n", i);
+          if (chunk*pg->chunk_size+i>pg->num_local_verts)
+            printf("    vtx %ld gid:-1\n", i);
+          else
+            printf("    vtx %ld gid:%ld\n", i,pg->local_unmap[chunk*pg->chunk_size+i]);
           for (agi::lid_t j = vtx;
                           j < vtx+(maxChunkDeg*pg->chunk_size);
                           j += pg->chunk_size) {
-            printf("      edge_list[t][%d] %d\n", j, pg->edge_list[t][j]);
+            if (pg->edge_list[t][j]==-1)
+              printf("      edge_list[t][%ld] gid:-1\n", j);
+            else
+              printf("      edge_list[t][%ld] gid:%ld\n", j,
+                     pg->edge_unmap[t][pg->edge_list[t][j]]);
+
           }
         }
         chunkStart+=chunkSize; // the number of entries in the chunk
       }
     } else {
       // CSR
-      printf("    degree_list[t][0] %d\n", pg->degree_list[t][0]);
+      printf("    degree_list[t][0] %ld\n", pg->degree_list[t][0]);
       for(agi::lid_t vtx = 0; vtx < pg->num_local_verts; vtx++) {
-        printf("    degree_list[t][%d] %d\n", vtx+1, pg->degree_list[t][vtx+1]);
+        printf("    degree_list[t][%ld] %ld\n", vtx+1, pg->degree_list[t][vtx+1]);
       }
       for(agi::lid_t vtx = 0; vtx < pg->num_local_verts; vtx++) {
-        printf("    vtx %d\n", vtx);
+        printf("    vtx lid:%ld gid:%ld\n", vtx,pg->local_unmap[vtx]);
         for(agi::lid_t j = pg->degree_list[t][vtx]; j < pg->degree_list[t][vtx+1]; j++) {
-          printf("      edge_list[t][%d] %d\n", j, pg->edge_list[t][j]);
+          printf("      edge_list[t][%ld] gid:%ld\n", j, pg->edge_unmap[t][pg->edge_list[t][j]]);
         }
       }
     }
@@ -83,7 +91,7 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
 
   agi::lid_t C = 4;
-  agi::lid_t sigma = 1;
+  agi::lid_t sigma = g->numLocalVtxs();
   agi::Ngraph* scg = ssg::convertFromAGI(g,C,sigma);
 
   writeGraphArrays(g,"csr");
