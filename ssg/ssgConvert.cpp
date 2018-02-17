@@ -130,8 +130,9 @@ namespace ssg {
           }
         }
       }
-      delete [] temp_degree_list;
+      delete [] temp_pindeg_list;
     }
+    delete [] temp_degree_list;
   }
   agi::Ngraph* convertFromAGI(agi::Ngraph* old, lid_t C, lid_t sigma) {
     return new SellCSigma(old,C,sigma);
