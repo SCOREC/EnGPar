@@ -75,6 +75,7 @@ namespace ssg {
       lid_t numBlocks = num_local_verts / C + (num_local_verts % C != 0);
       degree_list[t] = new lid_t[numBlocks+1];
       lid_t total = 0;
+      degree_list[t][0] = 0;
       for (lid_t i =0;i<numBlocks;i++) {
         degree_list[t][i+1] = 0;
         for (lid_t j = i * C; j < (i + 1) * C && j < num_local_verts; j++)
