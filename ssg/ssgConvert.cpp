@@ -87,7 +87,7 @@ namespace ssg {
       edge_list[t] = new lid_t[total*C];
       int index =0;
       for (lid_t i =0;i<num_vtx_chunks;i++) {
-        for (lid_t deg = degree_list[t][i];deg < degree_list[t][i+1];deg++) {
+        for (lid_t deg = 0;deg < degree_list[t][i+1]-degree_list[t][i];deg++) {
           for (lid_t j = i * C; j < (i + 1) * C; j++) {
             //if there is a edge at this location
             if (j<num_local_verts && deg<temp_degree_list[j].first) {
