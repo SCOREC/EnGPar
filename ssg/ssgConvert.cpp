@@ -16,10 +16,13 @@ namespace ssg {
     num_global_verts = old->num_global_verts;
     num_ghost_verts = old->num_ghost_verts;
 
+    num_vtx_chunks = num_local_verts / C + (num_local_verts % C != 0);
+
     //Get Edge Counts
     for (etype t=0;t<num_types;t++) {
       num_local_edges[t] = old->num_local_edges[t];
       num_global_edges[t] = old->num_global_edges[t];
+      num_edge_chunks[t] = num_local_edges[t] / C + (num_local_edges[t] % C != 0);
       num_local_pins[t] = old->num_local_pins[t];
       num_global_pins[t] = old->num_global_pins[t];
     }
@@ -61,7 +64,6 @@ namespace ssg {
     if (old->local_coords)
       memcpy(local_coords,old->local_coords,num_local_verts);
     */
-    num_vtx_chunks = num_local_verts / C + (num_local_verts % C != 0);
     
     for (etype t=0;t<num_types;t++) {
       pair_t* temp_pindeg_list = new pair_t[num_local_edges[t]];
@@ -113,7 +115,7 @@ namespace ssg {
       for (lid_t i =0;i<num_vtx_chunks;i++) {
         for (lid_t deg = 0;deg < degree_list[t][i+1]-degree_list[t][i];deg++) {
           for (lid_t j = i * C; j < (i + 1) * C; j++) {
-            //if there is a edge at this location
+            //if there is an edge at this location
             if (j<num_local_verts && deg<temp_degree_list[j].first) {
               lid_t old_lid = temp_degree_list[j].second;
               lid_t ind = old->degree_list[t][old_lid]+deg;
@@ -127,6 +129,40 @@ namespace ssg {
             //else add padding
             else
               edge_list[t][index++] = -1;
+          }
+        }
+      }
+
+      //If using a hypergraph build the hyperedge->vtx adjacency
+      if (isHyperGraph) {
+        //Get the degrees of each block of C vertices
+        pin_degree_list[t] = new lid_t[num_edge_chunks[t]+1];
+        total = 0;
+        pin_degree_list[t][0] = 0;
+        for (lid_t i =0;i<num_vtx_chunks;i++) {
+          pin_degree_list[t][i+1] = 0;
+          for (lid_t j = i * C; j < (i + 1) * C && j < num_local_edges[t]; j++)
+            pin_degree_list[t][i+1] = std::max(pin_degree_list[t][i+1],temp_pindeg_list[j].first);
+          total=(pin_degree_list[t][i+1]+=total);
+        }
+      
+        //build the padded pin_list
+        pin_list[t] = new lid_t[total*C];
+        index =0;
+        for (lid_t i =0;i<num_edge_chunks[t];i++) {
+          for (lid_t deg = 0;deg < pin_degree_list[t][i+1]-pin_degree_list[t][i];deg++) {
+            for (lid_t j = i * C; j < (i + 1) * C; j++) {
+              //if there is a edge at this location
+              if (j<num_local_edges[t] && deg<temp_pindeg_list[j].first) {
+                lid_t old_lid = temp_pindeg_list[j].second;
+                lid_t ind = old->pin_degree_list[t][old_lid]+deg;
+                lid_t new_lid = vtx_mapping[old->local_unmap[old->pin_list[t][ind]]];
+                pin_list[t][index++] = new_lid;
+              }
+              //else add padding
+              else
+                pin_list[t][index++] = -1;
+            }
           }
         }
       }

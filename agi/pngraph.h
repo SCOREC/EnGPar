@@ -151,13 +151,17 @@ class PNgraph {
    */
   bool isSellCSigma;;
 
-  /** \brief The number of vertex chunks when using SellCSigma
+  /** \brief The length of the chunks when using SellCSigma
    */
   int chunk_size;
 
   /** \brief The number of vertex chunks when using SellCSigma
    */
   int num_vtx_chunks;
+
+  /** \brief The number of edge chunks for each edge type when using SellCSigma
+   */
+  int num_edge_chunks[MAX_TYPES];
 
   // \endcond
   // \cond DEV
