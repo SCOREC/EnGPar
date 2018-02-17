@@ -66,14 +66,15 @@ namespace ssg {
       //TODO: Sigma sort edges
 
       //TODO: Reorder these
-      if (old->edge_weights[t])
+      if (old->edge_weights[t]) {
+        edge_weights[t] = new agi::wgt_t[num_local_edges[t]];
         memcpy(edge_weights[t],old->edge_weights[t],num_local_edges[t]);
+      }
 
       //Get the degrees of each block of C vertices
       lid_t numBlocks = num_local_verts / C + (num_local_verts % C != 0);
       degree_list[t] = new lid_t[numBlocks+1];
       lid_t total = 0;
-      degree_list[t]=0;
       for (lid_t i =0;i<numBlocks;i++) {
         degree_list[t][i+1] = 0;
         for (lid_t j = i * C; j < (i + 1) * C && j < num_local_verts; j++)
