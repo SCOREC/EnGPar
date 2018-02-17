@@ -88,11 +88,13 @@ namespace ssg {
         edge_mapping[t][edge_unmap[t][i]] = i;
       }
 
-      //TODO: Reorder these
+      //TODO: Reorder these and determine if necessary
+      /*
       if (old->edge_weights[t]) {
         edge_weights[t] = new agi::wgt_t[num_local_edges[t]];
         memcpy(edge_weights[t],old->edge_weights[t],num_local_edges[t]);
       }
+      */
 
       //Get the degrees of each block of C vertices
       degree_list[t] = new lid_t[num_vtx_chunks+1];
@@ -115,7 +117,6 @@ namespace ssg {
             if (j<num_local_verts && deg<temp_degree_list[j].first) {
               lid_t old_lid = temp_degree_list[j].second;
               lid_t ind = old->degree_list[t][old_lid]+deg;
-              //NOTE: this isnt quite right yet, but easier to test this way
               lid_t new_lid;
               if (isHyperGraph)
                 new_lid = edge_mapping[t][old->edge_unmap[t][old->edge_list[t][ind]]];
