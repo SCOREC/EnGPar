@@ -8,6 +8,7 @@ namespace agi {
   }
   Ngraph::Ngraph() {
     isHyperGraph=false;
+    isSellCSigma=false;
     num_global_verts=0;
     num_local_verts=0;
     num_ghost_verts=0;
