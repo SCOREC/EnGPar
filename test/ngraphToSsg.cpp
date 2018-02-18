@@ -94,13 +94,13 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
   printf("isSellCSigma  %d\n", pg->isSellCSigma);
   printf("isHyperGraph  %d\n", pg->isHyperGraph);
   printf("num verts %ld\n", pg->num_local_verts);
-  printf("num types %d\n", pg->num_types);
+  printf("num edge types %d\n", pg->num_types);
   if( pg->isSellCSigma ) {
     printf("num vtx-to-edge chunks  %d\n", pg->num_vtx_chunks);
     printf("chunk size  %d\n", pg->chunk_size);
   }
   for (agi::etype t=0;t<pg->num_types;t++) {
-    printf("type %d\n", t);
+    printf("edge type %d\n", t);
     printf("  num edges %ld\n", pg->num_local_edges[t]);
     printf("  num pins  %ld\n", pg->num_local_pins[t]);
     if( pg->isSellCSigma ) {
@@ -121,6 +121,12 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
         printf("    vtx lid:%ld gid:%ld\n", vtx,pg->local_unmap[vtx]);
         for(agi::lid_t j = pg->degree_list[t][vtx]; j < pg->degree_list[t][vtx+1]; j++) {
           printf("      edge_list[t][%ld] gid:%ld\n", j, pg->edge_unmap[t][pg->edge_list[t][j]]);
+        }
+      }
+      for(agi::lid_t edge = 0; edge < pg->num_local_edges[t]; edge++) {
+        printf("    edge lid:%ld gid:%ld\n", edge,pg->edge_unmap[t][edge]);
+        for(agi::lid_t j = pg->pin_degree_list[t][edge]; j < pg->pin_degree_list[t][edge+1]; j++) {
+          printf("      pin_list[t][%ld] gid:%ld\n", j, pg->local_unmap[pg->pin_list[t][j]]);
         }
       }
     }
