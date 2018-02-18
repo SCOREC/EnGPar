@@ -18,10 +18,10 @@ void writeVtxToEdgeScg(agi::lid_t t, agi::PNgraph* pg) {
   // loop over chunks
   for(agi::lid_t chunk = 0; chunk < pg->num_vtx_chunks; chunk++) {
     agi::lid_t maxChunkDeg = pg->degree_list[t][chunk+1] - pg->degree_list[t][chunk];
-    printf("    chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
+    printf("    vtx->edge chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
     agi::lid_t chunkSize = pg->chunk_size*maxChunkDeg;
     // write the chunk
-    printf("    chunk values\n");
+    printf("    vtx->edge chunk values\n");
     for (agi::lid_t i = chunkStart; i < chunkStart+chunkSize; i++)
       printf("      %ld\n", pg->edge_list[t][i]);
     // loop over chunk 'rows' 
@@ -42,6 +42,49 @@ void writeVtxToEdgeScg(agi::lid_t t, agi::PNgraph* pg) {
       }
     }
     chunkStart+=chunkSize; // the number of entries in the chunk
+  }
+}
+
+/* @brief write the hyperedge to vertex graph
+ * @param t (in) the hyperedge type
+ * @param pg (in) the publicized SCG
+ **/
+void writeEdgeToVtxScg(agi::lid_t t, agi::PNgraph* pg) {
+  assert(pg->isSellCSigma && pg->isHyperGraph);
+  if(!pg->isSellCSigma || !pg->isHyperGraph) {
+    printf("skipping edge->vtx; not an scg hypergraph\n");
+    return;
+  }
+  const agi::lid_t C = pg->chunk_size;
+  // loop over chunks
+  agi::lid_t chunkStart = 0; // the first index in the current chunk
+  for(agi::lid_t chunk = 0; chunk < pg->num_edge_chunks[t]; chunk++) {
+    agi::lid_t maxChunkDeg = pg->pin_degree_list[t][chunk+1] - pg->pin_degree_list[t][chunk];
+    printf("    edge->vtx chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
+    agi::lid_t chunkSize = C*maxChunkDeg; // the number of entries in the chunk
+    // write the chunk
+    printf("    edge->vtx chunk values\n");
+    for (agi::lid_t i = chunkStart; i < chunkStart+chunkSize; i++)
+      printf("      %ld\n", pg->pin_list[t][i]);
+    // loop over chunk 'rows'
+    for (agi::lid_t i = 0; i < C; i++) {
+      // the starting index of vertices adjacent to the ith edge in the chunk
+      agi::lid_t edge = chunkStart+i;
+      if (chunk*C+i >= pg->num_local_edges[t])
+        printf("    edge %ld gid:-1\n", i);
+      else
+        printf("    edge %ld gid:%ld\n", i,pg->edge_unmap[t][chunk*C+i]);
+      for (agi::lid_t j = edge;
+          j < edge+(maxChunkDeg*C);
+          j += C) {
+        if (pg->edge_list[t][j]==-1)
+          printf("      pin_list[t][%ld] gid:-1\n", j);
+        else
+          printf("      pin_list[t][%ld] gid:%ld\n", j,
+              pg->local_unmap[pg->pin_list[t][j]]);
+      }
+    }
+    chunkStart+=chunkSize; // set the starting chunk index for the next iteration
   }
 }
 
@@ -67,6 +110,7 @@ void writeGraphArrays(agi::Ngraph* g, const char* name) {
         printf("    degree_list[t][%ld] %ld\n", chunk+1, pg->degree_list[t][chunk+1]);
       }
       writeVtxToEdgeScg(t,pg);
+      writeEdgeToVtxScg(t,pg);
     } else {
       // CSR
       printf("    degree_list[t][0] %ld\n", pg->degree_list[t][0]);
