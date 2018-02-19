@@ -77,7 +77,7 @@ void writeEdgeToVtxScg(agi::lid_t t, agi::PNgraph* pg) {
       for (agi::lid_t j = edge;
           j < edge+(maxChunkDeg*C);
           j += C) {
-        if (pg->edge_list[t][j]==-1)
+        if (pg->pin_list[t][j]==-1)
           printf("      pin_list[t][%ld] gid:-1\n", j);
         else
           printf("      pin_list[t][%ld] gid:%ld\n", j,
