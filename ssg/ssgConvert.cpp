@@ -112,7 +112,7 @@ namespace ssg {
       }
       
       //build the padded edge_list
-      edge_list[t] = new lid_t[total*C];
+      edge_list[t] = new lid_t[total];
       int index =0;
       for (lid_t i =0;i<num_vtx_chunks;i++) {
         lid_t width = (degree_list[t][i+1] - degree_list[t][i]) / C;
@@ -151,7 +151,7 @@ namespace ssg {
         }
       
         //build the padded pin_list
-        pin_list[t] = new lid_t[total*C];
+        pin_list[t] = new lid_t[total];
         index =0;
         for (lid_t i = 0;i < num_edge_chunks[t]; i++) {
           lid_t width = (pin_degree_list[t][i+1] - pin_degree_list[t][i]) / C;
