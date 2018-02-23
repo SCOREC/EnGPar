@@ -107,19 +107,21 @@ namespace ssg {
         degree_list[t][i+1] = 0;
         for (lid_t j = i * C; j < (i + 1) * C && j < num_local_verts; j++)
           degree_list[t][i+1] = std::max(degree_list[t][i+1],temp_degree_list[j].first);
-        total=(degree_list[t][i+1]+=total);
+        degree_list[t][i+1]*=C;
+        total=(degree_list[t][i+1] += total);
       }
       
       //build the padded edge_list
       edge_list[t] = new lid_t[total*C];
       int index =0;
       for (lid_t i =0;i<num_vtx_chunks;i++) {
-        for (lid_t deg = 0;deg < degree_list[t][i+1]-degree_list[t][i];deg++) {
+        lid_t width = (degree_list[t][i+1] - degree_list[t][i]) / C;
+        for (lid_t deg = 0; deg < width; deg++) {
           for (lid_t j = i * C; j < (i + 1) * C; j++) {
             //if there is an edge at this location
-            if (j<num_local_verts && deg<temp_degree_list[j].first) {
+            if (j < num_local_verts && deg < temp_degree_list[j].first) {
               lid_t old_lid = temp_degree_list[j].second;
-              lid_t ind = old->degree_list[t][old_lid]+deg;
+              lid_t ind = old->degree_list[t][old_lid] + deg;
               lid_t new_lid;
               if (isHyperGraph)
                 new_lid = edge_mapping[t][old->edge_unmap[t][old->edge_list[t][ind]]];
@@ -144,19 +146,21 @@ namespace ssg {
           pin_degree_list[t][i+1] = 0;
           for (lid_t j = i * C; j < (i + 1) * C && j < num_local_edges[t]; j++)
             pin_degree_list[t][i+1] = std::max(pin_degree_list[t][i+1],temp_pindeg_list[j].first);
-          total=(pin_degree_list[t][i+1]+=total);
+          pin_degree_list[t][i+1]*=C;
+          total=(pin_degree_list[t][i+1] += total);
         }
       
         //build the padded pin_list
         pin_list[t] = new lid_t[total*C];
         index =0;
-        for (lid_t i =0;i<num_edge_chunks[t];i++) {
-          for (lid_t deg = 0;deg < pin_degree_list[t][i+1]-pin_degree_list[t][i];deg++) {
+        for (lid_t i = 0;i < num_edge_chunks[t]; i++) {
+          lid_t width = (pin_degree_list[t][i+1] - pin_degree_list[t][i]) / C;
+          for (lid_t deg = 0;deg < width; deg++) {
             for (lid_t j = i * C; j < (i + 1) * C; j++) {
               //if there is a edge at this location
               if (j<num_local_edges[t] && deg<temp_pindeg_list[j].first) {
                 lid_t old_lid = temp_pindeg_list[j].second;
-                lid_t ind = old->pin_degree_list[t][old_lid]+deg;
+                lid_t ind = old->pin_degree_list[t][old_lid] + deg;
                 lid_t new_lid = vtx_mapping[old->local_unmap[old->pin_list[t][ind]]];
                 pin_list[t][index++] = new_lid;
               }

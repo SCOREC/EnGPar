@@ -17,7 +17,7 @@ void writeVtxToEdgeScg(agi::lid_t t, agi::PNgraph* pg) {
   agi::lid_t chunkStart = 0;
   // loop over chunks
   for(agi::lid_t chunk = 0; chunk < pg->num_vtx_chunks; chunk++) {
-    agi::lid_t maxChunkDeg = pg->degree_list[t][chunk+1] - pg->degree_list[t][chunk];
+    agi::lid_t maxChunkDeg=(pg->degree_list[t][chunk+1]-pg->degree_list[t][chunk])/pg->chunk_size;
     printf("    vtx->edge chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
     agi::lid_t chunkSize = pg->chunk_size*maxChunkDeg;
     // write the chunk
@@ -59,7 +59,7 @@ void writeEdgeToVtxScg(agi::lid_t t, agi::PNgraph* pg) {
   // loop over chunks
   agi::lid_t chunkStart = 0; // the first index in the current chunk
   for(agi::lid_t chunk = 0; chunk < pg->num_edge_chunks[t]; chunk++) {
-    agi::lid_t maxChunkDeg = pg->pin_degree_list[t][chunk+1] - pg->pin_degree_list[t][chunk];
+    agi::lid_t maxChunkDeg = (pg->pin_degree_list[t][chunk+1] - pg->pin_degree_list[t][chunk])/C;
     printf("    edge->vtx chunkStart %ld maxChunkDegree %ld\n", chunkStart, maxChunkDeg);
     agi::lid_t chunkSize = C*maxChunkDeg; // the number of entries in the chunk
     // write the chunk
