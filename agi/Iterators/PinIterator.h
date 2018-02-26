@@ -12,7 +12,7 @@ class PinIterator {
   friend class Ngraph;
   lid_t* loc;
   lid_t* end;
-  PinIterator(gid_t* l,gid_t* e)
+  PinIterator(lid_t* l,lid_t* e)
     :loc(l),end(e) {}
   void iterate() {loc++;}
 };

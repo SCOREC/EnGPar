@@ -2,16 +2,18 @@
 #include "Iterators/HyperEdgeIterator.h"
 #include "Iterators/PinIterator.h"
 #include "Iterators/GraphIterator.h"
+#include "agi_typeconvert.h"
 
 namespace agi {
   VertexIterator* Ngraph::begin() const {
-    return reinterpret_cast<VertexIterator*>((char*)1);
+    return reinterpret_cast<VertexIterator*>(toPtr(1));
   }
   GhostIterator* Ngraph::beginGhosts() const {
-    return reinterpret_cast<GhostIterator*>((char*)num_local_verts+1);
+    return reinterpret_cast<GhostIterator*>(toPtr(num_local_verts+1));
   }
   GraphVertex* Ngraph::findGID(gid_t gid) const {
-    return reinterpret_cast<GraphVertex*>((char*)(vtx_mapping.find(gid)->second)+1);
+    lid_t v = vtx_mapping.find(gid)->second+1;
+    return reinterpret_cast<GraphVertex*>(toPtr(v));
   }
 
   EdgeIterator* Ngraph::begin(etype t) const {
@@ -26,8 +28,8 @@ namespace agi {
       itr=NULL;
       return NULL;
     }
-    GraphVertex* vtx = reinterpret_cast<GraphVertex*>((lid_t*)index);
-    itr = reinterpret_cast<VertexIterator*>((char*)(index+1));
+    GraphVertex* vtx = reinterpret_cast<GraphVertex*>(toPtr(index));
+    itr = reinterpret_cast<VertexIterator*>(toPtr(index+1));
     return vtx;
   }
   GraphVertex* Ngraph::iterate(GhostIterator*& itr) const {
@@ -36,8 +38,8 @@ namespace agi {
       itr=NULL;
       return NULL;
     }
-    GraphVertex* vtx = reinterpret_cast<GraphVertex*>((lid_t*)index);
-    itr = reinterpret_cast<GhostIterator*>((char*)(index+1));
+    GraphVertex* vtx = reinterpret_cast<GraphVertex*>(toPtr(index));
+    itr = reinterpret_cast<GhostIterator*>(toPtr(index+1));
     return vtx;
   }
 
@@ -50,7 +52,7 @@ namespace agi {
       index-=1;
       etype t = index%num_types;
       index/=num_types;
-      return (GraphEdge*)(num_types*edge_list[t][index]+t+1);
+      return (GraphEdge*)(toPtr(num_types*edge_list[t][index]+t+1));
     }
     return (GraphEdge*)(index);
   }

@@ -41,7 +41,7 @@ namespace engpar {
       printf("\n");
   }
   
-  void printMaxMinAvgImb(agi::gid_t my_val,std::string prefix) {
+  void printMaxMinAvgImb(agi::lid_t my_val,std::string prefix) {
     agi::gid_t max,min,total;
     double avg,imb;
     MPI_Datatype type = MPI_UNSIGNED_LONG;

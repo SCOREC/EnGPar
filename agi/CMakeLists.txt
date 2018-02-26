@@ -14,6 +14,7 @@ set(AGI_SOURCES
   agiIO.cpp
   agiValid.cpp
   agiVTK.cpp
+  agi_typeconvert.cpp
   )
 
 set(AGI_HEADERS

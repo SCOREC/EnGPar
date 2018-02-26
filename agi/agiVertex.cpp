@@ -7,11 +7,12 @@
 #include "Iterators/HyperEdgeIterator.h"
 #include "Iterators/PinIterator.h"
 #include "Iterators/GraphIterator.h"
+#include "agi_typeconvert.h"
 
 namespace agi {
 
 const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
-  lid_t index = (lid_t)(vtx)-1;
+  lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){
     printf("[ERROR] invalid vertex given to weight(vtx)\n");
     throw 1;
@@ -34,7 +35,7 @@ void Ngraph::setCoords(coord_t* cs) {
 }
   
 const coord_t& Ngraph::coord(GraphVertex* vtx) const {
-  lid_t index = (lid_t)(vtx)-1;
+  lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){
     printf("[ERROR] invalid vertex given to coord(vtx)\n");
     throw 1;
@@ -48,7 +49,7 @@ const coord_t& Ngraph::coord(GraphVertex* vtx) const {
 
 
 int Ngraph::owner(GraphVertex* vtx) const {
-  lid_t index = (lid_t)(vtx)-1;
+  lid_t index = fromPtr(vtx);
   if (index>=num_local_verts+num_ghost_verts) {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
     return -1;
@@ -61,7 +62,7 @@ int Ngraph::owner(GraphVertex* vtx) const {
 
 part_t Ngraph::originalOwner(GraphVertex* vtx) const {
   assert(original_owners);
-  lid_t index = (lid_t)(vtx)-1;
+  lid_t index = fromPtr(vtx);
   if (index>=num_local_verts+num_ghost_verts) {
     fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
     return -1;
@@ -108,19 +109,21 @@ GraphVertex* Ngraph::find(GraphVertex* vtx) const {
 }
 
 lid_t  Ngraph::degree(GraphVertex* vtx,etype type) const {
-  uintptr_t index =(uintptr_t)(vtx)-1;
+  lid_t index = fromPtr(vtx);
   return degree_list[type][index+1]-degree_list[type][index];
 }
   
 EdgeIterator* Ngraph::edges(GraphVertex* vtx,etype type) const {
-  uintptr_t index = (uintptr_t)(vtx)-1;
-  EdgeIterator* eitr = new EdgeIterator(type,num_types,(lid_t*)degree_list[type][index],degree(vtx,type));
+  lid_t index = fromPtr(vtx);
+  lid_t* foo = (lid_t*) toPtr(degree_list[type][index]);
+  EdgeIterator* eitr = new EdgeIterator(type,num_types,foo,degree(vtx,type));
   return eitr;
 }
 
 GraphIterator* Ngraph::adjacent(GraphVertex* vtx, etype type) const {
-  uintptr_t index = (uintptr_t)(vtx)-1;
-  EdgeIterator* eitr = new EdgeIterator(type,num_types,(lid_t*)degree_list[type][index],degree(vtx,type));
+  lid_t index = fromPtr(vtx);
+  lid_t* foo = (lid_t*) toPtr(degree_list[type][index]);
+  EdgeIterator* eitr = new EdgeIterator(type,num_types,foo,degree(vtx,type));
   return new GraphIterator(eitr,isHyperGraph);
 }
 

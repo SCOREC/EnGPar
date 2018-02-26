@@ -74,7 +74,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   
   if (edge_list[0])
     delete edge_list[0];
-  edge_list[0] = new gid_t[num_local_edges[0]*2];
+  edge_list[0] = new lid_t[num_local_edges[0]*2];
   std::copy(recv_edges.begin(),recv_edges.end(),edge_list[0]);
   vtx_mapping.clear();
   int32_t* ranks = new int32_t[num_global_verts];
@@ -289,7 +289,7 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
     else        
       edge_list[t][i] = vtx_mapping[out];
   }
-  gid_t* tmp_edges = new gid_t[num_local_edges[t]];
+  lid_t* tmp_edges = new lid_t[num_local_edges[t]];
   int64_t* temp_counts = new int64_t[num_local_verts];
   degree_list[t] = new lid_t[num_local_verts+1];
   for (int64_t i = 0; i < num_local_verts+1; ++i)

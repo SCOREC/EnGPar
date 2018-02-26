@@ -13,14 +13,14 @@ class EdgeIterator {
  public:
   virtual ~EdgeIterator() {}
  protected:
-  gid_t* loc;
-  gid_t* end;
+  lid_t* loc;
+  lid_t* end;
   int num_types;
   EdgeIterator(etype t, int nt, lid_t* l,lid_t deg)
-    :loc((gid_t*)(1+t+nt*(uintptr_t)l)),
-    end((gid_t*)(1+t+nt*((uintptr_t)l+deg))),
+    :loc((lid_t*)(1+t+nt*(uintptr_t)l)),
+    end((lid_t*)(1+t+nt*((uintptr_t)l+deg))),
     num_types(nt) {}
-  void iterate() {loc = (gid_t*)((uintptr_t)loc+num_types);}
+  void iterate() {loc = (lid_t*)((uintptr_t)loc+num_types);}
   virtual bool isHyper() {return false;}
 };
   
