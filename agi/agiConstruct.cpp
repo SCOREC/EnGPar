@@ -183,8 +183,8 @@ namespace agi {
     for (lid_t i=1;i<num_local_verts+1;i++) {
       degree_list[t][i]+=degree_list[t][i-1];
     }
-    uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-    std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
+    lid_t* temp_counts = (lid_t*)malloc(num_local_verts*sizeof(lid_t));
+    std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(lid_t));
     edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
     if (new_ghosts>0) {
       if (ghost_unmap) {
@@ -288,8 +288,8 @@ namespace agi {
     for (lid_t i=1;i<num_local_verts+1;i++) {
       degree_list[t][i]+=degree_list[t][i-1];
     }
-    uint64_t* temp_counts = (uint64_t*)malloc(num_local_verts*sizeof(uint64_t));
-    std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(uint64_t));
+    lid_t* temp_counts = (lid_t*)malloc(num_local_verts*sizeof(lid_t));
+    std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(lid_t));
     edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
     if (new_ghosts>0) {
       if (ghost_unmap) {
