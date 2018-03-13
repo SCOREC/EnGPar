@@ -72,6 +72,7 @@ program main
   logical(C_BOOL) :: inSmall
   real(C_DOUBLE) :: tol, stepfactor
   integer :: splitFactor, verbosity, newComm
+  integer(ENGPAR_PART_T), dimension(1) :: ranks ! only used LOCAL_PARMETIS
   character(len=256) :: inGraphFileName, outGraphFileName, splitMethod
 
   call mpi_init(ierr)
@@ -98,7 +99,8 @@ program main
   ! Create the split input
   edgeType = 0
   tol = 1.05
-  splitInput = cengpar_createSplitInput(graph,newComm,MPI_COMM_WORLD,inSmall,splitFactor,tol,edgeType)
+  ranks = 0
+  splitInput = cengpar_createSplitInput(graph,newComm,MPI_COMM_WORLD,inSmall,splitFactor,tol,edgeType,ranks)
 
   ! Perform split 
   splitMethod = c_char_"GLOBAL_PARMETIS"//c_null_char

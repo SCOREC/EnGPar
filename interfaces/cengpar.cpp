@@ -25,11 +25,11 @@ ngraph cengpar_createEmptyGraph() {
 }
 
 engparInput cengpar_createSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
-    bool isOrig, int splitFactor, double tol, agi::etype t) {
+    bool isOrig, int splitFactor, double tol, agi::etype t, agi::part_t* ranks) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   //fprintf(stderr, "%s %d graph %p\n", __func__, PCU_Comm_Self(), (void*)ng);
   engpar::Input* input = engpar::createSplitInput(ng,smallComm,largeComm,
-                                                  isOrig,splitFactor,tol,t);
+                                                  isOrig,splitFactor,tol,t,ranks);
   //fprintf(stderr, "%s %d input %p\n", __func__, PCU_Comm_Self(), (void*)input);
   if(isOrig)
     fprintf(stderr, "%s peers %d input %p input->g %p graph %p\n", __func__, PCU_Comm_Peers(), (void*)input, (void*)(input->g), (void*)ng);

@@ -19,7 +19,8 @@ ngraph cengpar_createEmptyGraph();
 
 engparInput cengpar_createSplitInput(ngraph g,
     MPI_Fint smallComm, MPI_Fint largeComm,
-    bool isOrig, int splitFactor, double tol, agi::etype t);
+    bool isOrig, int splitFactor, double tol,
+    agi::etype t, agi::part_t* ranks);
 
 void cengpar_loadFromFile(ngraph g, const char fileName[]);
 
