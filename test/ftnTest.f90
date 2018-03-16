@@ -12,7 +12,8 @@ program main
   integer(AGI_LID_FT), dimension(:), allocatable :: degs
   real(AGI_WGT_FT), dimension(:), allocatable :: weights, eweights
   integer(AGI_GID_FT), dimension(nghosts) :: ghostverts
-  integer(AGI_PART_FT), dimension(nghosts):: ghostowners, parts
+  integer(AGI_PART_FT), dimension(nghosts):: ghostowners
+  integer(AGI_PART_FT), dimension(:), allocatable :: parts
   type(c_ptr) :: graph
   logical(C_BOOL) :: isHg = .false.
   real(C_DOUBLE) :: tol, stepfactor
@@ -68,6 +69,7 @@ program main
   stepfactor = 0.1
   verbosity = 1
   call cengpar_balanceVertices(graph, tol, stepfactor, verbosity);
+  allocate(parts(nverts))
   call cengpar_getPartition(graph, verts, parts, nverts)
   call cengpar_destroyGraph(graph);
   call cengpar_finalize()
