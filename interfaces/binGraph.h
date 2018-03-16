@@ -33,7 +33,7 @@ class binGraph : public Ngraph {
   // \endcond
  private:
   //Loads edges from binary file
-  etype load_edges(char* filename,int64_t*& read_edges, int64_t& m_read);
+  etype load_edges(FILE* f, int64_t*& read_edges, int64_t& m_read);
   //Reads vertex owners from file
   int read_ranks(char* filename,int32_t* ranks);
   //Basic vertex block partitioning

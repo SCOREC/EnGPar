@@ -99,7 +99,7 @@ void testGraph() {
   int total =0;
   while ((gv = graph->iterate(g_itr))) {
     assert(graph->localID(gv)>=graph->numLocalVtxs());
-    printf("%d %ld %ld %d\n",PCU_Comm_Self(),graph->localID(gv),graph->globalID(gv),graph->owner(gv));
+    printf("%d %d %ld %d\n",PCU_Comm_Self(),graph->localID(gv),graph->globalID(gv),graph->owner(gv));
     assert(graph->owner(gv)!=PCU_Comm_Self());
     total++;
   }

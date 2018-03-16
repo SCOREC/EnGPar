@@ -41,13 +41,14 @@ namespace engpar {
       printf("\n");
   }
   
-  void printMaxMinAvgImb(agi::gid_t my_val,std::string prefix) {
+  void printMaxMinAvgImb(agi::lid_t my_val,std::string prefix) {
+    agi::gid_t in = my_val;
     agi::gid_t max,min,total;
     double avg,imb;
     MPI_Datatype type = MPI_UNSIGNED_LONG;
-    MPI_Allreduce(&my_val,&max,1,type,MPI_MAX,PCU_Get_Comm());
-    MPI_Allreduce(&my_val,&min,1,type,MPI_MIN,PCU_Get_Comm());
-    MPI_Allreduce(&my_val,&total,1,type,MPI_SUM,PCU_Get_Comm());
+    MPI_Allreduce(&in,&max,1,type,MPI_MAX,PCU_Get_Comm());
+    MPI_Allreduce(&in,&min,1,type,MPI_MIN,PCU_Get_Comm());
+    MPI_Allreduce(&in,&total,1,type,MPI_SUM,PCU_Get_Comm());
     avg = total*1.0/PCU_Comm_Peers();
     imb = max*1.0/avg;
     if (!PCU_Comm_Self())
@@ -74,6 +75,7 @@ namespace engpar {
     agi::wgt_t my_local = getWeight(g,-1);
     agi::lid_t my_total = g->numTotalVtxs();
     printMaxMinAvgImb(my_local,"Local Vertices");
+    printf("rank %d numTotalVtxs %d\n", PCU_Comm_Self(), my_total);
     printMaxMinAvgImb(my_total,"Total Vertices");
     //Edge type imbalance
     for (agi::etype t = 0;t<g->numEdgeTypes();t++) {

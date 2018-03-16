@@ -14,19 +14,19 @@ void partitionInfo(agi::binGraph* g) {
   lid_t edges = g->numLocalEdges()+g->numLocalEdges(SPLIT_TYPE);
   lid_t min = PCU_Min_Int(total_verts);
   lid_t max = PCU_Max_Int(total_verts);
-  lid_t tot = PCU_Add_Long(total_verts);
+  long tot = PCU_Add_Long(total_verts);
   double avg = ((double)tot)/PCU_Comm_Peers();
   double imb = max/avg;
   double inc = ((double)(tot-global_verts))/global_verts*100;
   if (!PCU_Comm_Self()) 
-    printf("Vertices: Min %lu Max %lu Tot %lu Inc %1.4f Avg %1.4f Imb %1.3f\n",min,max,tot,inc,avg,imb);
+    printf("Vertices: Min %d Max %d Tot %lu Inc %1.4f Avg %1.4f Imb %1.3f\n",min,max,tot,inc,avg,imb);
   min = PCU_Min_Int(edges);
   max = PCU_Max_Int(edges);
   tot = PCU_Add_Long(edges);
   avg = ((double)tot)/PCU_Comm_Peers();
   imb = max/avg;
   if (!PCU_Comm_Self()) 
-    printf("Edges: Min %lu Max %lu Tot %lu Avg %1.4f Imb %1.3f\n",min,max,tot,avg,imb);
+    printf("Edges: Min %d Max %d Tot %lu Avg %1.4f Imb %1.3f\n",min,max,tot,avg,imb);
   
   lid_t edge_cut =0;
   agi::EdgeIterator* eitr = g->begin(0);
@@ -38,7 +38,7 @@ void partitionInfo(agi::binGraph* g) {
   edge_cut+=g->numLocalEdges(SPLIT_TYPE);
   edge_cut = PCU_Add_Long(edge_cut);
   if (!PCU_Comm_Self())
-    printf("Edge Cut: %lu\n",edge_cut);
+    printf("Edge Cut: %d\n",edge_cut);
 }
 
 int main(int argc, char* argv[]) {

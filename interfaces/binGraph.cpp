@@ -11,6 +11,7 @@
 #include <vector>
 #include <PCU.h>
 #include <iostream>
+
 namespace agi {
 
 Ngraph* createBinGraph(char* graph_file,char* part_file) {
@@ -28,7 +29,8 @@ Ngraph* createBinGraph(char* graph_file,char* part_file) {
 binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   int64_t* read_edges;
   int64_t m_read;
-  etype t = load_edges(graph_file,read_edges,m_read);
+  FILE *f = fopen(graph_file, "rb");
+  etype t = load_edges(f,read_edges,m_read);
   int32_t* ranks = new int32_t[num_global_verts];
   if (!part_file)
     vert_block_ranks(ranks);
@@ -74,7 +76,7 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
   
   if (edge_list[0])
     delete edge_list[0];
-  edge_list[0] = new gid_t[num_local_edges[0]*2];
+  edge_list[0] = new lid_t[num_local_edges[0]*2];
   std::copy(recv_edges.begin(),recv_edges.end(),edge_list[0]);
   vtx_mapping.clear();
   int32_t* ranks = new int32_t[num_global_verts];
@@ -136,9 +138,8 @@ void binGraph::migrate(agi::EdgePartitionMap& map) {
 
 //TODO: optimize these operations using PCU
 //Private Functions
-etype binGraph::load_edges(char *filename, int64_t*& read_edges,
-    int64_t& m_read) {  
-  FILE *infp = fopen(filename, "rb");
+etype binGraph::load_edges(FILE* infp, int64_t*& read_edges,
+    int64_t& m_read) {
   fseek(infp, 0L, SEEK_END);
   int64_t file_size = ftell(infp);
   fseek(infp, 0L, SEEK_SET);
@@ -237,7 +238,6 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   int32_t total_send = sdispls[PCU_Comm_Peers()-1] + scounts[PCU_Comm_Peers()-1];
   int32_t total_recv = rdispls[PCU_Comm_Peers()-1] + rcounts[PCU_Comm_Peers()-1];
   int64_t* sendbuf = (int64_t*)malloc(total_send*sizeof(int64_t));
-  edge_list[t] = new lid_t[total_recv];
   num_local_edges[t] = total_recv / 2;
   num_local_pins[t] = 2*num_local_edges[t];
 
@@ -251,8 +251,12 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
     sendbuf[sdispls_cpy[vert_task]++] = vert2;
   }
 
+  int64_t* el = new int64_t[total_recv];
   MPI_Alltoallv(sendbuf, scounts, sdispls, MPI_INT64_T,
-                edge_list[t], rcounts, rdispls, MPI_INT64_T, PCU_Get_Comm());
+                el, rcounts, rdispls, MPI_INT64_T, PCU_Get_Comm());
+  edge_list[t] = new lid_t[total_recv];
+  for(int i=0; i<total_recv; i++)
+    edge_list[t][i] = static_cast<lid_t>(el[i]);
   free(scounts);
   free(rcounts);
   free(sdispls);
@@ -289,19 +293,19 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
     else        
       edge_list[t][i] = vtx_mapping[out];
   }
-  gid_t* tmp_edges = new gid_t[num_local_edges[t]];
-  int64_t* temp_counts = new int64_t[num_local_verts];
+  lid_t* tmp_edges = new lid_t[num_local_edges[t]];
+  lid_t* temp_counts = new lid_t[num_local_verts];
   degree_list[t] = new lid_t[num_local_verts+1];
-  for (int64_t i = 0; i < num_local_verts+1; ++i)
+  for (lid_t i = 0; i < num_local_verts+1; ++i)
     degree_list[t][i] = 0;
-  for (int64_t i = 0; i < num_local_verts; ++i)
+  for (lid_t i = 0; i < num_local_verts; ++i)
     temp_counts[i] = 0;
-  for (int64_t i = 0; i < num_local_edges[t]*2; i+=2)
+  for (lid_t i = 0; i < num_local_edges[t]*2; i+=2)
     ++temp_counts[edge_list[t][i]];
-  for (int64_t i = 0; i < num_local_verts; ++i)
+  for (lid_t i = 0; i < num_local_verts; ++i)
     degree_list[t][i+1] = degree_list[t][i] + temp_counts[i];
-  memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(int64_t));
-  for (int64_t i = 0; i < num_local_edges[t]*2; i+=2) {
+  memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(lid_t));
+  for (lid_t i = 0; i < num_local_edges[t]*2; i+=2) {
     tmp_edges[temp_counts[edge_list[t][i]]++] = edge_list[t][i+1];
   }
   delete [] temp_counts;

@@ -95,7 +95,7 @@ namespace agi {
       PinIterator* pitr = g->pins(e);
       while ((v = g->iterate(pitr))) {
         if (g->owner(v)==PCU_Comm_Self())
-          fprintf(f,"%ld %ld\n",g->localID(e)+g->numLocalVtxs(),g->localID(v));
+          fprintf(f,"%d %d\n",g->localID(e)+g->numLocalVtxs(),g->localID(v));
       }
       g->destroy(pitr);
     }
@@ -237,7 +237,7 @@ namespace agi {
     fprintf(f,"<VTKFile type=\"UnstructuredGrid\">\n");
     fprintf(f,"<UnstructuredGrid>\n");
     gid_t numCells = getNumCells(g);
-    fprintf(f,"<Piece NumberOfPoints=\"%ld\" NumberOfCells=\"%ld\">\n",
+    fprintf(f,"<Piece NumberOfPoints=\"%d\" NumberOfCells=\"%ld\">\n",
             g->numLocalVtxs()+g->numLocalEdges(),numCells);
     writePoints(g,f);
     writeCells(g,f);
