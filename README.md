@@ -16,6 +16,7 @@ EnGPar is a set of C/C++ libraries for partitioning relational data structures u
 * Configuration: two example configuration files are provided in the EnGPar directory minimal_config.sh and config.sh. The first has the minimum requirements to setup a directory while the second lists the specific flags to turn on and off the various portions of EnGPar.
 * Testing: After building the code, the test directory will have several tests and standalone executables that use the
 different functionalities of EnGPar.
+* [Calling EnGPar from your application](https://github.com/SCOREC/EnGPar/wiki/Getting-Started-with-EnGPar)
 
 ### End-user Build ###
 
