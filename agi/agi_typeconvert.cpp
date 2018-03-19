@@ -6,6 +6,7 @@ namespace agi {
   }
 
   lid_t fromPtr(GraphVertex* v) {
-    return reinterpret_cast<lid_t*>((char*)(&v))[0]-1;
+    lid_t* lid = reinterpret_cast<lid_t*>((char*)(&v));
+    return lid[0]-1;
   }
 }
