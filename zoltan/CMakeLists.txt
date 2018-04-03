@@ -28,3 +28,5 @@ if (ENABLE_ZOLTAN)
     ${PARMETIS_LIBRARIES}
     )
 endif()
+
+engpar_export_lib(agi_zoltan "")
