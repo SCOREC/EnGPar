@@ -3,17 +3,16 @@ program main
   use iso_c_binding
   implicit none
   include 'mpif.h'
-#include "../agi/agi_types.h"
 
   integer, parameter :: nghosts = 1
   integer :: nverts, nedges, npins
   integer :: ierr, self
-  integer(AGI_GID_FT), dimension(:), allocatable :: verts, edges, pins
-  integer(AGI_LID_FT), dimension(:), allocatable :: degs
-  real(AGI_WGT_FT), dimension(:), allocatable :: weights, eweights
-  integer(AGI_GID_FT), dimension(nghosts) :: ghostverts
-  integer(AGI_PART_FT), dimension(nghosts):: ghostowners
-  integer(AGI_PART_FT), dimension(:), allocatable :: parts
+  integer(ENGPAR_GID_T), dimension(:), allocatable :: verts, edges, pins
+  integer(ENGPAR_LID_T), dimension(:), allocatable :: degs
+  real(ENGPAR_WGT_T), dimension(:), allocatable :: weights, eweights
+  integer(ENGPAR_GID_T), dimension(nghosts) :: ghostverts
+  integer(ENGPAR_PART_T), dimension(nghosts):: ghostowners
+  integer(ENGPAR_PART_T), dimension(:), allocatable :: parts
   type(c_ptr) :: graph
   logical(C_BOOL) :: isHg = .false.
   real(C_DOUBLE) :: tol, stepfactor
