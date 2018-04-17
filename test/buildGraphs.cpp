@@ -3,8 +3,16 @@
 #include <PCU.h>
 #include <ngraph.h>
 
-//Builds a ring of vertices
-//  where each part gets 4 continuous vertices
+//Builds a traditional ring graph with an undirected edge between each
+//sequentially numbered pair of vertices.
+//Each part gets 4 sequentially numbered vertices.
+//Traditional graphs only have directed edges.  Thus, to construct the ring we
+//create one forward and one backward edge between each pair of sequentially
+//numbered pair of vertices.  The source vertex of the pins forming an edge
+//must be locally owned (i.e., exists in the vertex list on that part).  In
+//addition, edges in a traditional graph have global ids, but, those ids are not
+//required to be unique or consistent for a given vertex pair for correct EnGPar
+//operation.
 agi::Ngraph* buildGraph() {
   agi::Ngraph* graph  = agi::createEmptyGraph();
   agi::lid_t local_verts = 4;

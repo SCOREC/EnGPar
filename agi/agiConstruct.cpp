@@ -400,6 +400,7 @@ namespace agi {
         num_global_pins[t] = 2*num_global_edges[t];
       }
     }
+
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
     }
