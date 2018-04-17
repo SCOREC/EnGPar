@@ -140,16 +140,23 @@ namespace agi {
       sprintf(message,"constructEdges: %d\n",t);
       EnGPar_Log_Function(message);
     }
+    //Setup known array sizes
     degree_list[t] = new lid_t[num_local_verts+1];
     for (lid_t i=0;i<num_local_verts+1;i++)
       degree_list[t][i] = 0;
     num_local_edges[t] = edge_ids.size();
     num_local_pins[t] = pins_to_verts.size();
     edge_unmap[t] = new gid_t[edge_ids.size()];
+    //Note pin*list is not used in traditional graph but its made here for generality.
     pin_degree_list[t] = new lid_t[degs.size()+1];
     pin_degree_list[t][0]=0;
     pin_list[t] = new lid_t[pins_to_verts.size()];
     lid_t new_ghosts=0;
+
+    /*Loop through edges:
+        determine vertex degrees
+        add ghost vertices
+    */
     for (lid_t i=0;i<(lid_t)edge_ids.size();i++) {
       //set edge_weight
       gid_t gid = edge_ids[i];
@@ -159,14 +166,19 @@ namespace agi {
       for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
         gid_t v = pins_to_verts[j];
         map_t::iterator vitr = vtx_mapping.find(v);
+        //If the vtx is locally owned
         if (vitr!=vtx_mapping.end()&&vitr->second<num_local_verts) {
+          //If in traditional mode skip the first pin (source vtx)
           if (!(j%2))
             degree_list[t][vitr->second+1]++;
+          //If in hypergraph mode add to all vertices
+          //   because each vtx has 1 pin to the hyperedge
           else if (isHyperGraph)
             degree_list[t][vitr->second+1]++;
           pin_list[t][j]=vitr->second;
         }
-        else {
+        else {//Otherwise it is a ghost
+          //If the ghost is new then add it
           if (vitr==vtx_mapping.end()) {
             vtx_mapping[v]=num_local_verts+num_ghost_verts;
             pin_list[t][j] = num_local_verts+num_ghost_verts++;
@@ -178,14 +190,18 @@ namespace agi {
         }
       }
     }
+    //In traditional mode the number of edges is half the pins
     if (!isHyperGraph)
       num_local_edges[t] = num_local_pins[t]/2;
+    //Convert degree list into a list of offsets
     for (lid_t i=1;i<num_local_verts+1;i++) {
       degree_list[t][i]+=degree_list[t][i-1];
     }
+    //temp_counts copies the degree_list so we can build the edge_list incrementally
     lid_t* temp_counts = (lid_t*)malloc(num_local_verts*sizeof(lid_t));
     std::memcpy(temp_counts, degree_list[t], num_local_verts*sizeof(lid_t));
     edge_list[t] = new lid_t[degree_list[t][num_local_verts]];
+    //If there are ghost vertices then we make the mapping between localid->globalid
     if (new_ghosts>0) {
       if (ghost_unmap) {
         gid_t* tmp_ghosts = new gid_t[num_ghost_verts];
@@ -198,6 +214,7 @@ namespace agi {
         ghost_unmap = new gid_t[num_ghost_verts];
     }
 
+    //Loop through edges again to build the edge lists
     for (lid_t i=0;i<(lid_t)edge_ids.size();i++) {
       for (lid_t j=pin_degree_list[t][i];j<pin_degree_list[t][i+1];j++) {
         lid_t u = pin_list[t][j];
@@ -205,10 +222,12 @@ namespace agi {
           ghost_unmap[u-num_local_verts] = pins_to_verts[j];
         }
         if (isHyperGraph) {
+          //In hypergraph mode the edges are numbered by a local id/global id
           if (u<num_local_verts)
             edge_list[t][temp_counts[u]++] = i;
         }
         else {
+          //In traditional mode the edge_list stores the destination of the edge
           lid_t v = pin_list[t][++j];
           if (v>=num_local_verts){
             ghost_unmap[v-num_local_verts] = pins_to_verts[j];
