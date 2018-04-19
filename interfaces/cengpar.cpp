@@ -137,4 +137,5 @@ void cengpar_balance(engparInput in, int verbosity) {
   agi::Balancer* balancer = engpar::makeBalancer(input,verbosity);
   double ignored = 0.123;
   balancer->balance(ignored);
+  delete balancer;
 }
