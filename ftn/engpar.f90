@@ -203,8 +203,8 @@ module engpar
   !---------------------------------------------------------------------------
   !> @brief get the migration schedule computed by a balancing method
   !> @param graph(in) engpar graph
-  !> @param verts(in) array of graph vertex global ids
-  !> @param parts(in) array of destination part ids for each vertex
+  !> @param verts(in/out) array of graph vertex global ids
+  !> @param parts(in/out) array of destination part ids for each vertex
   !> @param nverts(in) number of graph vertices
   !---------------------------------------------------------------------------
   subroutine cengpar_getPartition(graph,verts,parts,nverts) &
