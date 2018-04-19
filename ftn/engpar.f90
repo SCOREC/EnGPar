@@ -68,6 +68,51 @@ module engpar
     integer(AGI_EDGE_FT), value :: edgeType
     integer(AGI_PART_FT), intent(in), dimension(splitFactor) :: ranks
   end function
+
+  !---------------------------------------------------------------------------
+  !> @brief create input for the diffusive balaancer
+  !> @param graph(in) engpar graph
+  !> @param stepfactor(in) controls how much weight is migrated in each
+  !>                       iteration, start with a setting of 0.1
+  !> @return input for balancing
+  !---------------------------------------------------------------------------
+  function cengpar_createDiffusiveInput(graph,stepfactor) &
+             bind(C, NAME='cengpar_createDiffusiveInput')
+    use :: iso_c_binding
+    type(c_ptr) :: cengpar_createDiffusiveInput
+    type(c_ptr), value :: graph
+    real(c_double), value :: stepfactor
+  end function
+  !---------------------------------------------------------------------------
+  !>  @brief add entity type to balance
+  !>  @remark add edge type t with tolerance tol to the priority list, 
+  !>  if edge type t appears edge type t' then t has a higher priority than t'
+  !>  @param input (in/out) diffusive input created with 'cengpar_createDiffusiveInput'
+  !>  @param etype (in) -1 represents graph vertices, 0-MAX_TYPES represent edge types
+  !>  @param tol (in) 1.0 + alpha allows for an imbalance of alpha percent,
+  !>                  alpha = 0 requests perfect balancing
+  !---------------------------------------------------------------------------
+  subroutine cengpar_addPriority(input,etype,tol) &
+             bind(C, NAME='cengpar_addPriority')
+    use :: iso_c_binding
+    type(c_ptr), value :: input
+    integer(c_int), value :: etype
+    real(c_double), value :: tol
+  end subroutine
+  !---------------------------------------------------------------------------
+  !>  @brief balance the graph based on the specified input
+  !>  @remark the engparInput object is destroyed
+  !>  @param input (in) the object containing diffusive balancer inputs
+  !>  @param verbosity (In) as verbosity increases the amount of output
+  !>                        increases, min verbosity=0, max verbosity=3
+  !---------------------------------------------------------------------------
+  subroutine cengpar_balance(input,verbosity) &
+             bind(C, NAME='cengpar_balance')
+    use :: iso_c_binding
+    type(c_ptr), value :: input
+    integer(C_INT), intent(in), value :: verbosity
+  end subroutine
+
   !---------------------------------------------------------------------------
   !> @brief load graph from file
   !> @param graph(in/out) empty engpar graph
@@ -189,7 +234,7 @@ module engpar
   !>          divided by the average vertex weight across all parts
   !> @param graph(in/out)  engpar graph
   !> @param tol(in) target maximum imbalance max(vertex weight) / average(vertex weight)
-  !> @param stepFactor(in) controls how much weight is migrated in each
+  !> @param stepfactor(in) controls how much weight is migrated in each
   !>                       iteration, start with a setting of 0.1
   !> @param verbosity(in) the level of output; the higher the value the more output
   !---------------------------------------------------------------------------

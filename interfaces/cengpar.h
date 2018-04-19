@@ -22,6 +22,12 @@ engparInput cengpar_createSplitInput(ngraph g,
     bool isOrig, int splitFactor, double tol,
     agi::etype t, agi::part_t* ranks);
 
+engparInput cengpar_createDiffusiveInput(ngraph g, double stepfactor);
+
+void cengpar_addPriority(engparInput in, int t, double tol);
+
+void cengpar_balance(engparInput in, int verbosity);
+
 void cengpar_loadFromFile(ngraph g, const char fileName[]);
 
 void cengpar_saveToFile(ngraph g, const char fileName[]);

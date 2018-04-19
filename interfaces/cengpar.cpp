@@ -120,3 +120,24 @@ void cengpar_getPartition(ngraph g, agi::gid_t* verts,
   }
   delete ptn;
 }
+
+engparInput cengpar_createDiffusiveInput(ngraph g, double stepfactor) {
+  printf("%s\n", __func__);
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  engpar::Input* input = engpar::createDiffusiveInput(ng,stepfactor);
+  return (engparInput)input;
+}
+
+void cengpar_addPriority(engparInput in, agi::etype t, double tol) {
+  printf("%s\n", __func__);
+  engpar::Input* input = (engpar::Input*)in;
+  input->addPriority(t,tol);
+}
+
+void cengpar_balance(engparInput in, int verbosity) {
+  printf("%s\n", __func__);
+  engpar::Input* input = (engpar::Input*)in;
+  agi::Balancer* balancer = engpar::makeBalancer(input,verbosity);
+  double ignored = 0.123;
+  balancer->balance(ignored);
+}
