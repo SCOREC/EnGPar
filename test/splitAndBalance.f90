@@ -39,18 +39,20 @@ module helperFns
     character(len=256) :: str
     cleanString = trim(str)//c_null_char
   end function
-  subroutine getArgs(self, inGraph, outGraph)
+  subroutine getArgs(self, inGraph, outGraph, splitfactor)
     implicit none
-    integer :: self, numArgs, strlen
-    character(len=256) :: inGraph, outGraph
+    integer :: self, numArgs, strlen, splitfactor
+    character(len=256) :: inGraph, outGraph, arg
     numArgs = command_argument_count()
-    if ( numArgs .ne. 2 ) then
-      if (self==0) write(*,*) "Usage: splitAndBalanceFtn </path/to/input/graph> </path/to/output/graph>"
+    if ( numArgs .ne. 3 ) then
+      if (self==0) write(*,*) "Usage: splitAndBalanceFtn </path/to/input/graph> </path/to/output/graph> <splitfactor>"
       stop
     end if
 
     call get_command_argument(1,inGraph)
     call get_command_argument(2,outGraph)
+    call get_command_argument(3,arg)
+    read(arg,*) splitfactor
 
     if (self==0) then
       write(*,*) "input graph: ", trim(inGraph)
@@ -79,9 +81,8 @@ program main
   call mpi_comm_rank(MPI_COMM_WORLD, self, ierr)
   call cengpar_initialize()
 
-  call getArgs(self, inGraphFileName, outGraphFileName)
+  call getArgs(self, inGraphFileName, outGraphFileName, splitfactor)
 
-  splitFactor = 4
   inSmall = .false.
   call switchToOriginals(splitFactor,inSmall,newComm)
 
@@ -113,7 +114,7 @@ program main
   ! Create the input for diffusive load balancing (vtx>element)
   tol = 1.05
   stepFactor = 0.1
-  verbosity = 1
+  verbosity = 0
   call cengpar_balanceVertices(graph, tol, stepFactor, verbosity);
   call cengpar_checkValidity(graph);
   if (self==0) write(*,*) 'After Vertex Balancing'
