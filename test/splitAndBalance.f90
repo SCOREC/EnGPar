@@ -119,7 +119,7 @@ program main
   if (self==0) write(*,*) 'After Vertex Balancing'
   call cengpar_evaluatePartition(graph)
 
-  ! Create the input for diffusive load balancing (vtx>element)
+  ! Create the input for diffusive load balancing of the graph edges
   diffusiveInput = cengpar_createDiffusiveInput(graph,stepFactor)
   call cengpar_addPriority(diffusiveInput,0,tol)
   call cengpar_balance(diffusiveInput,verbosity);
