@@ -75,7 +75,6 @@ namespace engpar {
     agi::wgt_t my_local = getWeight(g,-1);
     agi::lid_t my_total = g->numTotalVtxs();
     printMaxMinAvgImb(my_local,"Local Vertices");
-    printf("rank %d numTotalVtxs %d\n", PCU_Comm_Self(), my_total);
     printMaxMinAvgImb(my_total,"Total Vertices");
     //Edge type imbalance
     for (agi::etype t = 0;t<g->numEdgeTypes();t++) {
