@@ -68,7 +68,7 @@ program main
 
   integer :: ierr, self
   integer(ENGPAR_EDGE_T) :: edgeType
-  type(c_ptr) :: graph, splitInput
+  type(c_ptr) :: graph, splitInput, diffusiveInput
   logical(C_BOOL) :: inSmall
   real(C_DOUBLE) :: tol, stepfactor
   integer :: splitFactor, verbosity, newComm
@@ -116,8 +116,16 @@ program main
   verbosity = 1
   call cengpar_balanceVertices(graph, tol, stepFactor, verbosity);
   call cengpar_checkValidity(graph);
+  if (self==0) write(*,*) 'After Vertex Balancing'
+  call cengpar_evaluatePartition(graph)
 
-  if (self==0) write(*,*) 'After Balancing'
+  ! Create the input for diffusive load balancing (vtx>element)
+  diffusiveInput = cengpar_createDiffusiveInput(graph,stepFactor)
+  call cengpar_addPriority(diffusiveInput,0,tol)
+  call cengpar_balance(diffusiveInput,verbosity);
+  call cengpar_checkValidity(graph);
+
+  if (self==0) write(*,*) 'After Edge Balancing'
   call cengpar_evaluatePartition(graph)
   call cengpar_saveToFile(graph,cleanString(outGraphFileName))
   call MPI_Comm_free(newComm, ierr)
