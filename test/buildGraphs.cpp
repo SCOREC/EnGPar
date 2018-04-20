@@ -479,3 +479,38 @@ agi::Ngraph* buildEmptyGraph() {
   g->constructGraph(false,verts,weights,edges,degrees,pins,owners);
   return g;  
 }
+
+agi::Ngraph* buildUnbalancedLineHG() {
+  assert(PCU_Comm_Peers()==2);
+  std::vector<agi::gid_t> verts;
+  std::unordered_map<agi::gid_t,agi::part_t> owners;
+  std::vector<agi::gid_t> edges;
+  std::vector<agi::lid_t> degrees;
+  std::vector<agi::gid_t> pins;
+
+  if (PCU_Comm_Self()==0) {
+    for (int i=0;i<3;i++) {
+      verts.push_back(i);
+      edges.push_back(i);
+      degrees.push_back(2);
+      pins.push_back(i);
+      pins.push_back(i+1);
+    }
+    owners[3]=1;
+  }
+  else if (PCU_Comm_Self()==1) {
+    for (int i=3;i<8;i++) {
+      verts.push_back(i);
+      edges.push_back(i-1);
+      degrees.push_back(2);
+      pins.push_back(i-1);
+      pins.push_back(i);
+    }
+    owners[2]=0;
+  }
+  agi::Ngraph* g = agi::createEmptyGraph();
+  std::vector<agi::wgt_t> weights;
+  g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
+  agi::checkValidity(g);
+  return g;
+}

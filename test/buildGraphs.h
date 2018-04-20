@@ -18,4 +18,6 @@ agi::Ngraph* buildRequirementsGraph();
 agi::Ngraph* buildDisconnected2Graph();
 
 agi::Ngraph* buildEmptyGraph();
+
+agi::Ngraph* buildUnbalancedLineHG();
 #endif

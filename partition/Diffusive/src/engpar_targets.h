@@ -13,7 +13,7 @@ namespace engpar {
       Sides::iterator itr;
       for (itr = s->begin();itr!=s->end();itr++) {
         int neighbor = itr->first;
-        bool canSend=s->get(neighbor)<sideTol;
+        bool canSend=s->get(neighbor)<=sideTol;
         for (unsigned int i=0;i<completedTolerances.size();i++) {
           if (completedWs[i]->get(neighbor)>=completedTolerances[i])
             canSend=false;
