@@ -16,9 +16,10 @@ namespace engpar {
     inp->self = PCU_Comm_Self();
     if (inp->isOriginal) {
       if (method ==GLOBAL_PARMETIS) {
-        plan = EnGPar_ParMETIS(inp,PCU_Comm_Peers()*inp->split_factor,false);
+        plan = EnGPar_ParMETIS(inp,inp->total_parts,false);
       }
       else if (method == LOCAL_PARMETIS) {
+        assert(inp->split_factor*PCU_Comm_Peers()==inp->total_parts);
         assert(inp->other_ranks);
         //Set communicator to self
         PCU_Switch_Comm(MPI_COMM_SELF);

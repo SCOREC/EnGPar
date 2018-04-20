@@ -22,6 +22,9 @@ namespace engpar {
                           MPI_Comm largeComm, bool isPartOfSmall,
                           int split_factor,double tolerance,
                           agi::etype adj_type = 0, agi::part_t* others = NULL);
+  Input* createSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
+                          bool isPartOfSmall, double tolerance,
+                          agi::etype adj_type = 0, agi::part_t* others = NULL);
 }
 
 #endif
