@@ -68,6 +68,30 @@ module engpar
     integer(AGI_EDGE_FT), value :: edgeType
     integer(AGI_PART_FT), intent(in), dimension(splitFactor) :: ranks
   end function
+  !---------------------------------------------------------------------------
+  !> @brief create input for splitting
+  !> @param graph(in) engpar graph
+  !> @param smallComm(in) small mpi communicator
+  !> @param largeComm(in) large mpi communicator
+  !> @param isOrig(in) true if process is part of the small communicator
+  !> @param tol(in) target imbalance tolerance used for splitting
+  !> @param edgeType(in) mesh entity dimension used to create graph edges
+  !> @param ranks(in) list of MPI ranks to use for local splitting
+  !> @return input for splitting
+  !---------------------------------------------------------------------------
+  function cengpar_createNSplitInput(graph,smallComm,largeComm,isOrig, &
+             tol,edgeType,ranks) &
+             bind(C, NAME='cengpar_createNSplitInput')
+    use :: iso_c_binding
+    type(c_ptr) :: cengpar_createNSplitInput
+    type(c_ptr), value :: graph
+    integer(c_int), value :: smallComm
+    integer(c_int), value :: largeComm
+    logical(c_bool), intent(in), value :: isOrig
+    real(c_double), value :: tol
+    integer(AGI_EDGE_FT), value :: edgeType
+    integer(AGI_PART_FT), intent(in), dimension(:) :: ranks
+  end function
 
   !---------------------------------------------------------------------------
   !> @brief create input for the diffusive balaancer

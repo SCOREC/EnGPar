@@ -89,6 +89,9 @@ if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
   make_exe(splitAndBalanceFtn splitAndBalance.f90)
   set_property(TARGET splitAndBalanceFtn PROPERTY LINKER_LANGUAGE Fortran)
   set_source_files_properties(splitAndBalance.f90 PROPERTIES COMPILE_FLAGS -cpp)
+  make_exe(splitNFtn splitN.f90)
+  set_property(TARGET splitNFtn PROPERTY LINKER_LANGUAGE Fortran)
+  set_source_files_properties(splitN.f90 PROPERTIES COMPILE_FLAGS -cpp)
 endif()
 
 #Ctest file

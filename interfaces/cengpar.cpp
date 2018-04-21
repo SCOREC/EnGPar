@@ -36,6 +36,14 @@ engparInput cengpar_createSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint larg
   return (engparInput)input;
 }
 
+engparInput cengpar_createNSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
+    bool isOrig, double tol, agi::etype t, agi::part_t* ranks) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  engpar::Input* input = engpar::createSplitInput(
+      ng,smallComm,largeComm,isOrig,tol,t,ranks);
+  return (engparInput)input;
+}
+
 void cengpar_loadFromFile(ngraph g, const char fileName[]) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   ng->loadFromFile(fileName);
