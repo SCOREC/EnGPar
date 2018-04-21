@@ -6,7 +6,7 @@
 #include <PCU.h>
 #include <sys/types.h>
 #include <unistd.h>
-void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
+void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
