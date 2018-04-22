@@ -6,7 +6,7 @@
 #include <PCU.h>
 #include <sys/types.h>
 #include <unistd.h>
-void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
+void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -14,7 +14,7 @@ int main(int argc, char* argv[]) {
 
   if (argc != 4) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <graph_file> <split_factor> <out_file>\n", argv[0]);
+      printf("Usage: %s <graph_file> <original_num_parts> <out_file>\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
@@ -23,8 +23,8 @@ int main(int argc, char* argv[]) {
   //Application code:
   bool isOriginal = false;
   MPI_Comm newComm;
-  int split_factor = atoi(argv[2]);
-  switchToOriginals(split_factor, isOriginal,newComm);
+  int smallSize = atoi(argv[2]);
+  switchToOriginals(smallSize, isOriginal,newComm);
 
   //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
   EnGPar_Switch_Comm(newComm);
@@ -43,7 +43,8 @@ int main(int argc, char* argv[]) {
   engpar::Input* input = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                         tolerance,t);
 
-  engpar::evaluatePartition(g);
+  if (isOriginal)
+    engpar::evaluatePartition(g);
   engpar::split(input,engpar::GLOBAL_PARMETIS);
   engpar::evaluatePartition(g);
 
@@ -59,15 +60,15 @@ int main(int argc, char* argv[]) {
 }
 
 
-void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm) {
+void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm) {
   int self = PCU_Comm_Self();
   int group;
   int groupRank;
-  isOriginal = self%split_factor==0;
+  isOriginal = self<smallSize;
 
   if (isOriginal) {
     group=0;
-    groupRank=self/split_factor;
+    groupRank=self;
   }
   else {
     group = 1;

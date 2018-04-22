@@ -138,32 +138,33 @@ if (ENABLE_PARMETIS)
   mpi_test(splitCube1to2 2
     ./split
     "${GRAPHS}/cube/cube"
-    2
+    1
     cake/)
   
   mpi_test(splitCube1to4 4
     ./split
     "${GRAPHS}/cube/cube"
-    4
+    1
     cake/)
 
   mpi_test(splitCube4to8 8
     ./split
     "${GRAPHS}/cube/4/"
-    2
+    4
+    cake/)
+
+  mpi_test(splitTorus4to6 6
+    ./split
+    "${GRAPHS}/torus/4/"
+    4
     cake/)
 
   mpi_test(splitTorus4to8 8
     ./split
     "${GRAPHS}/torus/4_01/"
-    2
-    cake/)
-
-  mpi_test(splitTorus4to6 6
-    ./splitN
-    "${GRAPHS}/torus/4/"
     4
     cake/)
+
 
   mpi_test(localSplit1to4 4
     ./local_split
@@ -272,6 +273,6 @@ if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
   mpi_test(ftnTest 2 ./ftnTest)
   mpi_test(splitAndBalanceFtn 4 ./splitAndBalanceFtn
     ${GRAPHS}/cube/cube ${GRAPHS}/cube/cube_4p 4)
-  mpi_test(splitNFtn 5 ./splitNFtn
+  mpi_test(splitFtn 5 ./splitFtn
     ${GRAPHS}/torus/4/ ${GRAPHS}/torus/5/ 4)
 endif()
