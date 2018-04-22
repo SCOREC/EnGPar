@@ -24,12 +24,24 @@ ngraph cengpar_createEmptyGraph() {
   return (ngraph)ng;
 }
 
-engparInput cengpar_createSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
+engparInput cengpar_createGlobalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
+                                           bool isOrig,double tol, agi::etype t) {
+  agi::Ngraph* ng = (agi::Ngraph*)g;
+  //fprintf(stderr, "%s %d graph %p\n", __func__, PCU_Comm_Self(), (void*)ng);
+  engpar::Input* input = engpar::createGlobalSplitInput(ng,smallComm,largeComm,
+                                                        isOrig,tol,t);
+  //fprintf(stderr, "%s %d input %p\n", __func__, PCU_Comm_Self(), (void*)input);
+  if(isOrig)
+    fprintf(stderr, "%s peers %d input %p input->g %p graph %p\n", __func__, PCU_Comm_Peers(), (void*)input, (void*)(input->g), (void*)ng);
+  return (engparInput)input;
+}
+
+engparInput cengpar_createLocalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
     bool isOrig, int splitFactor, double tol, agi::etype t, agi::part_t* ranks) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   //fprintf(stderr, "%s %d graph %p\n", __func__, PCU_Comm_Self(), (void*)ng);
-  engpar::Input* input = engpar::createSplitInput(ng,smallComm,largeComm,
-                                                  isOrig,splitFactor,tol,t,ranks);
+  engpar::Input* input = engpar::createLocalSplitInput(ng,smallComm,largeComm,
+                                                       isOrig,splitFactor,tol,ranks,t);
   //fprintf(stderr, "%s %d input %p\n", __func__, PCU_Comm_Self(), (void*)input);
   if(isOrig)
     fprintf(stderr, "%s peers %d input %p input->g %p graph %p\n", __func__, PCU_Comm_Peers(), (void*)input, (void*)(input->g), (void*)ng);

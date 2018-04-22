@@ -40,8 +40,8 @@ int main(int argc, char* argv[]) {
   //Create the input
   double tolerance = 1.05;
   agi::etype t = 0;
-  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
+  engpar::Input* input = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                        tolerance,t);
 
   engpar::evaluatePartition(g);
   engpar::split(input,engpar::GLOBAL_PARMETIS);

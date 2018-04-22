@@ -41,8 +41,8 @@ int main(int argc, char* argv[]) {
   //Create the input
   double tolerance = 1.05;
   agi::etype t = 0;
-  engpar::Input* input_s = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t);
+  engpar::Input* input_s = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                          tolerance,t);
   //Perform split
   engpar::split(input_s,engpar::GLOBAL_PARMETIS);
   if (!PCU_Comm_Self())

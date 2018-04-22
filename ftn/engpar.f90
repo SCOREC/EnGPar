@@ -48,25 +48,48 @@ module engpar
   !> @param smallComm(in) small mpi communicator
   !> @param largeComm(in) large mpi communicator
   !> @param isOrig(in) true if process is part of the small communicator
-  !> @param splitFactor(in) = |large comm| / |small comm|
   !> @param tol(in) target imbalance tolerance used for splitting
   !> @param edgeType(in) mesh entity dimension used to create graph edges
-  !> @param ranks(in) list of MPI ranks to use for local splitting
   !> @return input for splitting
   !---------------------------------------------------------------------------
-  function cengpar_createSplitInput(graph,smallComm,largeComm,isOrig,splitFactor, &
-             tol,edgeType,ranks) &
-             bind(C, NAME='cengpar_createSplitInput')
+  function cengpar_createGlobalSplitInput(graph,smallComm,largeComm,isOrig, &
+             tol,edgeType) &
+             bind(C, NAME='cengpar_createGlobalSplitInput')
     use :: iso_c_binding
-    type(c_ptr) :: cengpar_createSplitInput
+    type(c_ptr) :: cengpar_createGlobalSplitInput
+    type(c_ptr), value :: graph
+    integer(c_int), value :: smallComm
+    integer(c_int), value :: largeComm
+    logical(c_bool), intent(in), value :: isOrig
+    real(c_double), value :: tol
+    integer(AGI_EDGE_FT), value :: edgeType
+  end function
+
+    !---------------------------------------------------------------------------
+  !> @brief create input for splitting
+  !> @param graph(in) engpar graph
+  !> @param smallComm(in) small mpi communicator
+  !> @param largeComm(in) large mpi communicator
+  !> @param isOrig(in) true if process is part of the small communicator
+  !> @param splitFactor(in) = |large comm| / |small comm|
+  !> @param tol(in) target imbalance tolerance used for splitting
+  !> @param ranks(in) list of MPI ranks to use for local splitting
+  !> @param edgeType(in) mesh entity dimension used to create graph edges
+  !> @return input for splitting
+  !---------------------------------------------------------------------------
+  function cengpar_createLocalSplitInput(graph,smallComm,largeComm,isOrig,splitFactor, &
+             tol,ranks,edgeType) &
+             bind(C, NAME='cengpar_createLocalSplitInput')
+    use :: iso_c_binding
+    type(c_ptr) :: cengpar_createLocalSplitInput
     type(c_ptr), value :: graph
     integer(c_int), value :: smallComm
     integer(c_int), value :: largeComm
     logical(c_bool), intent(in), value :: isOrig
     integer(c_int), value :: splitFactor
     real(c_double), value :: tol
-    integer(AGI_EDGE_FT), value :: edgeType
     integer(AGI_PART_FT), intent(in), dimension(splitFactor) :: ranks
+    integer(AGI_EDGE_FT), value :: edgeType
   end function
 
   !---------------------------------------------------------------------------
@@ -146,7 +169,7 @@ module engpar
   end subroutine
   !---------------------------------------------------------------------------
   !> @brief split the graph
-  !> @param input (in/out) split input created with 'cengpar_createSplitInput'
+  !> @param input (in/out) split input created with 'cengpar_create*SplitInput'
   !> @param splitMethod (in) string matching one of the engpar_split.h enums
   !---------------------------------------------------------------------------
   subroutine cengpar_split(input,splitMethod) &

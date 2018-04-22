@@ -39,8 +39,8 @@ int main(int argc, char* argv[]) {
   for (int i=0;i<split_factor;i++) {
     others[i] = my_rank+i;
   }
-  engpar::Input* input = engpar::createSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
-                                                  split_factor,tolerance,t,others);
+  engpar::Input* input = engpar::createLocalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                       split_factor,tolerance,others,t);
   
   if (isOriginal) {
     //Only the original parts will construct the graph
