@@ -17,14 +17,15 @@ typedef void* engparInput;
 
 ngraph cengpar_createEmptyGraph();
 
-engparInput cengpar_createGlobalSplitInput(ngraph g,
-    MPI_Fint smallComm, MPI_Fint largeComm,
-    bool isOrig, double tol, agi::etype t);
-
 engparInput cengpar_createLocalSplitInput(ngraph g,
     MPI_Fint smallComm, MPI_Fint largeComm,
     bool isOrig, int splitFactor, double tol,
     agi::part_t* ranks, agi::etype t);
+
+engparInput cengpar_createNSplitInput(ngraph g,
+    MPI_Fint smallComm, MPI_Fint largeComm,
+    bool isOrig, double tol,
+    agi::etype t);
 
 engparInput cengpar_createDiffusiveInput(ngraph g, double stepfactor);
 
