@@ -103,7 +103,7 @@ program main
   edgeType = 0
   tol = 1.05
   ranks = 0
-  splitInput = cengpar_createNSplitInput(graph,newComm,MPI_COMM_WORLD,inSmall,tol,edgeType)
+  splitInput = cengpar_createGlobalSplitInput(graph,newComm,MPI_COMM_WORLD,inSmall,tol,edgeType)
 
   ! Perform split 
   splitMethod = c_char_"GLOBAL_PARMETIS"//c_null_char

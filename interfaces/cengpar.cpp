@@ -31,7 +31,7 @@ engparInput cengpar_createLocalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint
   return (engparInput)input;
 }
 
-engparInput cengpar_createNSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
+engparInput cengpar_createGlobalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
                                       bool isOrig, double tol, agi::etype t) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
   engpar::Input* input = engpar::createGlobalSplitInput(
