@@ -37,6 +37,10 @@ namespace engpar {
       my_total++;
       d[key]++;
     }
+    void increment2(int key) {
+      d[key]++;
+    }
+
     void set(int key, T value) {
       iterator old = d.find(key);
       if (old!=d.end())

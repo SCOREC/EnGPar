@@ -19,9 +19,10 @@ namespace engpar {
           agi::Peers::iterator itr;
           for (itr=res.begin();itr!=res.end();itr++) {
             if (*itr!=PCU_Comm_Self()) {
-              increment(*itr);
+              increment2(*itr);
             }
           }
+          my_total++;
         }
       }
       in->g->destroy(eitr);
