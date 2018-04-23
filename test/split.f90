@@ -94,7 +94,6 @@ program main
   graph = cengpar_createEmptyGraph()
  
   if (inSmall) then
-    write(*,*) 'rank', self, 'is in small'
     ! Only the original parts will construct the graph
     call cengpar_loadFromFile(graph,cleanString(inGraphFileName))
     call cengpar_evaluatePartition(graph);
