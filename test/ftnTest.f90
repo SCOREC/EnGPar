@@ -83,6 +83,7 @@ program main
   do i=1, nverts
     write(*,*) i, verts(i), parts(i)
   end do
+  call cengpar_saveToFile(graph,'foo'//c_null_char)
   call cengpar_destroyGraph(graph);
   call cengpar_finalize()
   call mpi_finalize(ierr)

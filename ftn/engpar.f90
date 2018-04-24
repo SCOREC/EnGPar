@@ -80,11 +80,11 @@ module engpar
   !> @param ranks(in) list of MPI ranks to use for local splitting
   !> @return input for splitting
   !---------------------------------------------------------------------------
-  function cengpar_createNSplitInput(graph,smallComm,largeComm,isOrig, &
+  function cengpar_createGlobalSplitInput(graph,smallComm,largeComm,isOrig, &
              tol,edgeType) &
-             bind(C, NAME='cengpar_createNSplitInput')
+             bind(C, NAME='cengpar_createGlobalSplitInput')
     use :: iso_c_binding
-    type(c_ptr) :: cengpar_createNSplitInput
+    type(c_ptr) :: cengpar_createGlobalSplitInput
     type(c_ptr), value :: graph
     integer(c_int), value :: smallComm
     integer(c_int), value :: largeComm

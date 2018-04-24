@@ -22,7 +22,7 @@ engparInput cengpar_createLocalSplitInput(ngraph g,
     bool isOrig, int splitFactor, double tol,
     agi::part_t* ranks, agi::etype t);
 
-engparInput cengpar_createNSplitInput(ngraph g,
+engparInput cengpar_createGlobalSplitInput(ngraph g,
     MPI_Fint smallComm, MPI_Fint largeComm,
     bool isOrig, double tol,
     agi::etype t);
