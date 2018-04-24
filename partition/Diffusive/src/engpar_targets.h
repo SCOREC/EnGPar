@@ -26,6 +26,8 @@ namespace engpar {
           wgt_t diff = myW-neighborW;
           wgt_t sideFraction = itr->second;
           sideFraction /= s->total();
+          if (!PCU_Comm_Self())
+            printf("Special %f %d %d\n",sideFraction,itr->second,s->total());
           wgt_t scaledW = diff * sideFraction* in->step_factor;
           set(neighbor,scaledW);
         }

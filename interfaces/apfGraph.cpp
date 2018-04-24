@@ -41,7 +41,6 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   for (int i=0;i<MAX_TYPES;i++)
     edge_nums[i] = NULL;
   isHyperGraph=true;
-  primary_dimension = mesh->getDimension();
   checkDims(mesh->getDimension(),primary_dimension,secondary_dimension);
 
   m = mesh;
@@ -60,7 +59,6 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
   for (int i=0;i<MAX_TYPES;i++)
     edge_nums[i] = NULL;
   isHyperGraph=true;
-  primary_dimension = mesh->getDimension();
   for (int i=0;i<n;i++) {
     checkDims(mesh->getDimension(),primary_dimension,secondary_dimensions[i]);
   }
@@ -102,6 +100,12 @@ void apfGraph::checkDims(int dim, int primary, int second) {
       printf("[ERROR] primary and secondary dimensions cannot be equal\n");
     throw 2;
   }
+  if (primary != dim && PCU_Comm_Peers() > 1) {
+    if (!PCU_Comm_Self())
+      printf("[ERROR] partitioned mesh not supported for primary!=mesh->getDimension\n");
+    throw 3;
+  }
+
 
 }
 

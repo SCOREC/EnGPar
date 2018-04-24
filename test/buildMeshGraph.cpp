@@ -41,20 +41,20 @@ int main(int argc, char* argv[]) {
 
   //Check dimension too high
   //This doesn't get caught since primary is assumed to be 3 for now
-  /*
   try {
-    agi::Ngraph* g(m,5,0);
+    agi::Ngraph* g = agi::createAPFGraph(m,5,0);
+    agi::destroyGraph(g);
     throw "FAIL\n";
   }
   catch(int e) {
     assert(e==1);
     printf("Error caught successfully\n");
   } 
-  */ 
+   
   //check dimension too low
   try {
     agi::Ngraph* g = agi::createAPFGraph(m,3,-1);
-    destroyGraph(g);
+    agi::destroyGraph(g);
     throw "FAIL\n";
   }
   catch(int e) {
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
   //check primary==secondary
   try {
     agi::Ngraph* g = agi::createAPFGraph(m,3,3);
-    destroyGraph(g);
+    agi::destroyGraph(g);
     throw "FAIL!\n";
   }
   catch(int e) {
@@ -89,18 +89,26 @@ int main(int argc, char* argv[]) {
 
   PCU_Barrier();
   //Test of multiple edge types, vertices=0,faces=1
-  int secondaries[2] = {0,2};
-  if (!PCU_Comm_Self())
-    printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dims: %d,%d\n",
-           primary,secondaries[0],secondaries[1]);
+  try {
+    int secondaries[2] = {0,2};
+    if (!PCU_Comm_Self())
+      printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dims: %d,%d\n",
+             primary,secondaries[0],secondaries[1]);
 
-  agi::Ngraph* g2 = agi::createAPFGraph(m,primary,secondaries,2);
-  MPI_Barrier(MPI_COMM_WORLD);
-  testGraph(m,g2,primary,secondaries,2);
+    agi::Ngraph* g2 = agi::createAPFGraph(m,primary,secondaries,2);
+    MPI_Barrier(MPI_COMM_WORLD);
+    testGraph(m,g2,primary,secondaries,2);
 
-  agi::checkValidity(g2);
-  agi::destroyGraph(g2);
-
+    agi::checkValidity(g2);
+    agi::destroyGraph(g2);
+  }
+  catch(int e) {
+    if (primary==0||primary==2) {
+      assert(e==2);
+      if (!PCU_Comm_Self())
+        printf("Error caught successfully\n");
+    }
+  }
   m->destroyNative();
   apf::destroyMesh(m);
 

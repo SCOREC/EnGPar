@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   input->addPriority(-1,tol);
 
   //Create the balancer
-  int verbosity = 1;
+  int verbosity = 3;
   agi::Balancer* balancer = engpar::makeBalancer(input, verbosity);
   balancer->balance(tol);
 

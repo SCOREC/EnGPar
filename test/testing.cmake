@@ -35,6 +35,20 @@ IF(ENABLE_PUMI)
     3
     2)
 
+  mpi_test(buildSerialMeshGraph01 1
+    ./buildMeshGraph
+    ${MESHES}/cube/cube.dmg
+    ${MESHES}/cube/pumi11/cube.smb
+    0
+    1)
+
+  mpi_test(buildSerialMeshGraph13 1
+    ./buildMeshGraph
+    ${MESHES}/cube/cube.dmg
+    ${MESHES}/cube/pumi11/cube.smb
+    1
+    3)
+
   mpi_test(buildSerialMeshGraph31 1
     ./buildMeshGraph
     "${MESHES}/cube/cube.dmg"
