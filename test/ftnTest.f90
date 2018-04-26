@@ -13,7 +13,7 @@ program main
   integer(ENGPAR_GID_T), dimension(nghosts) :: ghostverts
   integer(ENGPAR_PART_T), dimension(nghosts):: ghostowners
   integer(ENGPAR_PART_T), dimension(:), allocatable :: parts
-  type(c_ptr) :: graph
+  type(c_ptr) :: graph, diffusiveInput
   logical(C_BOOL) :: isHg = .false.
   real(C_DOUBLE) :: tol, stepfactor
   integer :: verbosity
@@ -71,10 +71,16 @@ program main
   call cengpar_constructEdges(graph, edges, degs, eweights, pins, nedges, npins)
   call cengpar_constructGhosts(graph, ghostverts, ghostowners, nghosts)
   call cengpar_checkValidity(graph);
+
   tol = 1.05
   stepfactor = 0.1
   verbosity = 1
-  call cengpar_balanceVertices(graph, tol, stepfactor, verbosity);
+  ! Create the input for diffusive load balancing of the graph vertices
+  diffusiveInput = cengpar_createDiffusiveInput(graph,stepfactor)
+  call cengpar_addPriority(diffusiveInput,-1,tol)
+  call cengpar_balance(diffusiveInput,verbosity);
+  call cengpar_checkValidity(graph)
+
   allocate(parts(nverts))
   ! verts and parts are output arrays, verts[i] is assigned to process
   !   parts[i], i=1:nverts

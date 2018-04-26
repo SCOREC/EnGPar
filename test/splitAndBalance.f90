@@ -115,13 +115,9 @@ program main
   tol = 1.05
   stepFactor = 0.1
   verbosity = 0
-  call cengpar_balanceVertices(graph, tol, stepFactor, verbosity);
-  call cengpar_checkValidity(graph);
-  if (self==0) write(*,*) 'After Vertex Balancing'
-  call cengpar_evaluatePartition(graph)
-
-  ! Create the input for diffusive load balancing of the graph edges
+  ! Create the input for diffusive load balancing of the graph vertices and edges
   diffusiveInput = cengpar_createDiffusiveInput(graph,stepFactor)
+  call cengpar_addPriority(diffusiveInput,-1,tol)
   call cengpar_addPriority(diffusiveInput,0,tol)
   call cengpar_balance(diffusiveInput,verbosity);
   call cengpar_checkValidity(graph);
