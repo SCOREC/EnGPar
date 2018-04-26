@@ -76,6 +76,7 @@ namespace engpar {
   }
   void Selector::insertInteriorEdges(agi::GraphVertex* vtx, agi::part_t dest,
                                      EdgeSet& edges, int dim) {
+    
     agi::EdgeIterator* eitr = g->edges(vtx,dim);
     agi::GraphEdge* e;
     while ((e = g->iterate(eitr))) {
@@ -126,29 +127,41 @@ namespace engpar {
   };
   typedef std::set<Migr,CompareMigr> MigrComm;
 
+
   //return  map<int neighbor, pair<double vtxW, double edgeW> > where
   //  neighbor is a neighbor's part id
   //  vtxW is the vtx weight capacity of neighbor
   //  edgeW is the edge weight capacity of neighbor
   Midd* Selector::trim(Targets*, agi::Migration* plan) {
     //compute the weight of the vertices and edges being sent to each peer
+
+    std::unordered_set<part_t> neighbors;
     PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
+    std::unordered_map<int,double> vtx_weight;
     agi::Migration::iterator itr;
     for(itr = plan->begin();itr!=plan->end();itr++) {
       agi::GraphVertex* vtx = *itr;
       const int dest = plan->get(vtx);
+      neighbors.insert(dest);
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-        insertInteriorEdges(vtx, dest, peerEdges[i][dest],
-                            completed_dimensions->at(i));
+        if (completed_dimensions->at(i)!=-1)
+          insertInteriorEdges(vtx, dest, peerEdges[i][dest],
+                              completed_dimensions->at(i));
+        else
+          vtx_weight[dest]+=g->weight(vtx);
       }
     }
     //send vtx and edge weight
     PCU_Comm_Begin();
-    PeerEdgeSet::iterator sitr;
-    for (sitr = peerEdges[0].begin();sitr!=peerEdges[0].end();sitr++) {
-      const int dest = sitr->first;
+    std::unordered_set<part_t>::iterator sitr;
+    for (sitr = neighbors.begin();sitr!=neighbors.end();sitr++) {
+      const int dest = *sitr;
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-        double w = weight(peerEdges[i][dest]);
+        double w;
+        if (completed_dimensions->at(i)!=-1)
+          w = weight(peerEdges[i][dest]);
+        else
+          w = vtx_weight[dest];
         PCU_COMM_PACK(dest, w);
       }
     }
@@ -164,6 +177,7 @@ namespace engpar {
       }
       incoming.insert(migr);        
     }
+
     Midd accept;
     Ws avail = new double[completed_dimensions->size()];
     bool isAvail=true;
@@ -236,6 +250,7 @@ namespace engpar {
     //Plan is a vector so this iterates over the plan in the order they were
     //    selected in.
     PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
+    std::unordered_map<int,double> vtx_weight;
     agi::Migration::iterator pitr;
     for(pitr = plan->begin();pitr!=plan->end();pitr++) {
       agi::GraphVertex* v = *pitr;
@@ -244,16 +259,26 @@ namespace engpar {
       EdgeSet* tmpEdges = new EdgeSet[completed_dimensions->size()];
       
       for (unsigned int i=0;i<completed_dimensions->size();i++) {
-        tempInsertInteriorEdges(v, dest, tmpEdges[i],
-                                completed_dimensions->at(i),
-                                peerEdges[i][dest]);
-        if(weight(peerEdges[i][dest])+weight(tmpEdges[i])>(*capacity)[dest][i])
-          isSpace=false;
+        if (completed_dimensions->at(i)!=-1) {
+          tempInsertInteriorEdges(v, dest, tmpEdges[i],
+                                  completed_dimensions->at(i),
+                                  peerEdges[i][dest]);
+          if(weight(peerEdges[i][dest])+weight(tmpEdges[i])>(*capacity)[dest][i])
+            isSpace=false;
+        }
+        else {
+          if (vtx_weight[dest]+ g->weight(v) > (*capacity)[dest][i])
+            isSpace = false;
+        }
       }
       if (isSpace) {
         keep.push_back(PlanPair(v,dest));
-        for (unsigned int i=0;i<completed_dimensions->size();i++) 
-          combineSets(peerEdges[i][dest],tmpEdges[i]);
+        for (unsigned int i=0;i<completed_dimensions->size();i++) {
+          if (completed_dimensions->at(i)!=-1)
+            combineSets(peerEdges[i][dest],tmpEdges[i]);
+          else
+            vtx_weight[dest]+=g->weight(v);
+        }
       }
       delete [] tmpEdges;
     }
