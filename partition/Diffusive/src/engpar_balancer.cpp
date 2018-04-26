@@ -128,6 +128,7 @@ namespace engpar {
       sizes[0] = plan->size();
       Midd* midd = selector->trim(targets,plan);
       selector->cancel(plan,midd);
+      
       sizes[1]=plan->size();
       if (verbosity>=2) {
         PCU_Add_Ints(sizes,2);
@@ -181,7 +182,7 @@ namespace engpar {
 
     return true; //not done balancing
   }
-  void Balancer::balance(double) {
+  void Balancer::balance(double tolerance) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     if (EnGPar_Is_Log_Open()) {
       char message[1000];
@@ -228,8 +229,8 @@ namespace engpar {
     sd = new SDSlope;
     
     //Set imbalance tolerance
-    double tol=1.1;
-    if (inp->tolerances.size()>index)
+    double tol=tolerance;
+    if (inp->tolerances.size()>index&&inp->tolerances[index]<tol)
       tol = inp->tolerances[index];
     
     //Set side tolerance
@@ -280,8 +281,9 @@ namespace engpar {
         delete sd;
         sd = new SDSlope;
         //Set new tolerance
-        if (inp->tolerances.size()>index)
-          tol = inp->tolerances[index];        
+        tol=tolerance;
+        if (inp->tolerances.size()>index&&inp->tolerances[index]<tol)
+          tol = inp->tolerances[index];
         //Set side tolerance
         Sides* sides = makeSides(inp);
         sideTol = averageSides(sides);
