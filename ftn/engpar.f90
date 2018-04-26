@@ -253,23 +253,6 @@ module engpar
     type(c_ptr), value :: graph
   end subroutine
   !---------------------------------------------------------------------------
-  !> @brief balance the graph vertices
-  !> @remark the imbalance is specified as the maximum vertex weight across all parts
-  !>          divided by the average vertex weight across all parts
-  !> @param graph(in/out)  engpar graph
-  !> @param tol(in) target maximum imbalance max(vertex weight) / average(vertex weight)
-  !> @param stepfactor(in) controls how much weight is migrated in each
-  !>                       iteration, start with a setting of 0.1
-  !> @param verbosity(in) the level of output; the higher the value the more output
-  !---------------------------------------------------------------------------
-  subroutine cengpar_balanceVertices(graph,tol,stepfactor,verbosity) &
-             bind(C, NAME='cengpar_balanceVertices')
-    use :: iso_c_binding
-    type(c_ptr), value :: graph
-    real(C_DOUBLE), intent(in), value :: tol, stepfactor
-    integer(C_INT), intent(in), value :: verbosity
-  end subroutine
-  !---------------------------------------------------------------------------
   !> @brief get the migration schedule computed by a balancing method
   !> @param graph(in) engpar graph
   !> @param verts(in/out) array of graph vertex global ids

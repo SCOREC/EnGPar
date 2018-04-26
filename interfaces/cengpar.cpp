@@ -101,13 +101,6 @@ void cengpar_destroyGraph(ngraph g) {
   agi::destroyGraph(ng);
 }
 
-void cengpar_balanceVertices(ngraph g, double tol, double stepfactor, int verbosity) {
-  agi::Ngraph* ng = (agi::Ngraph*)g;
-  agi::Balancer* b = engpar::makeVtxBalancer(ng, stepfactor, verbosity);
-  b->balance(tol);
-  delete b;
-}
-
 void cengpar_getPartition(ngraph g, agi::gid_t* verts,
     agi::part_t* parts, int nverts) {
   agi::Ngraph* ng = (agi::Ngraph*)g;
