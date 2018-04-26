@@ -120,7 +120,7 @@ module engpar
              bind(C, NAME='cengpar_addPriority')
     use :: iso_c_binding
     type(c_ptr), value :: input
-    integer(c_int), value :: etype
+    integer(AGI_EDGE_FT), value :: etype
     real(c_double), value :: tol
   end subroutine
   !---------------------------------------------------------------------------
@@ -205,10 +205,12 @@ module engpar
   !> @param pins(in) array of graph vertices bounding each edge
   !> @param nedges(in) number of graph edges
   !> @param npins(in) number of pins
+  !> @return created edge type (used in cengpar_addPriority and cengpar_createGlobalSplitInput)
   !---------------------------------------------------------------------------
-  subroutine cengpar_constructEdges(graph,edges,degs,weights,pins,nedges,npins) &
+  function cengpar_constructEdges(graph,edges,degs,weights,pins,nedges,npins) &
              bind(C, NAME='cengpar_constructEdges')
     use :: iso_c_binding
+    integer(AGI_EDGE_FT) :: cengpar_constructEdges
     type(c_ptr), value :: graph
     integer(AGI_GID_FT), intent(in), dimension(nedges) :: edges
     integer(AGI_LID_FT), intent(in), dimension(nedges) :: degs
@@ -216,7 +218,7 @@ module engpar
     integer(AGI_GID_FT), intent(in), dimension(npins) :: pins
     integer(C_INT), intent(in), value :: nedges
     integer(C_INT), intent(in), value :: npins
-  end subroutine
+  end function
   !---------------------------------------------------------------------------
   !> @brief construct ghost vertices
   !> @remark for each $e(u,v)$, a ghost vertex is needed if the owner of $u$ is not the owner of $v$.
