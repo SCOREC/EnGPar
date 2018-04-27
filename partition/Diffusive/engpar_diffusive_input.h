@@ -67,6 +67,7 @@ namespace engpar {
      * defaults to false
      */
     bool bfsPush;
+
   };
 }
 

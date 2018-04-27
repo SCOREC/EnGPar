@@ -43,13 +43,13 @@ namespace {
 
 namespace engpar {
 
-  wgt_t getMaxWeight(agi::Ngraph* g, int dimension) {
-    wgt_t w = getWeight(g,dimension);
+  wgt_t getMaxWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
+    wgt_t w = getWeight(g,dimension,countGhosts);
     return PCU_Max_Double(w);
   }
 
-  wgt_t getAvgWeight(agi::Ngraph* g, int dimension) {
-    wgt_t w = getWeight(g,dimension);
+  wgt_t getAvgWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
+    wgt_t w = getWeight(g,dimension,countGhosts);
     return PCU_Add_Double(w) / PCU_Comm_Peers();
   }
   double averageSides(Sides* s) {
@@ -74,7 +74,7 @@ namespace engpar {
   bool Balancer::runStep(double tolerance) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     double stepTime = PCU_Time();
-    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension));
+    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension,inp->countGhosts));
     //Check for completition of criteria
     if (imb < tolerance)
       return false;
@@ -257,8 +257,8 @@ namespace engpar {
         // the specified imbalance (tgtMaxW) or, if it wasn't reached, the
         // current weight (maxW).
         completed_dimensions.push_back(target_dimension);
-        double maxW = getMaxWeight(input->g,target_dimension);
-        double tgtMaxW = getAvgWeight(input->g,target_dimension)*tol;
+        double maxW = getMaxWeight(input->g,target_dimension, inp->countGhosts);
+        double tgtMaxW = getAvgWeight(input->g,target_dimension,inp->countGhosts)*tol;
         maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
         completed_weights.push_back(maxW);
         

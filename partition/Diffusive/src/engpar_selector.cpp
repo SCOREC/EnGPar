@@ -182,7 +182,7 @@ namespace engpar {
     Ws avail = new double[completed_dimensions->size()];
     bool isAvail=true;
     for (unsigned int i=0;i<completed_dimensions->size();i++) {
-      double totW = getWeight(g,completed_dimensions->at(i));
+      double totW = getWeight(g,completed_dimensions->at(i),in->countGhosts);
       avail[i] = completed_weights->at(i) - totW;
       if (avail[i]<0)
         isAvail=false;

@@ -1,14 +1,17 @@
 #include "engpar.h"
 #include <PCU.h>
 namespace engpar {
-  wgt_t getWeight(agi::Ngraph* g, int dimension) {
+  wgt_t getWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
     wgt_t w =0;
     if (dimension==-1) {
+      
       //calculate the total weight of the vertices
       agi::GraphVertex* vtx;
       agi::VertexIterator* vitr = g->begin();
       while ((vtx = g->iterate(vitr))) 
         w+=g->weight(vtx);
+      if (countGhosts)
+	w+=g->numGhostVtxs();
     }
     else {
       agi::GraphEdge* edge;
@@ -73,7 +76,7 @@ namespace engpar {
 
     //Vertex Imbalance
     agi::wgt_t my_local = getWeight(g,-1);
-    agi::lid_t my_total = g->numTotalVtxs();
+    agi::lid_t my_total = getWeight(g,-1,true);
     printMaxMinAvgImb(my_local,"Local Vertices");
     printMaxMinAvgImb(my_total,"Total Vertices");
     //Edge type imbalance

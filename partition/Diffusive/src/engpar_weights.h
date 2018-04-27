@@ -12,7 +12,7 @@ namespace engpar {
   public:
     Weights(DiffusiveInput* in,Sides* s, int target_dimension) {
       //calculate the total weight of the vertices
-      my_weight = getWeight(in->g,target_dimension);
+      my_weight = getWeight(in->g,target_dimension,in->countGhosts);
       //Share weight with all neighbors
       PCU_Comm_Begin();
       Sides::iterator itr;
