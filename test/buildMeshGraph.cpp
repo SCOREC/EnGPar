@@ -138,17 +138,18 @@ agi::lid_t getNumPins(apf::Mesh* m,int primary,int second) {
 agi::lid_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
   apf::MeshEntity* ent;
   apf::MeshIterator* itr = m->begin(primary);
-  size_t num_edges=0;
+  agi::lid_t num_edges=0;
   while ((ent = m->iterate(itr))) {
-    apf::Downward down;
-    int nd = m->getDownward(ent,second,down);
-    for (int i=0;i<nd;i++) {
+    apf::Adjacent adj1;
+    m->getAdjacent(ent,second,adj1);
+    for (int i=0;i<adj1.size();i++) {
       apf::Adjacent adj;
-      m->getAdjacent(down[i],primary,adj);
+      m->getAdjacent(adj1[i],primary,adj);
       num_edges+=adj.size()-1;
     }
   }
   m->end(itr);
+
   return num_edges;
 }
 
@@ -222,6 +223,7 @@ void testVertices(apf::Mesh*,agi::Ngraph* g) {
   assert(i==g->numLocalVtxs());
 
 }
+
 void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   if (!PCU_Comm_Self())
     printf("Iterating over edges & pins\n");
@@ -229,7 +231,7 @@ void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   agi::VertexIterator* gitr = g->begin();
   agi::GraphVertex* vtx=NULL;
   for (int i=0;i<n;i++) {
-    int num_pins = getNumNaiveEdges(m,primary,seconds[i]);
+    agi::lid_t num_pins = getNumNaiveEdges(m,primary,seconds[i]);
     int tot_pins=0;
     int ghost_pins=0;
     int other_count=0;
