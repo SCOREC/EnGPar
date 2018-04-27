@@ -142,7 +142,7 @@ agi::lid_t getNumNaiveEdges(apf::Mesh* m,int primary,int second) {
   while ((ent = m->iterate(itr))) {
     apf::Adjacent adj1;
     m->getAdjacent(ent,second,adj1);
-    for (int i=0;i<adj1.size();i++) {
+    for (size_t i=0;i<adj1.size();i++) {
       apf::Adjacent adj;
       m->getAdjacent(adj1[i],primary,adj);
       num_edges+=adj.size()-1;
