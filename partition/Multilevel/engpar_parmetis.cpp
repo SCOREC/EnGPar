@@ -94,7 +94,7 @@ namespace engpar {
     i=0;
     agi::gid_t deg=0;
     idx_t* vwgts = new idx_t[g->numLocalVtxs()];
-    idx_t* ewgts = NULL;
+    idx_t* ewgts = new idx_t[num_degs];
     while ((vtx = g->iterate(vitr))) {
       vwgts[i] = g->weight(vtx);
       agi::GraphIterator* gitr = g->adjacent(vtx,input->edge_type);
@@ -109,12 +109,15 @@ namespace engpar {
         agi::GraphVertex* other = vsItr->first;
         if (g->owner(other)==input->self) {
           agi::lid_t lidv = g->localID(other);
-          adjncy[deg++] = gids[lidv]; 
+          adjncy[deg] = gids[lidv]; 
+          ewgts[deg++] = vsItr->second;
         }
         else if (!isLocal) {
           agi::gid_t gidv = g->globalID(other);
-          adjncy[deg++] = ghost_gids[gidv];
+          adjncy[deg] = ghost_gids[gidv];
+          ewgts[deg++] = vsItr->second;
         }
+
       }
       g->destroy(gitr);
       xadj[i + 1] = deg;
@@ -123,7 +126,7 @@ namespace engpar {
     delete [] gids;
     printf("%ld %ld %ld",deg,num_degs,g->numLocalPins());
     assert(deg==num_degs);
-    idx_t wgtflag=2;
+    idx_t wgtflag=3;
     idx_t numflag=0;
     idx_t ncon=1;
     idx_t nparts = target_parts;
