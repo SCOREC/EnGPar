@@ -13,6 +13,11 @@ namespace engpar {
 #ifdef HAS_PARMETIS
   //TODO: generalize to any edge type
   agi::Migration* EnGPar_ParMETIS(SplitInput* input, int target_parts, bool isLocal) {
+
+    //Unique map of vertices for adjacency
+    //  int can be used for edge weights
+    typedef std::unordered_map<agi::GraphVertex*,int> VertexSet;
+    
     agi::Ngraph* g = input->g;
     //Get an offset array of the vertices on each part
     idx_t* vtxdist = new idx_t[PCU_Comm_Peers()+1];
@@ -35,7 +40,7 @@ namespace engpar {
     agi::GraphVertex* vtx;
     int i = 0;
     PCU_Comm_Begin();
-    int num_degs = 0;
+    agi::gid_t num_degs = 0;
     while((vtx = g->iterate(vitr))) {
       gids[i] = vtxdist[PCU_Comm_Self()] + i;
 
@@ -43,21 +48,23 @@ namespace engpar {
       agi::Peers res;
       agi::EdgeIterator* eitr = g->edges(vtx,input->edge_type);
       agi::GraphEdge* edge;
+      VertexSet neighbors;
       while ((edge = g->iterate(eitr))) {
-        if (isLocal) {
-          agi::PinIterator* pitr = g->pins(edge);
-          agi::GraphVertex* other;
-          while ((other = g->iterate(pitr)))
-            if (g->owner(other)==input->self)
-              num_degs++;
-	  g->destroy(pitr);
+        //Gather neighboring vertices
+        agi::PinIterator* pitr = g->pins(edge);
+        agi::GraphVertex* other;
+        while ((other = g->iterate(pitr))) {
+          if (other==vtx)
+            continue;
+          agi::part_t owner = g->owner(other);
+          if (!isLocal || owner ==input->self)
+            neighbors[other]=1;
+          if (!isLocal)
+            res.insert(owner);
         }
-        else {
-          g->getResidence(edge,res);
-          num_degs+=g->degree(edge)-1;
-
-        }
+        g->destroy(pitr);
       }
+      num_degs+=neighbors.size();
       g->destroy(eitr);
       res.erase(PCU_Comm_Self());
       agi::gid_t vals[2];
@@ -85,31 +92,39 @@ namespace engpar {
     idx_t* adjncy = new idx_t[num_degs];
     xadj[0] = 0;
     i=0;
-    int deg=0;
+    agi::gid_t deg=0;
     idx_t* vwgts = new idx_t[g->numLocalVtxs()];
-    idx_t* ewgts = NULL;
+    idx_t* ewgts = new idx_t[num_degs];
     while ((vtx = g->iterate(vitr))) {
       vwgts[i] = g->weight(vtx);
       agi::GraphIterator* gitr = g->adjacent(vtx,input->edge_type);
       agi::GraphVertex* other;
+      VertexSet neighbors;
       while ((other = g->iterate(gitr))) {
         if (other==vtx)
           continue;
+        neighbors[other]+=g->weight(g->edge(gitr));
+      }
+      for (VertexSet::iterator vsItr = neighbors.begin(); vsItr != neighbors.end(); vsItr++) {
+        agi::GraphVertex* other = vsItr->first;
         if (g->owner(other)==input->self) {
           agi::lid_t lidv = g->localID(other);
-          adjncy[deg++] = gids[lidv]; 
+          adjncy[deg] = gids[lidv]; 
+          ewgts[deg++] = vsItr->second;
         }
         else if (!isLocal) {
           agi::gid_t gidv = g->globalID(other);
-          adjncy[deg++] = ghost_gids[gidv];
+          adjncy[deg] = ghost_gids[gidv];
+          ewgts[deg++] = vsItr->second;
         }
+
       }
       g->destroy(gitr);
       xadj[i + 1] = deg;
       ++i;
     }
     delete [] gids;
-    idx_t wgtflag=2;
+    idx_t wgtflag=3;
     idx_t numflag=0;
     idx_t ncon=1;
     idx_t nparts = target_parts;
