@@ -48,7 +48,7 @@ namespace engpar {
       agi::Peers res;
       agi::EdgeIterator* eitr = g->edges(vtx,input->edge_type);
       agi::GraphEdge* edge;
-      VertexSet neighbors;      
+      VertexSet neighbors;
       while ((edge = g->iterate(eitr))) {
         //Gather neighboring vertices
         agi::PinIterator* pitr = g->pins(edge);
@@ -124,8 +124,6 @@ namespace engpar {
       ++i;
     }
     delete [] gids;
-    printf("%ld %ld %ld",deg,num_degs,g->numLocalPins());
-    assert(deg==num_degs);
     idx_t wgtflag=3;
     idx_t numflag=0;
     idx_t ncon=1;
