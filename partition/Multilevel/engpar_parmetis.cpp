@@ -103,7 +103,7 @@ namespace engpar {
       while ((other = g->iterate(gitr))) {
         if (other==vtx)
           continue;
-        neighbors[other]++;
+        neighbors[other]+=g->weight(g->edge(gitr));
       }
       for (VertexSet::iterator vsItr = neighbors.begin(); vsItr != neighbors.end(); vsItr++) {
         agi::GraphVertex* other = vsItr->first;
