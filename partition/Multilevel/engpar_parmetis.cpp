@@ -105,6 +105,7 @@ namespace engpar {
           continue;
         neighbors[other]+=g->weight(g->edge(gitr));
       }
+      g->destroy(gitr);
       for (VertexSet::iterator vsItr = neighbors.begin(); vsItr != neighbors.end(); vsItr++) {
         agi::GraphVertex* other = vsItr->first;
         if (g->owner(other)==input->self) {
@@ -119,7 +120,7 @@ namespace engpar {
         }
 
       }
-      g->destroy(gitr);
+
       xadj[i + 1] = deg;
       ++i;
     }
@@ -148,6 +149,7 @@ namespace engpar {
     delete [] xadj;
     delete [] adjncy;
     delete [] vwgts;
+    delete [] ewgts;
     delete [] tpwgts;
     //Make the migration plan
     agi::Migration* plan = new agi::Migration(g);
