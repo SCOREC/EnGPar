@@ -74,19 +74,22 @@ IF(ENABLE_PUMI)
     ./testFileIO
     ${MESHES}/cube/cube.dmg
     ${MESHES}/cube/pumi670/cube.smb
-    ${GRAPHS}/cube/cube)
+    ${GRAPHS}/cube/cube
+    3)
 
   mpi_test(testFileIOParallel 4
     ./testFileIO
     ${MESHES}/cube/cube.dmg
     ${MESHES}/cube/pumi670/4/cube.smb
-    ${GRAPHS}/cube/4/)
+    ${GRAPHS}/cube/4/
+    3)
 
   mpi_test(testFileIOParallelTorus 4
     ./testFileIO
     ${MESHES}/torus/torus.dmg
     ${MESHES}/torus/4imb/torus.smb
     ${GRAPHS}/torus/4/
+    3
     0)
 
   mpi_test(testFileIOParallelTorus01 4
@@ -94,6 +97,7 @@ IF(ENABLE_PUMI)
     ${MESHES}/torus/torus.dmg
     ${MESHES}/torus/4imb/torus.smb
     ${GRAPHS}/torus/4_01/
+    3
     0
     1)
 ENDIF()
