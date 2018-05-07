@@ -27,10 +27,9 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   PCU_Comm_Init();
   EnGPar_Initialize();
-  if ( argc < 4 ) {
-    printf("%d\n",argc);
+  if ( argc < 5 ) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh> <save prefix> [edge_types...]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <save prefix> <primary> [edge_types...]\n", argv[0]);
     EnGPar_Finalize();
     MPI_Finalize();
     assert(false);
@@ -39,14 +38,19 @@ int main(int argc, char* argv[]) {
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
   agi::Ngraph* g;
-  if (argc==4)
-    g = agi::createAPFGraph(m,3,2);
+  int primary = atoi(argv[4]);
+  if (argc==5) {
+    int second = primary-1;
+    if (second<0)
+      second=m->getDimension();
+    g = agi::createAPFGraph(m,primary,second);
+      }
   else {
-    int* edges = new int[argc-4];
-    for (int i=4;i<argc;i++) {
-      edges[i-4] = atoi(argv[i]);
+    int* edges = new int[argc-5];
+    for (int i=5;i<argc;i++) {
+      edges[i-5] = atoi(argv[i]);
     }
-    g = agi::createAPFGraph(m,3,edges,argc-4);
+    g = agi::createAPFGraph(m,primary,edges,argc-5);
     delete [] edges;
   }
   PCU_Barrier();
