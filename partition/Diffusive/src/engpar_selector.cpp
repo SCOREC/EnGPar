@@ -9,6 +9,8 @@ namespace engpar {
     agi::PinIterator* pitr = g->pins(edge);
     agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
+    typedef std::map<agi::part_t, int> Peer_Map;
+    Peer_Map peerMap;
     for (agi::lid_t i =0;i<deg;i++) {
       vtx = g->iterate(pitr);
       if (g->owner(vtx)==PCU_Comm_Self()) {
@@ -17,9 +19,19 @@ namespace engpar {
         }
       }
       else
-        peers.insert(g->owner(vtx));
+	peerMap[g->owner(vtx)]++;
     }
     g->destroy(pitr);
+
+    int max =0;
+    Peer_Map::iterator itr;
+    for (itr = peerMap.begin(); itr != peerMap.end(); itr++) 
+      if (itr->second > max)
+	max = itr->second;
+    for (itr = peerMap.begin(); itr != peerMap.end(); itr++) 
+      if (itr->second == max)
+	peers.insert(itr->first);
+      
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
