@@ -132,19 +132,9 @@ namespace engpar {
       return false;
     }
   };
-  typedef std::set<Migr,CompareMigr> MigrComm;
 
 
-  //return  map<int neighbor, pair<double vtxW, double edgeW> > where
-  //  neighbor is a neighbor's part id
-  //  vtxW is the vtx weight capacity of neighbor
-  //  edgeW is the edge weight capacity of neighbor
-  Midd* Selector::trim(Targets*, agi::Migration* plan) {
-    //compute the weight of the vertices and edges being sent to each peer
-
-    std::unordered_set<part_t> neighbors;
-    PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
-    std::unordered_map<int,double> vtx_weight;
+  void Selector::calculatePlanWeights(agi::Migration* plan, std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
     agi::Migration::iterator itr;
     for(itr = plan->begin();itr!=plan->end();itr++) {
       agi::GraphVertex* vtx = *itr;
@@ -158,8 +148,10 @@ namespace engpar {
           vtx_weight[dest]+=g->weight(vtx);
       }
     }
-    //send vtx and edge weight
-    PCU_Comm_Begin();
+
+  }
+
+  void Selector::sendPlanWeight(std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
     std::unordered_set<part_t>::iterator sitr;
     for (sitr = neighbors.begin();sitr!=neighbors.end();sitr++) {
       const int dest = *sitr;
@@ -173,8 +165,10 @@ namespace engpar {
       }
     }
     delete [] peerEdges;
-    PCU_Comm_Send();
-    MigrComm incoming;
+
+  }
+
+  void Selector::receiveIncomingWeight(MigrComm& incoming) {
     double w;
     while (PCU_Comm_Receive()) {
       Migr migr(PCU_Comm_Sender());
@@ -185,16 +179,19 @@ namespace engpar {
       incoming.insert(migr);        
     }
 
-    Midd accept;
-    Ws avail = new double[completed_dimensions->size()];
-    bool isAvail=true;
+  }
+  bool Selector::determineAvailability(Ws& avail) {
+    bool isAvail = true;
     for (unsigned int i=0;i<completed_dimensions->size();i++) {
       double totW = getWeight(g,completed_dimensions->at(i),in->countGhosts);
       avail[i] = completed_weights->at(i) - totW;
       if (avail[i]<0)
         isAvail=false;
     }
+    return isAvail;
+  }
 
+  void Selector::acceptWeight(MigrComm& incoming, bool& isAvail, Ws& avail, Midd& accept) {
     MigrComm::iterator in;
     for (in=incoming.begin();in!=incoming.end();in++) {
       const int nbor = (*in).id;
@@ -207,7 +204,6 @@ namespace engpar {
         if( hasSpace ) {
           for (unsigned int i=0;i<completed_dimensions->size();i++) 
             isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
-          
         } else {
           for (unsigned int i=0;i<completed_dimensions->size();i++)
             isAvail = (avail[i] -=accept[nbor][i] = avail[i])>0;
@@ -218,17 +214,19 @@ namespace engpar {
           accept[nbor][i] = 0;
       }
     }
-    PCU_Barrier();
-    delete [] avail;
-    PCU_Comm_Begin();
+  }
+
+  void Selector::sendAcceptedWeights(Midd& accept) {
     Midd::iterator acc; 
     for (acc=accept.begin();acc!=accept.end();acc++) {
       for (unsigned int i=0;i<completed_dimensions->size();i++) 
         PCU_COMM_PACK(acc->first, acc->second[i]);
       delete [] acc->second;
     }
-    PCU_Comm_Send();
-    Midd* capacity = new Midd;
+  }
+
+  void Selector::gatherCapacities(Midd* capacity) {
+    double w;
     while (PCU_Comm_Receive()) {
       int nbor = PCU_Comm_Sender();
       capacity->insert(std::make_pair(nbor,
@@ -238,6 +236,41 @@ namespace engpar {
         (*capacity)[nbor][i] = w;
       }
     }
+  }
+  //return  map<int neighbor, pair<double vtxW, double edgeW> > where
+  //  neighbor is a neighbor's part id
+  //  vtxW is the vtx weight capacity of neighbor
+  //  edgeW is the edge weight capacity of neighbor
+  Midd* Selector::trim(Targets*, agi::Migration* plan) {
+    //compute the weight of the vertices and edges being sent to each peer
+    std::unordered_set<part_t> neighbors;
+    PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
+    std::unordered_map<int,double> vtx_weight;
+    calculatePlanWeights(plan,vtx_weight,peerEdges,neighbors);
+    
+    //send vtx and edge weight
+    PCU_Comm_Begin();
+    sendPlanWeight(vtx_weight,peerEdges,neighbors);
+    PCU_Comm_Send();
+    MigrComm incoming;
+    receiveIncomingWeight(incoming);
+
+
+    Ws avail = new double[completed_dimensions->size()];
+    bool isAvail=determineAvailability(avail);
+
+    Midd accept;
+    acceptWeight(incoming,isAvail,avail,accept);
+
+    PCU_Barrier();
+    delete [] avail;
+
+    PCU_Comm_Begin();
+    sendAcceptedWeights(accept);
+    PCU_Comm_Send();
+    Midd* capacity = new Midd;
+    gatherCapacities(capacity);
+
     return capacity;
   }
 

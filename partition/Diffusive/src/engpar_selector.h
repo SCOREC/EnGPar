@@ -13,7 +13,11 @@ namespace engpar {
   typedef std::unordered_map<part_t,wgt_t> Sending;
   typedef double* Ws;
   typedef std::map<int, Ws> Midd;
+  struct Migr;
+  struct CompareMigr;
+  typedef std::set<Migr,CompareMigr> MigrComm;
 
+  
   class Selector {
   public:
     Selector(DiffusiveInput* in_, Queue* queue,
@@ -28,10 +32,23 @@ namespace engpar {
     void cancel(agi::Migration*& plan,Midd* capacity);
 
   protected:
+      
     typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
     typedef std::map<int,EdgeSet> PeerEdgeSet;
-    void insertInteriorEdges(agi::GraphVertex*,agi::part_t,
-                                       EdgeSet&,int);
+    //Trim functions
+    void insertInteriorEdges(agi::GraphVertex*,agi::part_t, EdgeSet&,int);
+    void calculatePlanWeights(agi::Migration* plan, std::unordered_map<int,double>& vtx_weight,
+                              PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors);
+    void sendPlanWeight(std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges,
+                        std::unordered_set<part_t>& neighbors);
+    void receiveIncomingWeight(MigrComm& incoming);
+    bool determineAvailability(Ws& avail);
+    void acceptWeight(MigrComm& incoming, bool& isAvail, Ws& avail, Midd& accept);
+    void sendAcceptedWeights(Midd& accept);
+    void gatherCapacities(Midd* capacity);
+
+
+
     void tempInsertInteriorEdges(agi::GraphVertex*,agi::part_t,
                                            EdgeSet&,int,const EdgeSet&);
     double weight(const EdgeSet&);
