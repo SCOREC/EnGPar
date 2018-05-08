@@ -51,24 +51,31 @@ namespace engpar {
 
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
+    q->startIteration();
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
       //Create Cavity and peers
       Cavity cav;
       Peers peers;
-      getCavity(g,*itr,plan,cav,peers);
+      getCavity(g,q->get(itr),plan,cav,peers);
       //For each peer of cavity
-      Peers::iterator itr;
-      for (itr = peers.begin();itr!=peers.end();itr++) {
-        part_t peer = *itr;
+      Peers::iterator pitr;
+      bool sent = false;
+      for (pitr = peers.begin();pitr!=peers.end();pitr++) {
+        part_t peer = *pitr;
         if (targets->has(peer) &&
-            sending[*itr]<targets->get(peer) &&
+            sending[*pitr]<targets->get(peer) &&
             cav.size()< cavSize) {
           //  addCavity to plan
           wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
           planW+=w;
           sending[peer]+=w;
+          sent=true;
+          break;
         }
+      }
+      if (!sent) {
+        q->addElement(q->get(itr));
       }
     }
     return planW;

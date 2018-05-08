@@ -3,7 +3,7 @@
 
 namespace engpar {
   Queue* createIterationQueue(agi::Ngraph* g) {
-    Queue* q = new Queue;
+    int n=0;
     agi::GraphEdge* edge;
     agi::EdgeIterator* eitr = g->begin(0);
     while ((edge = g->iterate(eitr))) {
@@ -12,7 +12,22 @@ namespace engpar {
       for (agi::lid_t i=0;i<degree;i++) {
         agi::GraphVertex* pin = g->iterate(pitr);
         if (g->owner(pin)!=PCU_Comm_Self()) {
-          q->push_back(edge);
+          i++;
+          break;
+        }
+      }
+      g->destroy(pitr);
+    }
+    g->destroy(eitr);
+    Queue* q = new Queue(n);
+    eitr = g->begin(0);
+    while ((edge = g->iterate(eitr))) {
+      agi::PinIterator* pitr = g->pins(edge);
+      agi::lid_t degree = g->degree(edge);
+      for (agi::lid_t i=0;i<degree;i++) {
+        agi::GraphVertex* pin = g->iterate(pitr);
+        if (g->owner(pin)!=PCU_Comm_Self()) {
+          q->addElement(edge);
           break;
         }
       }
@@ -261,8 +276,8 @@ namespace engpar {
           in1->seeds[in1->numSeeds++] = i;
       }
     }
+    Queue* q = new Queue(in1->numSeeds);
     if (in1->numSeeds==0) {
-      Queue* q = new Queue;
       delete in1;
       return q;
     }
@@ -359,14 +374,13 @@ namespace engpar {
     }
     delete in1;
     //Setup the Queue from the second bfs
-    Queue* q = new Queue;
     for (int i=in2->numSeeds;i>0;i--) {
       agi::lid_t lid = in2->seeds[i-1];
       agi::GraphEdge* edge = pg->getEdge(lid,t);
       agi::Peers res;
       g->getResidence(edge,res);
       if (res.size()>1)
-        q->push_back(edge);
+        q->addElement(edge);
     }
     delete in2;
     return q;
