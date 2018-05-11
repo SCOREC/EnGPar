@@ -166,6 +166,10 @@ public:
    * \param cs an array of 3-D coordinates of size numLocalVtxs()
    */
   void setCoords(coord_t* cs);
+  /** \brief Sets the weights of the vertices
+   * \param wgts the vertex weights
+   */
+  void setWeights(wgt_t* wgts);
   /** \brief Returns the owner of a vertex
    * \param vtx the graph vertex
    * \return the part id of the owner
@@ -175,6 +179,7 @@ public:
   part_t originalOwner(GraphVertex* vtx) const;
   void setOriginalOwners();
   void setOriginalOwners(std::vector<part_t>&);
+  void resetOwnership();
   // \endcond
   /** \brief Determines the parts that the given edge resides on
    * \param e the edge 

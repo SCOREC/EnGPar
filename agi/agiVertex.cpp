@@ -23,6 +23,12 @@ const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
   }
   return local_weights[index];
 }
+void Ngraph::setWeights(wgt_t* wgts) {
+  if (!local_weights) {
+    local_weights = new wgt_t[num_local_verts];
+  }
+  memcpy(local_weights,wgts,num_local_verts*sizeof(wgt_t));
+}
 bool Ngraph::hasCoords() const {
   return local_coords!=NULL;
 }
@@ -91,6 +97,21 @@ void Ngraph::setOriginalOwners(std::vector<part_t>& oos) {
   original_owners = new part_t[num_local_verts];
   for (lid_t i=0;i<num_local_verts;i++) 
     original_owners[i]=oos[i];
+}
+
+void Ngraph::resetOwnership() {
+  if (EnGPar_Is_Log_Open()) {
+    char message[25];
+    sprintf(message,"resetOriginalOwners\n");
+    EnGPar_Log_Function(message);
+  }
+  if (original_owners)
+    delete [] original_owners;
+  original_owners = NULL;
+  setOriginalOwners();
+  if (EnGPar_Is_Log_Open()) {
+    EnGPar_End_Function();
+  }
 }
 
 lid_t Ngraph::localID(GraphVertex* vtx) const {

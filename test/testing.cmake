@@ -260,6 +260,10 @@ mpi_test(balanceTorusVtxFaceElm 4
   "${GRAPHS}/torus/4_01/"
   yes)
 
+mpi_test(balanceMultipleTorus 4
+  ./balanceMultiple
+  "${GRAPHS}/torus/4/")
+
 
 if (ENABLE_ZOLTAN)
 
