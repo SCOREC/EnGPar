@@ -6,13 +6,44 @@
 #include <pcu_io.h>
 namespace agi {
 
-  /* File Format 
-   * <isHyperGraph>
-   * <number of vertices>
-   * <vertex gid> <vertex weight> ...
-   * <number of edges>
-   * <edge gid> <edge weight> <edge degree> <pins to vertices ...> ...
-   * <ghost gid> <owner> ...
+  /* bgd file format, field = < description - [ field {field...} | type=[valid values] ] - count >
+   * <isHyperGraph - unsigned=[0(false)|1(true)] - 1 >
+   * <number of vertices - unsigned=[>0] - 1 >
+   * <vertices -
+   *   <global id - unsigned=[>0] - 1 >
+   *   <weight - double=[>0] - 1 >
+   *   -
+   *   |V|
+   * >
+   * <hasCoordinates - unsigned=[0(false)|1(true)] - 1 >
+   * { <vertex coordinates -
+   *     <xyz - double=[real] - 3 > -
+   *     |V|
+   *   >
+   * }
+   * <number of edge types - unsigned=[>0] - 1 >
+   * <edge types -
+   *   <type - unsigned=[>0] - 1 >
+   *   <count - unsigned=[>0] - 1 >
+   *   <edges
+   *     <global id - unsigned=[>0] - 1 >
+   *     <weight - double=[>0] - 1 >
+   *     <degree - unsinged=[>0] - 1 >
+   *     <pins-to-vertices -
+   *       <vertex global id - unsigned=[>0] - 1 > -
+   *       |degree(edge[i])|
+   *     > -
+   *     |E(type)|
+   *   > -
+   *   number of edge types
+   * >
+   * <number of ghost vertices - unsigned=[>=0] - 1 >
+   * <ghost vertices -
+   *   <vertex global id - unsigned=[>0] - 1 >
+   *   <owning process - unsigned=[>=0] - 1 >
+   *   -
+   *   |ghosts|
+   * >
    */
 
   void writeHeader(struct pcu_file* f, Ngraph* g) {
