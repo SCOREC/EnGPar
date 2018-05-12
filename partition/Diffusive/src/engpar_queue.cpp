@@ -12,7 +12,7 @@ namespace engpar {
       for (agi::lid_t i=0;i<degree;i++) {
         agi::GraphVertex* pin = g->iterate(pitr);
         if (g->owner(pin)!=PCU_Comm_Self()) {
-          i++;
+          n++;
           break;
         }
       }
