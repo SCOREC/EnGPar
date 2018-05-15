@@ -1,5 +1,7 @@
 #include "engpar.h"
 #include <PCU.h>
+#include "src/engpar_sides.h"
+
 namespace engpar {
   wgt_t getWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
     wgt_t w =0;
@@ -72,20 +74,61 @@ namespace engpar {
              prefix.c_str(),max,min,avg,imb);
   }
 
-  void evaluatePartition(agi::Ngraph* g) {
+  
+  void evaluatePartition(agi::Ngraph* g,std::string) {
+    agi::wgt_t* my_vals = new agi::wgt_t[2+g->numEdgeTypes()+3];
+    agi::wgt_t* min = new agi::wgt_t[2+g->numEdgeTypes()+3];
+    agi::wgt_t* max = new agi::wgt_t[2+g->numEdgeTypes()+3];
+    agi::wgt_t* total = new agi::wgt_t[2+g->numEdgeTypes()+3];
+    agi::wgt_t* avg = new agi::wgt_t[2+g->numEdgeTypes()+3];
+
+    //Disconnected comp
+    my_vals[0] = 0;
+
+    //Neighbors & Part Boundary
+    DiffusiveInput* in = static_cast<DiffusiveInput*>(createDiffusiveInput(g,0));
+    Sides* sides = makeSides(in);
+    my_vals[1] = sides->size();
+    my_vals[2] = sides->total();
+    delete in;
 
     //Vertex Imbalance
-    agi::wgt_t my_local = getWeight(g,-1);
-    agi::lid_t my_total = getWeight(g,-1,true);
-    printMaxMinAvgImb(my_local,"Local Vertices");
-    printMaxMinAvgImb(my_total,"Total Vertices");
+    my_vals[3] = getWeight(g,-1);
+    my_vals[4] = getWeight(g,-1,true);
+
     //Edge type imbalance
     for (agi::etype t = 0;t<g->numEdgeTypes();t++) {
-      agi::wgt_t my_edges = getWeight(g,t);
-      char edge_name[15];
-      sprintf(edge_name,"Edges type %d",t);
-      printMaxMinAvgImb(my_edges,edge_name);
+      my_vals[t+5] = getWeight(g,t);
     }
-  
+
+
+    //Empty parts
+    int empty = my_vals[3]==0;
+
+    MPI_Reduce(my_vals,max,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_MAX,0,PCU_Get_Comm());
+    MPI_Reduce(my_vals,min,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_MIN,0,PCU_Get_Comm());
+    MPI_Reduce(my_vals,total,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_SUM,0,PCU_Get_Comm());
+    empty = PCU_Add_Int(empty);
+
+    if (!PCU_Comm_Self()) {
+      for (int i=0;i<5+g->numEdgeTypes();i++) {
+        avg[i] = total[i]/PCU_Comm_Peers();
+      }
+      printf("ENGPAR STATUS: Empty Parts: %d\n"
+             "ENGPAR STATUS: Disconnected Components: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Neighbors: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Edge Cut: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Local Vertex Imbalance: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Total Vertex Imbalance: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n",
+             empty,max[0],min[0],avg[0],total[0]/avg[0],max[1],min[1],avg[1],total[1]/avg[1],
+             max[2],min[2],avg[2],total[2]/avg[2],max[3],min[3],avg[3],total[3]/avg[3],
+             max[4],min[4],avg[4],total[4]/avg[4]);
+      for (int i=0;i<g->numEdgeTypes();i++) {
+        char edge_name[15];
+        sprintf(edge_name,"Edges type %d",i);
+        printf("ENGPAR STATUS: %s: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
+               max[5+i],min[5+i],avg[5+i],total[5+i]/avg[5+i]);
+      }
+    }
   }
 }

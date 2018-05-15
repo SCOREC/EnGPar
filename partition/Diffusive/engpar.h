@@ -44,7 +44,7 @@ namespace engpar {
   /** \brief Prints an evaluation of the partition of the Ngraph
    * \param g The graph
    */
-  void evaluatePartition(agi::Ngraph* g);
+  void evaluatePartition(agi::Ngraph* g, std::string prefix = "");
 
   void printImbalances(agi::Ngraph* g);
   ///@}
