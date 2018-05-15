@@ -91,7 +91,8 @@ namespace engpar {
     my_vals[1] = sides->size();
     my_vals[2] = sides->total();
     delete in;
-
+    delete sides;
+    
     //Vertex Imbalance
     my_vals[3] = getWeight(g,-1);
     my_vals[4] = getWeight(g,-1,true);
@@ -109,7 +110,7 @@ namespace engpar {
     MPI_Reduce(my_vals,min,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_MIN,0,PCU_Get_Comm());
     MPI_Reduce(my_vals,total,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_SUM,0,PCU_Get_Comm());
     empty = PCU_Add_Int(empty);
-
+    delete [] my_vals;
     if (!PCU_Comm_Self()) {
       for (int i=0;i<5+g->numEdgeTypes();i++) {
         avg[i] = total[i]/PCU_Comm_Peers();
@@ -130,5 +131,10 @@ namespace engpar {
                max[5+i],min[5+i],avg[5+i],total[5+i]/avg[5+i]);
       }
     }
+    
+  delete [] max;
+  delete [] min;
+  delete [] total;
+  delete [] avg;
   }
 }
