@@ -161,19 +161,19 @@ namespace engpar {
         avg[i] = total[i]/PCU_Comm_Peers();
       }
       printf("ENGPAR STATUS: Empty Parts: %d\n"
-             "ENGPAR STATUS: Disconnected Components: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Neighbors: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Edge Cut: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Local Vertex Imbalance: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Total Vertex Imbalance: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n",
-             empty,max[0],min[0],avg[0],total[0]/avg[0],max[1],min[1],avg[1],total[1]/avg[1],
-             max[2],min[2],avg[2],total[2]/avg[2],max[3],min[3],avg[3],total[3]/avg[3],
-             max[4],min[4],avg[4],total[4]/avg[4]);
+             "ENGPAR STATUS: Disconnected Components: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Neighbors: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Edge Cut: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Local Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
+             "ENGPAR STATUS: Total Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+             empty,max[0],min[0],avg[0],max[0]/avg[0],max[1],min[1],avg[1],max[1]/avg[1],
+             max[2],min[2],avg[2],max[2]/avg[2],max[3],min[3],avg[3],max[3]/avg[3],
+             max[4],min[4],avg[4],max[4]/avg[4]);
       for (int i=0;i<g->numEdgeTypes();i++) {
         char edge_name[15];
         sprintf(edge_name,"Edges type %d",i);
-        printf("ENGPAR STATUS: %s: <min,max,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
-               max[5+i],min[5+i],avg[5+i],total[5+i]/avg[5+i]);
+        printf("ENGPAR STATUS: %s: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
+               max[5+i],min[5+i],avg[5+i],max[5+i]/avg[5+i]);
       }
     }
     
