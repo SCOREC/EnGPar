@@ -74,6 +74,51 @@ namespace engpar {
              prefix.c_str(),max,min,avg,imb);
   }
 
+  void bfs(agi::Ngraph* g, agi::GraphVertex* v, agi::GraphTag* visited) {
+    agi::GraphVertex** queue = new agi::GraphVertex*[g->numLocalVtxs()];
+    queue[0] = v;
+    g->setIntTag(visited,v,1);
+    agi::lid_t size=1;
+    agi::lid_t i=0;
+    while (i<size) {
+      agi::GraphVertex* u = queue[i++];
+      agi::GraphVertex* other;
+      agi::GraphIterator* gitr = g->adjacent(u);
+      while ((other = g->iterate(gitr))) {
+        if (g->owner(other)!=PCU_Comm_Self())
+          continue;
+        if (g->getIntTag(visited,other)==0) {
+          queue[size++] = other;
+          g->setIntTag(visited,other,1);
+        }
+      }
+      g->destroy(gitr);
+    }
+    delete [] queue;
+  }
+
+  int countDisconnected(agi::Ngraph* g) {
+    int dis = 0;
+
+    agi::GraphTag* visited = g->createIntTag();
+    agi::VertexIterator* vitr = g->begin();
+    agi::GraphVertex* vtx;
+    while ((vtx = g->iterate(vitr))) {
+      g->setIntTag(visited,vtx,0);
+    }
+
+    vitr = g->begin();
+    while ((vtx = g->iterate(vitr))) {
+      if (g->getIntTag(visited,vtx)==0) {
+        bfs(g,vtx,visited);
+        dis++;
+      }
+    }
+
+    g->destroyTag(visited);
+    return dis-1;
+  }
+
   
   void evaluatePartition(agi::Ngraph* g,std::string) {
     agi::wgt_t* my_vals = new agi::wgt_t[2+g->numEdgeTypes()+3];
@@ -83,7 +128,7 @@ namespace engpar {
     agi::wgt_t* avg = new agi::wgt_t[2+g->numEdgeTypes()+3];
 
     //Disconnected comp
-    my_vals[0] = 0;
+    my_vals[0] = countDisconnected(g);
 
     //Neighbors & Part Boundary
     DiffusiveInput* in = static_cast<DiffusiveInput*>(createDiffusiveInput(g,0));
