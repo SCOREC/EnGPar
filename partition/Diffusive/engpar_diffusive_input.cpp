@@ -14,6 +14,8 @@ namespace engpar {
       useDistanceQueue = false;
     bfsPush = true;
     countGhosts=false;
+    minConnectivity=1;
+    connectivityType=0;
   }
 
   void DiffusiveInput::addPriority(int type, double tolerance) {

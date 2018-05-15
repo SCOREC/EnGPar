@@ -68,7 +68,20 @@ namespace engpar {
      */
     bool bfsPush;
 
+    /** \brief The minimum number of edge connections that define connectivity.
+     *
+     * defaults to 1
+     */
+    int minConnectivity;
+
+    /** \brief The dimension used to count connectivity.
+     *
+     * defaults to 0
+     */
+    agi::etype connectivityType;
+
   };
 }
 
 #endif
+

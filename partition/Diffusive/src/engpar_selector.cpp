@@ -61,6 +61,49 @@ namespace engpar {
     return w;
   }
 
+  typedef std::pair<agi::GraphVertex*,agi::GraphVertex*> Connection;
+  typedef std::map<Connection,int> Connection_Count;
+  void getCavityConnections(agi::Ngraph* g,agi::etype con, int minCon, Cavity cav,
+                            Connection_Count& conns) {
+    for (unsigned int i=0;i<cav.size();i++) {
+      agi::GraphVertex* u = cav[i];
+      agi::GraphIterator* gitr = g->adjacent(u,con);
+      agi::GraphVertex* v;
+      std::map<agi::GraphVertex*, int> occ;
+      while ((v = g->iterate(gitr))) {
+        if (v==u) continue;
+        occ[v]++;
+      }
+      g->destroy(gitr);
+      std::map<agi::GraphVertex*, int>::iterator itr;
+      for (itr=occ.begin();itr!=occ.end();itr++) {
+        if (itr->second>=minCon) {
+          agi::GraphVertex* v = itr->first;
+          if (u<v)
+            conns[std::make_pair(u,v)]++;
+          else
+            conns[std::make_pair(v,u)]++;
+        }
+      }
+    }
+  }
+
+  //Returns true if the cavity isn't fully connected to the part
+  //  In the example of a mesh, full connectivity is having a face connection
+  bool isPartiallyConnected(agi::Ngraph* g,agi::etype con, int minCon,
+                            agi::Migration* plan, Cavity cav) {
+    Connection_Count conns;
+    getCavityConnections(g,con,minCon,cav,conns);
+    Connection_Count::iterator itr;
+    for (itr=conns.begin();itr!=conns.end();itr++) {
+      if (itr->second==2)
+        continue;
+      if (!plan->has(itr->first.first) && !plan->has(itr->first.second))
+        return false;
+    }
+    return true;
+  }
+
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
     q->startIteration();
@@ -85,6 +128,13 @@ namespace engpar {
           sent=true;
           break;
         }
+      }
+      if (!sent && in->minConnectivity > 1 &&
+          isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
+        wgt_t w = addCavity(g,cav,*peers.begin(),plan,target_dimension);
+        planW+=w;
+        sending[*peers.begin()]+=w;
+        sent=true;        
       }
       if (!sent) {
         q->addElement(q->get(itr));
