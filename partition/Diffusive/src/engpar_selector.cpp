@@ -126,6 +126,7 @@ namespace engpar {
     q->startIteration();
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
+      if (planW > targets->total()) break;
       //Create Cavity and peers
       Cavity cav;
       Peers peers;
@@ -158,8 +159,8 @@ namespace engpar {
       }
     }
     return planW;
-  
   }
+  
   void Selector::insertInteriorEdges(agi::GraphVertex* vtx, agi::part_t dest,
                                      EdgeSet& edges, int dim) {
     
