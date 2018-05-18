@@ -9,29 +9,46 @@ namespace engpar {
     agi::PinIterator* pitr = g->pins(edge);
     agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
-    typedef std::map<agi::part_t, int> Peer_Map;
+    typedef std::map<agi::part_t, std::unordered_set<agi::GraphEdge*> > Peer_Map;
     Peer_Map peerMap;
+    std::set<agi::GraphEdge*> edgesOfCavity;
     for (agi::lid_t i =0;i<deg;i++) {
       vtx = g->iterate(pitr);
       if (g->owner(vtx)==PCU_Comm_Self()) {
         if(!plan->has(vtx)) {
           cav.push_back(vtx);
+          agi::GraphEdge* e;
+          agi::EdgeIterator* eitr = g->edges(vtx);
+          while ((e=g->iterate(eitr)))
+            edgesOfCavity.insert(e);
+          g->destroy(eitr);
         }
       }
-      else
-	peerMap[g->owner(vtx)]++;
     }
     g->destroy(pitr);
-
-    int max =0;
-    Peer_Map::iterator itr;
-    for (itr = peerMap.begin(); itr != peerMap.end(); itr++) 
-      if (itr->second > max)
-	max = itr->second;
-    for (itr = peerMap.begin(); itr != peerMap.end(); itr++) 
-      if (itr->second == max)
-	peers.insert(itr->first);
-      
+    std::set<agi::GraphEdge*>::iterator sitr;
+    for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
+      agi::GraphVertex* v;
+      agi::PinIterator* pitr = g->pins(*sitr);
+      while ((v = g->iterate(pitr))) {
+        if (g->owner(v)!=PCU_Comm_Self())
+          peerMap[g->owner(v)].insert(*sitr);
+      }
+    }
+    while (peers.size()!=peerMap.size()) {
+      unsigned int max =0;
+      Peer_Map::iterator itr;
+      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
+        if (itr->second.size() > max)
+          max = itr->second.size();
+      if (max<2&&peers.size()>0)
+        break;
+      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
+        if (itr->second.size() == max) {
+          peers.insert(itr->first);
+          itr->second.clear();
+        }
+    }
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
