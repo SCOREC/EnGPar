@@ -147,20 +147,27 @@ namespace engpar {
           break;
         }
       }
-      if (!sent && in->minConnectivity > 1 &&
-          isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
-        wgt_t w = addCavity(g,cav,*peers.begin(),plan,target_dimension);
-        planW+=w;
-        sending[*peers.begin()]+=w;
-        sent=true;        
-      }
       if (!sent) {
         q->addElement(q->get(itr));
       }
     }
     return planW;
   }
-  
+
+  void Selector::selectDisconnected(agi::Migration* plan, int target_dimension) {
+    q->startIteration();
+    Queue::iterator itr;
+    for (itr = q->begin();itr!=q->end();itr++) {
+      //Create Cavity and peers
+      Cavity cav;
+      Peers peers;
+      getCavity(g,q->get(itr),plan,cav,peers);
+      if (in->minConnectivity > 1 &&
+          isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
+        addCavity(g,cav,*peers.begin(),plan,target_dimension);
+      }
+    }
+  }
   void Selector::insertInteriorEdges(agi::GraphVertex* vtx, agi::part_t dest,
                                      EdgeSet& edges, int dim) {
     

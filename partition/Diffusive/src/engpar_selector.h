@@ -28,6 +28,7 @@ namespace engpar {
 
     wgt_t select(Targets* targets,agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int);
+    void selectDisconnected(agi::Migration* plan, int target_dimension);
     Midd* trim(Targets* targets, agi::Migration* plan);
     void cancel(agi::Migration*& plan,Midd* capacity);
 
