@@ -29,11 +29,12 @@ namespace engpar {
     std::set<agi::GraphEdge*>::iterator sitr;
     for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
       agi::GraphVertex* v;
-      agi::PinIterator* pitr = g->pins(*sitr);
+      pitr = g->pins(*sitr);
       while ((v = g->iterate(pitr))) {
         if (g->owner(v)!=PCU_Comm_Self())
           peerMap[g->owner(v)].insert(*sitr);
       }
+      g->destroy(pitr);
     }
     while (peers.size()!=peerMap.size()) {
       unsigned int max =0;
