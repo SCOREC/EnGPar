@@ -20,19 +20,18 @@ namespace engpar {
   
   /** \name Load Balancers */
   ///@{
-  /** \brief Makes a diffusive load balancer that targets the vertices of the graph
-   * \param g The graph to be balanced
-   * \param stepFactor Control of how much weight is migrated in each iteration
+  /** \brief Performs diffusive load balancing that targets the vertices of the graph
+   * \param g The graph to be balanced.
+   * \param tolerance The goal vertex imbalance to reach.
+   * \param stepFactor Control of how much weight is migrated in each iteration.
    * \param verbosity The level of output.
-   * \return The balancer, use balancer->run to run the operations
    *
-   * Good for initial testing. Use makeBalancer for getting results.
+   * Good for initial testing. Use balance for getting results.
    */
   void balanceVertices(agi::Ngraph*& g, double tolerance, double stepFactor=0.1, int verbosity=0);
-  /** \brief Makes a diffusive load balancer based on the input parameters provided
+  /** \brief Performs diffusive load balancing based on the input parameters provided
    * \param input A list of input parameters provided by the user
    * \param verbosity The level of output.
-   * \return The balancer, use balancer->run to run the operations
    */
   void balance(Input* input, int verbosity=0);
 
