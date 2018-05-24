@@ -7,7 +7,7 @@ namespace engpar {
     step_factor=0.1;
     sides_edge_type = 0;
     selection_edge_type = 0;
-    countGhosts =false;
+    useDistanceQueue = true;
     if (g->isHyper())
       useDistanceQueue = true;
     else
