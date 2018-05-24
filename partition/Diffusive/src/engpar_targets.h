@@ -8,7 +8,7 @@ namespace engpar {
 
   class Targets : public Container<wgt_t> {
   public:
-    Targets(DiffusiveInput* in, Sides* s, Weights* targetW, int sideTol,
+    Targets(double step_factor, Sides* s, Weights* targetW, int sideTol,
             Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;
       for (itr = s->begin();itr!=s->end();itr++) {
@@ -26,12 +26,15 @@ namespace engpar {
           wgt_t diff = myW-neighborW;
           wgt_t sideFraction = itr->second;
           sideFraction /= s->total();
-          wgt_t scaledW = diff * sideFraction* in->step_factor;
+          wgt_t scaledW = diff * sideFraction * step_factor;
           set(neighbor,scaledW);
         }
       }
     }
   };
+  Targets* makeTargets(double step_factor, Sides* s, Weights* tW,int sT,
+                       Weights** cWs,std::vector<wgt_t>& cTs);
+
   Targets* makeTargets(DiffusiveInput* in, Sides* s, Weights* tW,int sT,
                        Weights** cWs,std::vector<wgt_t>& cTs);
 }

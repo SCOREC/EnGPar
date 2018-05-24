@@ -8,13 +8,13 @@
 namespace engpar {
   class Sides : public Container<int>  {
   public:
-    Sides(DiffusiveInput* in) {
-      agi::Ngraph* graph = in->g;
+    Sides(agi::Ngraph* g, agi::etype t) {
+      agi::Ngraph* graph = g;
       agi::GraphEdge* edge;
-      agi::EdgeIterator* eitr = graph->begin(in->sides_edge_type);
+      agi::EdgeIterator* eitr = graph->begin(t);
       while ((edge = graph->iterate(eitr))) {
         agi::Peers res;
-        in->g->getResidence(edge,res);
+        g->getResidence(edge,res);
         if (res.size()>1) {
           agi::Peers::iterator itr;
           for (itr=res.begin();itr!=res.end();itr++) {
@@ -25,11 +25,13 @@ namespace engpar {
           my_total++;
         }
       }
-      in->g->destroy(eitr);
+      g->destroy(eitr);
     }
   };
 
   Sides* makeSides(DiffusiveInput* in);
+  Sides* makeSides(agi::Ngraph* g, agi::etype t);
+  
 }
 
 #endif

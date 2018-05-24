@@ -10,9 +10,9 @@ namespace engpar {
   
   class Weights : public Container<wgt_t> {
   public:
-    Weights(DiffusiveInput* in,Sides* s, int target_dimension) {
+    Weights(agi::Ngraph* g, bool countGhosts,Sides* s, int target_dimension) {
       //calculate the total weight of the vertices
-      my_weight = getWeight(in->g,target_dimension,in->countGhosts);
+      my_weight = getWeight(g,target_dimension,countGhosts);
       //Share weight with all neighbors
       PCU_Comm_Begin();
       Sides::iterator itr;
@@ -32,6 +32,7 @@ namespace engpar {
   };
 
   Weights* makeVtxWeights(DiffusiveInput* in, Sides* s);
+  Weights* makeWeights(agi::Ngraph* g, bool countGhosts, Sides* s,int target);
   Weights* makeWeights(DiffusiveInput* in, Sides* s,int target);
 }
 

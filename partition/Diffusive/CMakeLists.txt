@@ -1,7 +1,9 @@
 set(ENGPAR_SOURCES
   engpar_diffusive_input.cpp
+  engpar_weight_input.cpp
   src/engpar_balancer.cpp
   src/engpar_vtxBalancer.cpp
+  src/engpar_weightBalancer.cpp
   src/engpar_queue.cpp
   src/engpar_selector.cpp
   src/engpar_make.cpp

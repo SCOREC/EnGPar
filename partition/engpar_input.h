@@ -17,14 +17,18 @@ namespace engpar {
   };
   class DiffusiveInput;
   class SplitInput;
-
-  DiffusiveInput* createDiffusiveInput(agi::Ngraph* g, double step_factor);
+  class WeightInput;
+  
   SplitInput* createLocalSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
                                MPI_Comm largeComm, bool isPartOfSmall,
                                int split_factor,double tolerance,
                                agi::part_t* others, agi::etype adj_type = 0);
   SplitInput* createGlobalSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
                                 bool isPartOfSmall, double tolerance, agi::etype adj_type = 0);
+
+  DiffusiveInput* createDiffusiveInput(agi::Ngraph* g, double step_factor);
+  WeightInput* createWeightInput(agi::Ngraph* g, double tolerance,
+                                 double step_factor=0.1, agi::etype edge_type=0);
 }
 
 #endif

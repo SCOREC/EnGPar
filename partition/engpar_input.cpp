@@ -1,6 +1,7 @@
 #include "engpar_input.h"
 #include <engpar_split_input.h>
 #include <engpar_diffusive_input.h>
+#include <engpar_weight_input.h>
 #include <PCU.h>
 namespace engpar {
   
@@ -45,4 +46,7 @@ namespace engpar {
     return input;
   }
 
+  WeightInput* createWeightInput(agi::Ngraph* g, double t, double sf, agi::etype et) {
+    return new WeightInput(g,t,sf,et);
+  }
 }

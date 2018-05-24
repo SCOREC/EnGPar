@@ -3,6 +3,7 @@
 
 #include <ngraph.h>
 #include "Diffusive/engpar_diffusive_input.h"
+#include "Diffusive/engpar_weight_input.h"
 #include "Multilevel/engpar_split_input.h"
 #include "engpar_types.h"
 namespace engpar {
@@ -29,11 +30,21 @@ namespace engpar {
    * Good for initial testing. Use balance for getting results.
    */
   void balanceVertices(agi::Ngraph*& g, double tolerance, double stepFactor=0.1, int verbosity=0);
+  
   /** \brief Performs diffusive load balancing based on the input parameters provided
    * \param input A list of input parameters provided by the user
    * \param verbosity The level of output.
    */
   void balance(Input* input, int verbosity=0);
+
+  /** \brief Performs diffusive load balancing where vertices send weights to neighboring parts
+   * \param input A collection of input parameters provided by the user.
+   * \param verbosity The level of output.
+   *
+   * This balancer is designed with the assumption that all edges are across part 
+   * boundaries and there are no interpart connections via the edge type being used to balance
+   */
+  void balanceWeights(WeightInput* input, int verbosity=0);
 
   ///@}
 
