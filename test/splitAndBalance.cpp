@@ -1,6 +1,5 @@
 #include <engpar_support.h>
 #include <engpar.h>
-#include <engpar_split.h>
 #include <PCU.h>
 #include <sys/types.h>
 #include <unistd.h>

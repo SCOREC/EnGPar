@@ -1,5 +1,4 @@
 set(ENGPAR_SOURCES
-  engpar.cpp
   engpar_diffusive_input.cpp
   src/engpar_balancer.cpp
   src/engpar_vtxBalancer.cpp
@@ -10,7 +9,6 @@ set(ENGPAR_SOURCES
   )
 
 set(ENGPAR_HEADERS
-  engpar.h
   )
 
 add_library(diffusive ${ENGPAR_SOURCES})

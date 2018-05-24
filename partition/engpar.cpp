@@ -1,6 +1,6 @@
 #include "engpar.h"
 #include <PCU.h>
-#include "src/engpar_sides.h"
+#include "Diffusive/src/engpar_sides.h"
 
 namespace engpar {
   wgt_t getWeight(agi::Ngraph* g, int dimension, bool countGhosts) {

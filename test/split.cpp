@@ -2,7 +2,6 @@
 #include <engpar.h>
 #include <engpar_input.h>
 #include <binGraph.h>
-#include <engpar_split.h>
 #include <PCU.h>
 #include <sys/types.h>
 #include <unistd.h>

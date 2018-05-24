@@ -3,12 +3,12 @@ add_subdirectory(Diffusive)
 add_subdirectory(Multilevel)
 
 set(ENGPAR_SOURCES
-  engpar_split.cpp
   engpar_input.cpp
+  engpar.cpp
   )
 
 set(ENGPAR_HEADERS
-  engpar_split.h
+  engpar.h
   )
 
 add_library(engpar ${ENGPAR_SOURCES})

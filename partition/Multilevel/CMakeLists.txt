@@ -4,6 +4,7 @@ endif()
 
 
 set(PARMETIS_SOURCE
+  engpar_split.cpp
   engpar_parmetis.cpp
   )
 

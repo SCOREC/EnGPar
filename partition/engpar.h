@@ -56,6 +56,9 @@ namespace engpar {
   void evaluatePartition(agi::Ngraph* g, std::string prefix = "");
 
   wgt_t getWeight(agi::Ngraph*,int,bool countGhosts=false);
+  
+  void printImbalances(agi::Ngraph* g);
+
   ///@}
 
 

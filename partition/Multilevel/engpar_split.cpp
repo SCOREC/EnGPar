@@ -1,9 +1,18 @@
-#include "engpar_split.h"
 #include <engpar_parmetis.h>
 #include <PCU.h>
-#include <engpar.h>
+#include "../engpar.h"
 namespace engpar {
-  
+
+  void expandParts(agi::Ngraph* g, MPI_Comm newComm) {
+    int s = PCU_Comm_Peers();
+    int newSelf;
+    MPI_Comm_rank(newComm,&newSelf);
+    int* newRanks = new int[s];
+    MPI_Allgather(&newSelf,1,MPI_INT,newRanks,1,MPI_INT,PCU_Get_Comm());
+    g->changeOwners(newRanks);
+    delete [] newRanks;
+  }
+
   void split(Input* input, SPLIT_METHOD method) {
     SplitInput* inp = dynamic_cast<SplitInput*>(input);
     if (!inp){
@@ -39,15 +48,5 @@ namespace engpar {
     input->g->setOriginalOwners();
     inp->g->migrate(plan);
     delete input;
-  }
-
-  void expandParts(agi::Ngraph* g, MPI_Comm newComm) {
-    int s = PCU_Comm_Peers();
-    int newSelf;
-    MPI_Comm_rank(newComm,&newSelf);
-    int* newRanks = new int[s];
-    MPI_Allgather(&newSelf,1,MPI_INT,newRanks,1,MPI_INT,PCU_Get_Comm());
-    g->changeOwners(newRanks);
-    delete [] newRanks;
   }
 }
