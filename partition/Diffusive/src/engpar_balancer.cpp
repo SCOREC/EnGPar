@@ -327,16 +327,5 @@ namespace engpar {
     balancer->balance();
     delete balancer;
   }
-  /*
-  agi::Balancer* makeBalancer(Input* in,int v_) {
-    if (EnGPar_Is_Log_Open()) {
-      char message[25];
-      sprintf(message,"makeBalancer\n");
-      EnGPar_Log_Function(message);
-      EnGPar_End_Function();
-    }
-    return new Balancer(in,v_,"balancer");
-  }
-  */
 }
 
