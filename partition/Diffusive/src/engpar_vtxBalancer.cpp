@@ -8,18 +8,18 @@
 namespace engpar {
   class VtxBalancer : public engpar::Balancer {
   public:
-    VtxBalancer(agi::Ngraph*& g, double f, int v)
+    VtxBalancer(agi::Ngraph*& g, double f, int v, double tol)
       : Balancer(g,f,v,"Vtx") {
       DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
-      inp->addPriority(-1,1.1);
+      inp->addPriority(-1,tol);
     }
     ~VtxBalancer() {}
   };
 
 
   void balanceVertices(agi::Ngraph*& g, double tol, double f, int v) {
-    Balancer* balancer = new VtxBalancer(g,f,v);
-    balancer->balance(tol);
+    Balancer* balancer = new VtxBalancer(g,f,v,tol);
+    balancer->balance();
     delete balancer;
   }
   /*

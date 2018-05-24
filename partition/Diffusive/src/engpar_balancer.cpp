@@ -170,7 +170,7 @@ namespace engpar {
 
     return true; //not done balancing
   }
-  void Balancer::balance(double) {
+  void Balancer::balance() {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     if (EnGPar_Is_Log_Open()) {
       char message[1000];
@@ -324,7 +324,7 @@ namespace engpar {
       EnGPar_End_Function();
     }
     Balancer* balancer = new Balancer(in,v_,"balancer");
-    balancer->balance(1.1);
+    balancer->balance();
     delete balancer;
   }
   /*
