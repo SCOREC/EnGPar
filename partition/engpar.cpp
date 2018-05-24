@@ -10,10 +10,11 @@ namespace engpar {
       //calculate the total weight of the vertices
       agi::GraphVertex* vtx;
       agi::VertexIterator* vitr = g->begin();
-      while ((vtx = g->iterate(vitr))) 
-        w+=g->weight(vtx);
-      if (countGhosts)
-	w+=g->numGhostVtxs();
+      if (!countGhosts)
+        while ((vtx = g->iterate(vitr))) 
+          w+=g->weight(vtx);
+      else
+	w=g->numTotalVtxs();
     }
     else {
       agi::GraphEdge* edge;
