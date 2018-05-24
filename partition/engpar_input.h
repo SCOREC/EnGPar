@@ -15,14 +15,15 @@ namespace engpar {
     /** \brief The graph being balanced */
     agi::Ngraph* g;
   };
+  class DiffusiveInput;
+  class SplitInput;
 
-
-  Input* createDiffusiveInput(agi::Ngraph* g, double step_factor);
-  Input* createLocalSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
+  DiffusiveInput* createDiffusiveInput(agi::Ngraph* g, double step_factor);
+  SplitInput* createLocalSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
                                MPI_Comm largeComm, bool isPartOfSmall,
                                int split_factor,double tolerance,
                                agi::part_t* others, agi::etype adj_type = 0);
-  Input* createGlobalSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
+  SplitInput* createGlobalSplitInput(agi::Ngraph* g, MPI_Comm smallComm, MPI_Comm largeComm,
                                 bool isPartOfSmall, double tolerance, agi::etype adj_type = 0);
 }
 

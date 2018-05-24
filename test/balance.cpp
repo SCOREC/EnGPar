@@ -41,13 +41,15 @@ int main(int argc, char* argv[]) {
   engpar::evaluatePartition(g);
 
   double step_factor = 0.1;
-  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
   input->addPriority(0,1.1);
   if (argc==3) {
     input->addPriority(1,1.1);
   }
   input->addPriority(-1,1.1);
 
+  input->maxIterationsPerType=50;
+  input->maxIterations=75;
   //Create the balancer
   agi::Balancer* balancer = engpar::makeBalancer(input,2);
   balancer->balance(1.1);

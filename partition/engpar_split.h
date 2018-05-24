@@ -4,6 +4,7 @@
 #include <ngraph.h>
 #include <mpi.h>
 #include "engpar_input.h"
+#include "engpar_split_input.h"
 namespace engpar {
 
   enum SPLIT_METHOD {
