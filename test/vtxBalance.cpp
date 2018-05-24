@@ -39,11 +39,9 @@ int main(int argc, char* argv[]) {
   engpar::evaluatePartition(g);
   
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeVtxBalancer(g,step_factor,verbosity);
-  balancer->balance(1.01);
+  engpar::balanceVertices(g, 1.05, step_factor, verbosity);
+
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
   
   //Destroy graph
   agi::destroyGraph(g);

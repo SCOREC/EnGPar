@@ -37,12 +37,9 @@ int main(int argc, char* argv[]) {
   input->addPriority(-1,1.1);
 
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input,1);
-  balancer->balance(1.1);
+  engpar::balance(input,1);
 
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
 
   //Ensure the graph is still valid
   agi::checkValidity(g);
@@ -65,12 +62,9 @@ int main(int argc, char* argv[]) {
 
 
   //Create the balancer
-  balancer = engpar::makeBalancer(input,1);
-  balancer->balance(1.1);
+  engpar::balance(input,1);
 
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
 
   //Ensure the graph is still valid
   agi::checkValidity(g);

@@ -65,12 +65,9 @@ int main(int argc, char* argv[]) {
 
   //Create the balancer
   int verbosity = 3;
-  agi::Balancer* balancer = engpar::makeBalancer(input, verbosity);
-  balancer->balance(tol);
+  engpar::balance(input,verbosity);
 
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
   times[1] = PCU_Time() - times[1];
 
   //Ensure the graph is still valid

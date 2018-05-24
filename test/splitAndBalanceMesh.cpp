@@ -52,14 +52,11 @@ int main(int argc, char* argv[]) {
     printf("\n");
 
   //Create and run the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input_d,0);
-  balancer->balance(1.1);
+  engpar::balance(input_d,0);
 
   if (!PCU_Comm_Self())
     printf("\nAfter Balancing\n");
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
 
   double total_time = PCU_Time()- start_time;
   total_time = PCU_Max_Double(total_time);

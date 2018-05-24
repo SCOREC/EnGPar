@@ -51,12 +51,10 @@ int main(int argc, char* argv[]) {
   input->maxIterationsPerType=50;
   input->maxIterations=75;
   //Create the balancer
-  agi::Balancer* balancer = engpar::makeBalancer(input,2);
-  balancer->balance(1.1);
+  engpar::balance(input,2);
 
+  //Evaluate the new partition
   engpar::evaluatePartition(g);
-  //Destroy balancer
-  delete balancer;
 
   //Ensure the graph is still valid
   agi::checkValidity(g);

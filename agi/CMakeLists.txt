@@ -7,7 +7,6 @@ set(AGI_SOURCES
   agiEdge.cpp
   agiIterate.cpp
   agiTag.cpp
-  agiBalancer.cpp
   agiMigration.cpp
   agiMigrationTimers.cpp
   agiMigrate.cpp

@@ -129,8 +129,5 @@ void cengpar_addPriority(engparInput in, agi::etype t, double tol) {
 
 void cengpar_balance(engparInput in, int verbosity) {
   engpar::Input* input = (engpar::Input*)in;
-  agi::Balancer* balancer = engpar::makeBalancer(input,verbosity);
-  double ignored = 0.123;
-  balancer->balance(ignored);
-  delete balancer;
+  engpar::balance(input,verbosity);
 }

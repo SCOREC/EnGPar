@@ -5,7 +5,6 @@
 #include "Diffusive/engpar_diffusive_input.h"
 #include "Multilevel/engpar_split_input.h"
 #include "engpar_types.h"
-#include <agiBalancer.h>
 namespace engpar {
 
   /** \name Partition Routines */
@@ -29,14 +28,16 @@ namespace engpar {
    *
    * Good for initial testing. Use makeBalancer for getting results.
    */
-  agi::Balancer* makeVtxBalancer(agi::Ngraph*& g, double stepFactor=0.1,
-                                        int verbosity=0);
+  void balanceVertices(agi::Ngraph*& g, double tolerance, double stepFactor=0.1, int verbosity=0);
+  //agi::Balancer* makeVtxBalancer(agi::Ngraph*& g, double stepFactor=0.1,
+  //                                      int verbosity=0);
   /** \brief Makes a diffusive load balancer based on the input parameters provided
    * \param input A list of input parameters provided by the user
    * \param verbosity The level of output.
    * \return The balancer, use balancer->run to run the operations
    */
-  agi::Balancer* makeBalancer(Input* input,int verbosity=0);
+  void balance(Input* input, int verbosity=0);
+  //agi::Balancer* makeBalancer(Input* input,int verbosity=0);
 
   ///@}
 

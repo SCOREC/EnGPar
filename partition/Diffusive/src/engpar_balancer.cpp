@@ -59,14 +59,14 @@ namespace engpar {
   }
   
   Balancer::Balancer(agi::Ngraph*& g, double f, int v, const char* n) :
-    agi::Balancer(g,v,n) {
+    graph(g), verbosity(v), name(n) {
     input = createDiffusiveInput(g,f);
     totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
-    agi::Balancer(input_->g,v,n), input(input_) {
+    graph(input_->g),verbosity(v), name(n), input(input_) {
     totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
@@ -316,6 +316,18 @@ namespace engpar {
       EnGPar_End_Function();
   }
 
+  void balance(Input* in, int v_) {
+    if (EnGPar_Is_Log_Open()) {
+      char message[25];
+      sprintf(message,"makeBalancer\n");
+      EnGPar_Log_Function(message);
+      EnGPar_End_Function();
+    }
+    Balancer* balancer = new Balancer(in,v_,"balancer");
+    balancer->balance(1.1);
+    delete balancer;
+  }
+  /*
   agi::Balancer* makeBalancer(Input* in,int v_) {
     if (EnGPar_Is_Log_Open()) {
       char message[25];
@@ -325,5 +337,6 @@ namespace engpar {
     }
     return new Balancer(in,v_,"balancer");
   }
+  */
 }
 

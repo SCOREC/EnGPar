@@ -15,9 +15,14 @@ namespace engpar {
     }
     ~VtxBalancer() {}
   };
-}
 
-namespace engpar {
+
+  void balanceVertices(agi::Ngraph*& g, double tol, double f, int v) {
+    Balancer* balancer = new VtxBalancer(g,f,v);
+    balancer->balance(tol);
+    delete balancer;
+  }
+  /*
   agi::Balancer* makeVtxBalancer(agi::Ngraph*& g, double f, int v) {
     if (EnGPar_Is_Log_Open()) {
       char message[25];
@@ -27,4 +32,5 @@ namespace engpar {
     }
     return new VtxBalancer(g,f,v);
   }
+  */
 }
