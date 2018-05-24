@@ -7,14 +7,6 @@
 #include "engpar_split_input.h"
 namespace engpar {
 
-  enum SPLIT_METHOD {
-    GLOBAL_PARMETIS,
-    LOCAL_PARMETIS
-  };
-
-  void split(Input*, SPLIT_METHOD method);
-
-
   void expandParts(agi::Ngraph* g, MPI_Comm newComm);
 }
 

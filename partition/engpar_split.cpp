@@ -1,7 +1,7 @@
 #include "engpar_split.h"
 #include <engpar_parmetis.h>
 #include <PCU.h>
-#include <engpar_split_input.h>
+#include <engpar.h>
 namespace engpar {
   
   void split(Input* input, SPLIT_METHOD method) {

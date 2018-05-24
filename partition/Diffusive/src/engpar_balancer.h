@@ -1,7 +1,7 @@
 #ifndef ENGPAR_BALANCER_H
 #define ENGPAR_BALANCER_H
 
-#include "../engpar.h"
+//#include "../engpar.h"
 #include <agiBalancer.h>
 #include "engpar_sides.h"
 #include "engpar_weights.h"
