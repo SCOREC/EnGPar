@@ -6,6 +6,7 @@ set(ENGPAR_SOURCES
   src/engpar_weightBalancer.cpp
   src/engpar_queue.cpp
   src/engpar_selector.cpp
+  src/engpar_weightSelector.cpp
   src/engpar_make.cpp
   src/engpar_sd.cpp
   )

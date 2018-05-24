@@ -1,9 +1,13 @@
 #include "engpar_balancer.h"
+#include "engpar_weightSelector.h"
 #include "engpar_queue.h"
 #include <PCU.h>
 #include "../engpar.h"
 #include <engpar_support.h>
 
+namespace agi {
+  class WeightMigration;
+}
 namespace engpar {
 
 
@@ -19,10 +23,11 @@ namespace engpar {
   WeightBalancer::WeightBalancer(Input* input_, int v) :
     Balancer(input_,v,"weightBalancer") {
   }
+  
   bool WeightBalancer::runStep(double tolerance) {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);
     double stepTime = PCU_Time();
-    double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension,false));
+    double imb = EnGPar_Get_Imbalance(getWeight(input->g,-1,false));
     //Check for completition of criteria
     if (imb < tolerance)
       return false;
@@ -30,11 +35,10 @@ namespace engpar {
     sd->push(imb);
     if (sd->isFull()&&sd->slope()>0)
       return false;
-    
     Sides* sides = makeSides(inp->g,inp->primary_edge_type);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
-    Weights* targetWeights = makeWeights(inp->g,false, sides,target_dimension);
+    Weights* targetWeights = makeWeights(inp->g,false, sides,-1);
     if (verbosity>=3)
       printf("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
@@ -62,14 +66,13 @@ namespace engpar {
     distance_time+=PCU_Time()-t;
 
     //TODO: Replace with a weight selector
-    //Selector* selector = makeSelector(inp,pq,&completed_dimensions,
-    //                                  &completed_weights);
-    agi::Migration* plan = new agi::Migration(input->g);
+    WeightSelector* selector = makeWeightSelector(inp,pq);
+    agi::WeightMigration* plan = NULL;// = new agi::WeightMigration(input->g);
     wgt_t planW = 0.0;
     int selectIterations=10;
     for (int i=0;i<selectIterations;i++) {
       wgt_t beforeW = planW;
-      //planW = selector->select(targets,plan,beforeW,0,target_dimension);
+      planW = selector->select(targets,plan,beforeW);
       if (planW-beforeW<.00001) {
         break;
       }
@@ -79,15 +82,17 @@ namespace engpar {
     //delete selector;
     
     stepTime = PCU_Time()-stepTime;
-    int numMigrate = plan->size();
+    int numMigrate = planW;
+    //int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
 
     if (numMigrate>0)
       //TODO: replace with weight migration
-      input->g->migrate(plan, migrTime);
-    else
-      delete plan;
-    
+      //input->g->migrate(plan, migrTime);
+      ;
+    else {
+      //delete plan;
+    }
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
         printf("  Step took %f seconds\n",stepTime);
@@ -100,14 +105,14 @@ namespace engpar {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
           printf("    Slope: %f\n",sd->slope());
-        printf("    Migrating %d vertices took %f seconds\n",numMigrate, migrTime->getTime("total"));
+        printf("    Migrating %d weight took %f seconds\n",numMigrate, 0.0);//migrTime->getTime("total"));
       }
     }
 
     if (numMigrate == 0)
       return false;
 
-    return true; //not done balancing
+    return false; //not done balancing
   }
   void WeightBalancer::balance() {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);

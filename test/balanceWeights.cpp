@@ -66,11 +66,11 @@ int main(int argc, char* argv[]) {
   
   engpar::evaluatePartition(g);
 
-  double step_factor = 0.1;
-  engpar::WeightInput* input = engpar::createWeightInput(g,1.05,step_factor,0);
+  double step_factor = .25;
+  engpar::WeightInput* input = engpar::createWeightInput(g,tol,step_factor,0);
 
   //Create the balancer
-  engpar::balanceWeights(input,0);
+  engpar::balanceWeights(input,1);
 
   //Evaluate the new partition
   engpar::evaluatePartition(g);
