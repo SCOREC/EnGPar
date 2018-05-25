@@ -15,7 +15,7 @@ namespace agi {
     int i=0;
     VertexIterator* vitr = begin();
     while ((v = iterate(vitr))) {
-      v_weights[i] = weight(v);
+      v_weights[i++] = weight(v);
     }
 
     //Send the weight in the plan
