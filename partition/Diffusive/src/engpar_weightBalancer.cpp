@@ -105,7 +105,7 @@ namespace engpar {
     if (numMigrate == 0)
       return false;
 
-    return false; //not done balancing
+    return true; //not done balancing
   }
   void WeightBalancer::balance() {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);
