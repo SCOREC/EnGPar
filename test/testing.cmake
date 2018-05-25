@@ -196,6 +196,43 @@ if (ENABLE_PARMETIS)
     2
     cake/)
 
+  mpi_test(vtxBalanceCube 4
+    ./vtxBalance
+    "${GRAPHS}/cube/4/"
+    .1)
+
+  mpi_test(vtxBalanceTorus 4
+    ./vtxBalance
+    "${GRAPHS}/torus/4/"
+    .15)
+
+  mpi_test(vtxBalanceGraph 2
+    ./vtxBalance
+    "${GRAPHS}/gnutella.ebin"
+    .1)
+
+  mpi_test(balanceCube 4
+    ./balance
+    "${GRAPHS}/cube/4/")
+
+  mpi_test(balanceTorus 4
+    ./balance
+    "${GRAPHS}/torus/4/")
+
+  mpi_test(balanceTorusVtxFaceElm 4
+    ./balance
+    "${GRAPHS}/torus/4_01/"
+    yes)
+
+  mpi_test(balanceMultipleTorus 4
+    ./balanceMultiple
+    "${GRAPHS}/torus/4/")
+
+  mpi_test(balanceWeights4_100 4
+    ./balanceWeights
+    100
+    1.05)
+
   mpi_test(splitAndBalanceCube 8
     ./splitAndBalance
     "${GRAPHS}/cube/4/"
@@ -232,37 +269,6 @@ if (ENABLE_PARMETIS)
   endif()
 endif()
   
-mpi_test(vtxBalanceCube 4
-  ./vtxBalance
-  "${GRAPHS}/cube/4/"
-  .1)
-
-mpi_test(vtxBalanceTorus 4
-  ./vtxBalance
-  "${GRAPHS}/torus/4/"
-  .15)
-
-mpi_test(vtxBalanceGraph 2
-  ./vtxBalance
-  "${GRAPHS}/gnutella.ebin"
-  .1)
-
-mpi_test(balanceCube 4
-  ./balance
-  "${GRAPHS}/cube/4/")
-
-mpi_test(balanceTorus 4
-  ./balance
-  "${GRAPHS}/torus/4/")
-
-mpi_test(balanceTorusVtxFaceElm 4
-  ./balance
-  "${GRAPHS}/torus/4_01/"
-  yes)
-
-mpi_test(balanceMultipleTorus 4
-  ./balanceMultiple
-  "${GRAPHS}/torus/4/")
 
 
 if (ENABLE_ZOLTAN)
