@@ -8,8 +8,10 @@ set(AGI_SOURCES
   agiIterate.cpp
   agiTag.cpp
   agiMigration.cpp
+  agiWeightMigration.cpp
   agiMigrationTimers.cpp
   agiMigrate.cpp
+  agiWeightMigrate.cpp
   agiIO.cpp
   agiValid.cpp
   agiVTK.cpp

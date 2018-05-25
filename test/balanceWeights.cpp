@@ -41,7 +41,9 @@ int main(int argc, char* argv[]) {
     weights[i] = PCU_Comm_Self()*100;
   }
   g->constructVerts(true,num_verts,verts,weights);
-
+  delete [] verts;
+  delete [] weights;
+  
   agi::gid_t num_edges = numComps;
   agi::gid_t* edge_ids = new agi::gid_t[num_edges];
   agi::lid_t* degs = new agi::lid_t[num_edges];
@@ -54,7 +56,10 @@ int main(int argc, char* argv[]) {
     }
   }
   g->constructEdges(num_edges,edge_ids,degs,pins_to_verts);
-
+  delete [] edge_ids;
+  delete [] degs;
+  delete [] pins_to_verts;
+  
   std::unordered_map<agi::gid_t,agi::part_t> owns;
   for (int i=0;i<num_edges;i++) {
     for (int j=0;j<PCU_Comm_Peers();j++) {

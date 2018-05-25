@@ -17,10 +17,11 @@ namespace engpar {
       else
         others.push_back(vtx);
     }
+    g->destroy(pitr);
     return v;
   }
 
-  wgt_t WeightSelector::select(Targets* targets,agi::WeightMigration*, wgt_t planW) {
+  wgt_t WeightSelector::select(Targets* targets,agi::WeightMigration* plan, wgt_t planW) {
 
     wgt_t alpha = .1;
     
@@ -39,7 +40,7 @@ namespace engpar {
           if (x> targets->get(owner)-sending[owner])
             x = targets->get(owner)-sending[owner];
           //Add to plan
-          //{v,cav[i],x} -> plan
+          plan->insert(mine,cav[i],x);
           sending[owner]+=x;
           vSending[mine]+=x;
           planW+=x;

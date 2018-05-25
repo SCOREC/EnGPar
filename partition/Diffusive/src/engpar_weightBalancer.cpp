@@ -5,9 +5,6 @@
 #include "../engpar.h"
 #include <engpar_support.h>
 
-namespace agi {
-  class WeightMigration;
-}
 namespace engpar {
 
 
@@ -65,9 +62,8 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
-    //TODO: Replace with a weight selector
     WeightSelector* selector = makeWeightSelector(inp,pq);
-    agi::WeightMigration* plan = NULL;// = new agi::WeightMigration(input->g);
+    agi::WeightMigration* plan = new agi::WeightMigration(input->g);
     wgt_t planW = 0.0;
     int selectIterations=10;
     for (int i=0;i<selectIterations;i++) {
@@ -79,17 +75,14 @@ namespace engpar {
     }
     delete pq;
     delete targets;
-    //delete selector;
+    delete selector;
     
     stepTime = PCU_Time()-stepTime;
-    int numMigrate = planW;
-    //int numMigrate = plan->size();
+    int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
 
     if (numMigrate>0)
-      //TODO: replace with weight migration
-      //input->g->migrate(plan, migrTime);
-      ;
+      input->g->migrate(plan, migrTime);
     else {
       //delete plan;
     }

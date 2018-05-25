@@ -460,6 +460,7 @@ public:
 
   // \cond
   void migrate(Migration* plan, MigrationTimers* mt = NULL);
+  void migrate(WeightMigration* plan, MigrationTimers* mt = NULL);
   // \endcond
   void repartition(part_t* partition);
   ///@}
