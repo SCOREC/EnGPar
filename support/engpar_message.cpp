@@ -49,34 +49,39 @@ void EnGPar_Debug_Close() {
 }
 
 
+void EnGPar_Print(FILE* f, const char* prefix, const char* format, va_list args) {
+  //Dangerous if someone prints a string of size > 1024
+  char buffer[1024];
+  sprintf(buffer,"%s %s",prefix,format);
+  vfprintf(f,buffer,args);
+
+}
 
 void EnGPar_Status_Message(const char* format, ...) {
   va_list ap;
   va_start(ap,format);
-  //Dangerous if someone prints a string of size > 1024
-  char buffer[1024];
-  sprintf(buffer,"ENGPAR %s",format);
-  vprintf(buffer,ap);
+  EnGPar_Print(stdout,"ENGPAR",format,ap);
+  va_end(ap);
+}
+void EnGPar_Status_Message(int verbosity,const char* format, ...) {
+  if (!EnGPar_Check_Verbosity(verbosity))
+    return;
+  va_list ap;
+  va_start(ap,format);
+  EnGPar_Print(stdout,"ENGPAR",format,ap);
   va_end(ap);
 }
 
 void EnGPar_Warning_Message(const char* format, ...) {
   va_list ap;
   va_start(ap,format);
-  //Dangerous if someone prints a string of size > 1024
-  char buffer[1024];
-  sprintf(buffer,"[WARNING] ENGPAR %s",format);
-  vprintf(buffer,ap);
+  EnGPar_Print(stdout,"[WARNING] ENGPAR",format,ap);
   va_end(ap);
 
 }
 void EnGPar_Error_Message(const char* format, ...) {
   va_list ap;
   va_start(ap,format);
-  //Dangerous if someone prints a string of size > 1024
-  char buffer[1024];
-  sprintf(buffer,"[ERROR] ENGPAR %s",format);
-  vfprintf(stderr,buffer,ap);
+  EnGPar_Print(stderr,"[ERROR] ENGPAR",format,ap);
   va_end(ap);
-
 }

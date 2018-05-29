@@ -20,6 +20,7 @@ void EnGPar_Close_Log();
 void EnGPar_Set_Verbosity(int);
 bool EnGPar_Check_Verbosity(int);
 void EnGPar_Status_Message(const char*, ...);
+void EnGPar_Status_Message(int verbosity, const char*, ...);
 void EnGPar_Warning_Message(const char*, ...);
 void EnGPar_Error_Message(const char*, ...);
 #endif
