@@ -10,6 +10,8 @@ configure_file(engpar_version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/engpar_version.h)
 
 set(SOURCES
   engpar_support.cpp
+  engpar_log.cpp
+  engpar_message.cpp
   )
 
 set(SUPPORT_HEADERS
