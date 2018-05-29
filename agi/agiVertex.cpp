@@ -14,11 +14,11 @@ namespace agi {
 const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
   lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){
-    printf("[ERROR] invalid vertex given to weight(vtx)\n");
+    EnGPar_Error_Message("invalid vertex given to weight(vtx)\n");
     throw 1;
   }    
   else if (index>=num_local_verts) {
-    printf("[ERROR] weights unknown for ghost vertices\n");
+    EnGPar_Error_Message("weights unknown for ghost vertices\n");
     throw 2;
   }
   return local_weights[index];
@@ -43,11 +43,11 @@ void Ngraph::setCoords(coord_t* cs) {
 const coord_t& Ngraph::coord(GraphVertex* vtx) const {
   lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){
-    printf("[ERROR] invalid vertex given to coord(vtx)\n");
+    EnGPar_Error_Message("invalid vertex given to coord(vtx)\n");
     throw 1;
   }    
   else if (index>=num_local_verts) {
-    printf("[ERROR] coordinates unknown for ghost vertices\n");
+    EnGPar_Error_Message("coordinates unknown for ghost vertices\n");
     throw 2;
   }
   return local_coords[index];
@@ -57,7 +57,7 @@ const coord_t& Ngraph::coord(GraphVertex* vtx) const {
 int Ngraph::owner(GraphVertex* vtx) const {
   lid_t index = fromPtr(vtx);
   if (index>=num_local_verts+num_ghost_verts) {
-    fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
+    EnGPar_Error_Message("invalid vertex given to owner(vtx)\n");
     return -1;
   }
   if (index<num_local_verts)
@@ -70,7 +70,7 @@ part_t Ngraph::originalOwner(GraphVertex* vtx) const {
   assert(original_owners);
   lid_t index = fromPtr(vtx);
   if (index>=num_local_verts+num_ghost_verts) {
-    fprintf(stderr,"[ERROR] invalid vertex given to owner(vtx)\n");
+    EnGPar_Error_Message("invalid vertex given to owner(vtx)\n");
     return -1;
   }
   return original_owners[index];

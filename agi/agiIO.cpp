@@ -1,3 +1,4 @@
+#include <engpar_support.h>
 #include "ngraph.h"
 #include <stdio.h>
 #include <PCU.h>
@@ -143,7 +144,7 @@ namespace agi {
     mkdir_r(filename);
     struct pcu_file* file = pcu_fopen(filename,true,false);
     if (!file) {
-      printf("Could not open file for saving: %s#.bgd\n",prefix);
+      EnGPar_Error_Message("Could not open file for saving: %s#.bgd\n",prefix);
       throw 1;
     }
     writeHeader(file,this); 
@@ -226,7 +227,7 @@ namespace agi {
     sprintf(filename,"%s_%d.bgd",prefix,PCU_Comm_Self());
     struct pcu_file* file = pcu_fopen(filename,false,false);
     if (!file) {
-      printf("Could not open file for loading: %s#.bgd",prefix);
+      EnGPar_Error_Message("Could not open file for loading: %s#.bgd",prefix);
       throw 1;
     }
     bool isHG = readHeader(file);
@@ -253,5 +254,8 @@ namespace agi {
     readGhosts(file,owns);
     constructGhosts(owns);
     pcu_fclose(file);
+
+    if (EnGPar_Check_Verbosity(0));
+      //TODO: Add printStats(); to print the loaded graph
   }
 }

@@ -1,4 +1,5 @@
 #include "agiMigrationTimers.h"
+#include <engpar_support.h>
 #include <PCU.h>
 #include <cassert>
 
@@ -64,7 +65,7 @@ namespace agi {
 
   int MigrationTimers::getTimerIdx(std::string name) {
     if( !nameToIdx.count(name) ) {
-      fprintf(stderr, "%s timer %s not found... call addTimer before use... exiting\n",
+      EnGPar_Error_Message("%s timer %s not found... call addTimer before use... exiting\n",
           __func__, name.c_str());
       exit(EXIT_FAILURE);
     }
