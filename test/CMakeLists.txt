@@ -37,10 +37,16 @@ set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
   ${KOKKOS_LIBRARIES}
-)
+  )
+
+set(TESTING_SOURCES
+  buildGraphs.cpp
+  gatherGraphs.cpp
+  TestingSuite.cpp
+  )
 
 function(make_exe exename srcname)
-  add_executable(${exename} ${srcname} buildGraphs.cpp)
+  add_executable(${exename} ${srcname} ${TESTING_SOURCES})
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_exe)
 
@@ -97,5 +103,14 @@ endif()
 
 #Ctest file
 if(IS_TESTING)
+  set(MESHES ""
+    CACHE STRING
+    "See sub module pumi_meshes")
+  set(GRAPHS ""
+    CACHE STRING
+    "See sub module EnGPar-graphs")
+  add_definitions(-DENGPAR_GRAPHS="${GRAPHS}")
+  make_exe(ConstructTestSuite ConstructTestSuite.cpp)
+
   include(testing.cmake)
 endif()

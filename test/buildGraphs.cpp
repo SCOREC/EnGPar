@@ -243,7 +243,6 @@ agi::Ngraph* buildHyperGraphLine() {
     pins.push_back(local_verts*PCU_Comm_Self()-1);
     pins.push_back(local_verts*PCU_Comm_Self());
     owners[local_verts*PCU_Comm_Self()-1]=PCU_Comm_Self()-1;
-    printf("Ghost vertex: %d\n",local_verts*PCU_Comm_Self()-1);
   }
   for (agi::lid_t i=0;i<local_verts;i++) {
     int vert = local_verts*PCU_Comm_Self()+i;
@@ -256,7 +255,6 @@ agi::Ngraph* buildHyperGraphLine() {
     pins.push_back(vert+1);
     if (i==local_verts-1) {
       owners[vert+1]=PCU_Comm_Self()+1;
-      printf("Ghost vertex: %d\n",vert+1);
     }
   }
   std::vector<agi::wgt_t> weights;
@@ -303,13 +301,6 @@ agi::Ngraph* buildDisconnected2Graph() {
   //The first part also has an island of vertices completely disconnected from the rest of the graph
   assert(PCU_Comm_Peers()==2);
 
-  if (!PCU_Comm_Self()) {
-    printf("Distance Queue of part 0 for this graph should be:\n");
-    printf("400\n");
-    printf("200\n");
-    printf("300\n");
-    printf("100\n");
-  }
   agi::Ngraph* g = agi::createEmptyGraph();
   std::unordered_map<agi::gid_t,agi::part_t> owners;
   std::vector<agi::gid_t> edges;
@@ -444,7 +435,6 @@ agi::Ngraph* buildDisconnected2Graph() {
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
   g->setCoords(cs);
   return g;
- 
 }
 
 agi::Ngraph* buildEmptyGraph() {
