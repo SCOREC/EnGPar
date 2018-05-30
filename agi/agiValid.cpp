@@ -9,9 +9,9 @@ namespace agi {
     while ((vtx = g->iterate(vitr))) {
       i++;
     }
-    assert(g->numLocalVtxs()==i);
+    if(g->numLocalVtxs()!=i) return false;
     lid_t ig = PCU_Add_Long(i);
-    assert(g->numGlobalVtxs()==ig);
+    if(g->numGlobalVtxs()!=ig) return false;
     vitr = g->begin();
     while ((vtx = g->iterate(vitr))) {
       for (etype t = 0;t<g->numEdgeTypes();t++) {
@@ -22,7 +22,7 @@ namespace agi {
           j++;
         }
         g->destroy(eitr);
-        assert(g->degree(vtx,t)==j);
+        if(g->degree(vtx,t)!=j) return false;
       }
     }
 
@@ -38,7 +38,7 @@ namespace agi {
             if (g->isEqual(other,vtx))
               break;
           }
-          assert(other);
+          if(!other) return false;
           g->destroy(pitr);
         }
         g->destroy(eitr);
@@ -69,12 +69,12 @@ namespace agi {
         }
       }
       g->destroy(eitr);
-      assert(i==g->numLocalEdges(t));
+      if(i!=g->numLocalEdges(t)) return false;
       j = PCU_Add_Long(j);
-      assert(j==g->numGlobalEdges(t));
+      if(j!=g->numGlobalEdges(t)) return false;
       k = PCU_Add_Long(k);
-      assert(k==g->numGlobalPins(t));
-      assert(l==g->numLocalPins(t));
+      if(k!=g->numGlobalPins(t)) return false;
+      if(l!=g->numLocalPins(t)) return false;
       eitr = g->begin(t);
       while ((edge = g->iterate(eitr))) {
         GraphVertex* other;
@@ -84,7 +84,7 @@ namespace agi {
           j++;
         }
         g->destroy(pitr);
-        assert(g->degree(edge)==j);
+        if(g->degree(edge)!=j) return false;
       }
       g->destroy(eitr);
     }
@@ -92,8 +92,8 @@ namespace agi {
     GhostIterator* g_itr = g->beginGhosts();
     GraphVertex* gv;
     while ((gv = g->iterate(g_itr))) {
-      assert(g->owner(gv)!=PCU_Comm_Self());
-      assert(g->owner(gv)<PCU_Comm_Peers());
+      if(g->owner(gv)==PCU_Comm_Self()) return false;
+      if(g->owner(gv)>=PCU_Comm_Peers()) return false;
     }
     
     return true;
