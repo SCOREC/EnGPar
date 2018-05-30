@@ -466,7 +466,7 @@ public:
   ///@}
   void changeOwners(int* newRanks);
   
-
+  void printStats() const;
  protected:
   // \cond 
   Ngraph();

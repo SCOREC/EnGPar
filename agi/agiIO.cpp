@@ -255,7 +255,10 @@ namespace agi {
     constructGhosts(owns);
     pcu_fclose(file);
 
-    if (EnGPar_Check_Verbosity(0));
-      //TODO: Add printStats(); to print the loaded graph
+    if (EnGPar_Check_Verbosity(0) && !PCU_Comm_Self()) {
+      //TODO: Add timing info
+      EnGPar_Status_Message("Loaded graph %s.\n",filename);
+      printStats();
+    }
   }
 }

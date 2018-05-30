@@ -554,4 +554,29 @@ namespace agi {
     }  
 
   }
+
+  void Ngraph::printStats() const {
+    if (isHyperGraph)
+      EnGPar_Status_Message("Hyper N-graph Status\n");
+    else
+      EnGPar_Status_Message("N-graph Status\n");
+    EnGPar_Status_Message("Vertices: %ld\n", numGlobalVtxs());
+    char edges[100];
+    int n = sprintf(edges,"Edges: ");
+    char* temp = edges + n;
+    for (etype t = 0; t < numEdgeTypes(); t++) {
+      n = sprintf(temp,"Type %d: %ld ",t,numGlobalEdges(t));
+      temp+=n;
+    }
+    EnGPar_Status_Message("%s\n",edges);
+    if (isHyperGraph) {
+      int n = sprintf(edges,"Pins: ");
+      char* temp = edges + n;
+      for (etype t = 0; t < numEdgeTypes(); t++) {
+        n = sprintf(temp,"Type %d: %ld ",t,numGlobalPins(t));
+        temp+=n;
+      }
+      EnGPar_Status_Message("%s\n",edges);
+    }
+  }
 }
