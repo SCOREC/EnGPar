@@ -24,17 +24,17 @@ namespace {
     PCU_Max_Doubles(globalRatios,4);
     int count = migrTime->getCount("comm");
     if (!PCU_Comm_Self() && count) {
-      fprintf(stderr, "max migration time (s) "
+      EnGPar_Status_Message("max migration time (s) "
           "<total, setup, comm, build> = <%f, %f, %f, %f>\n",
           maxTot, maxSetup, maxComm, maxBuild);
-      fprintf(stderr, "max migration ratios "
+      EnGPar_Status_Message("max migration ratios "
           "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
           globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
     for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
     PCU_Min_Doubles(globalRatios,4);
     if (!PCU_Comm_Self() && count) {
-      fprintf(stderr, "min migration ratios "
+      EnGPar_Status_Message("min migration ratios "
           "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
           globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
@@ -84,10 +84,10 @@ namespace engpar {
       return false;
     Sides* sides = makeSides(inp);
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
     Weights* targetWeights = makeWeights(inp, sides,target_dimension);
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(),
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
     Weights** completedWs = NULL;
     if (completed_dimensions.size()>0) {
@@ -107,7 +107,7 @@ namespace engpar {
     delete targetWeights;
         
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq;
     double t = PCU_Time();
     if (inp->useDistanceQueue) {
@@ -133,7 +133,7 @@ namespace engpar {
       if (verbosity>=2) {
         PCU_Add_Ints(sizes,2);
         if (!PCU_Comm_Self())
-          printf("  Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
+          EnGPar_Status_Message("  Plan was trimmed from %d to %d vertices\n",sizes[0],sizes[1]);
       }
     }
     delete pq;
@@ -151,8 +151,8 @@ namespace engpar {
     
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
-        printf("  Step took %f seconds\n",stepTime);
-        printf("  Imbalances <v, e0, ...>: ");
+        EnGPar_Status_Message("  Step took %f seconds\n",stepTime);
+        EnGPar_Status_Message("  Imbalances <v, e0, ...>: ");
       }
       printImbalances(input->g);
       totStepTime+=stepTime;
@@ -160,8 +160,8 @@ namespace engpar {
     if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
-          printf("    Slope: %f\n",sd->slope());
-        printf("    Migrating %d vertices took %f seconds\n",numMigrate, migrTime->getTime("total"));
+          EnGPar_Status_Message("    Slope: %f\n",sd->slope());
+        EnGPar_Status_Message("    Migrating %d vertices took %f seconds\n",numMigrate, migrTime->getTime("total"));
       }
     }
 
@@ -198,7 +198,7 @@ namespace engpar {
       EnGPar_Log_Function(message);
     }
     if (1 == PCU_Comm_Peers()) {
-      printf("EnGPar ran in serial, nothing to do exiting...\n");
+      EnGPar_Warning_Message("ran in serial, nothing to do exiting...\n");
       return;
     }
 
@@ -227,10 +227,10 @@ namespace engpar {
     delete sides;
     
     if (!PCU_Comm_Self() && verbosity >= 0)
-      printf("Starting criteria type %d with imbalances: ",target_dimension);
+      EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
     printImbalances(input->g);
     if (!PCU_Comm_Self() && verbosity >= 1)
-      printf("Side Tolerance is: %d\n", sideTol);
+      EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
     int step = 0;
     int inner_steps=0;
@@ -254,7 +254,7 @@ namespace engpar {
         targetTime = PCU_Time()-targetTime;
         targetTime = PCU_Max_Double(targetTime);
         if (verbosity >= 0 && !PCU_Comm_Self()) {
-          printf("Completed criteria type %d in %d steps and took %f seconds\n",
+          EnGPar_Status_Message("Completed criteria type %d in %d steps and took %f seconds\n",
                  target_dimension, inner_steps, targetTime);
         }
         targetTime=PCU_Time();
@@ -277,10 +277,10 @@ namespace engpar {
         delete sides;
 
         if (!PCU_Comm_Self() && verbosity >= 0)
-          printf("Starting criteria type %d with imbalances: ",target_dimension);
+          EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
         printImbalances(input->g);
         if (!PCU_Comm_Self() && verbosity >= 1)
-          printf("Side Tolerance is: %d\n", sideTol);
+          EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
 
       }      
@@ -293,10 +293,10 @@ namespace engpar {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
         if(step==inp->maxIterations)
-          printf("EnGPar ran to completion in %d iterations in %f seconds\n",
+          EnGPar_Status_Message("EnGPar ran to completion in %d iterations in %f seconds\n",
                  inp->maxIterations, time);
         else
-          printf("EnGPar converged in %lu iterations in %f seconds\n",
+          EnGPar_Status_Message("EnGPar converged in %lu iterations in %f seconds\n",
                  step-inp->priorities.size(),time);
       }
     }
@@ -306,9 +306,9 @@ namespace engpar {
       double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
-        printf("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
-        printf("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
-        printf("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
+        EnGPar_Status_Message("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
+        EnGPar_Status_Message("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
+        EnGPar_Status_Message("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
             distance_time, distance_time/time*100);
       }
     }

@@ -1,6 +1,7 @@
 #include "engpar.h"
 #include <PCU.h>
 #include "Diffusive/src/engpar_sides.h"
+#include <engpar_support.h>
 
 namespace engpar {
   wgt_t getWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
@@ -37,14 +38,16 @@ namespace engpar {
   }
 
   void printImbalances(agi::Ngraph* g) {
+    char imbalances[100];
+    int n=0;
     for (agi::etype type = -1;type<g->numEdgeTypes();type++) {
       agi::wgt_t w = getWeight(g,type);
       double imb = EnGPar_Get_Imbalance(w);
       if (!PCU_Comm_Self())
-        printf("%2.4f ",imb);
+        n+=sprintf(imbalances+n, "%2.4f ", imb);
     }
     if (!PCU_Comm_Self())
-      printf("\n");
+      printf("%s\n",imbalances);
   }
   
   void printMaxMinAvgImb(agi::lid_t my_val,std::string prefix) {
@@ -58,7 +61,7 @@ namespace engpar {
     avg = total*1.0/PCU_Comm_Peers();
     imb = max*1.0/avg;
     if (!PCU_Comm_Self())
-      printf("%s <max, min, avg, imb> = <%lu %lu %f %f>\n",
+      EnGPar_Status_Message("%s <max, min, avg, imb> = <%lu %lu %f %f>\n",
              prefix.c_str(),max,min,avg,imb);
   }
   void printMaxMinAvgImb(agi::wgt_t my_val,std::string prefix) {
@@ -71,7 +74,7 @@ namespace engpar {
     avg = total*1.0/PCU_Comm_Peers();
     imb = max*1.0/avg;
     if (!PCU_Comm_Self())
-      printf("%s <max, min, avg, imb> = <%f %f %f %f>\n",
+      EnGPar_Status_Message("%s <max, min, avg, imb> = <%f %f %f %f>\n",
              prefix.c_str(),max,min,avg,imb);
   }
 
@@ -121,7 +124,7 @@ namespace engpar {
   }
 
   
-  void evaluatePartition(agi::Ngraph* g,std::string) {
+  void evaluatePartition(agi::Ngraph* g,const char* name) {
     agi::wgt_t* my_vals = new agi::wgt_t[2+g->numEdgeTypes()+3];
     agi::wgt_t* min = new agi::wgt_t[2+g->numEdgeTypes()+3];
     agi::wgt_t* max = new agi::wgt_t[2+g->numEdgeTypes()+3];
@@ -161,19 +164,23 @@ namespace engpar {
       for (int i=0;i<5+g->numEdgeTypes();i++) {
         avg[i] = total[i]/PCU_Comm_Peers();
       }
-      printf("ENGPAR STATUS: Empty Parts: %d\n"
-             "ENGPAR STATUS: Disconnected Components: <max,tot> %.3f %.3f\n"
-             "ENGPAR STATUS: Neighbors: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Edge Cut: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Local Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n"
-             "ENGPAR STATUS: Total Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
-             empty,max[0],total[0],max[1],min[1],avg[1],max[1]/avg[1],
-             max[2],min[2],avg[2],max[2]/avg[2],max[3],min[3],avg[3],max[3]/avg[3],
-             max[4],min[4],avg[4],max[4]/avg[4]);
+      char prefix[100];
+      sprintf(prefix,"PARTITION %s",name);
+      EnGPar_Status_Message("%s: Empty Parts: %d\n",prefix,empty);
+      EnGPar_Status_Message("%s: Disconnected Components: <max,tot> %.3f %.3f\n",
+                            prefix,max[0],total[0]);
+      EnGPar_Status_Message("%s: Neighbors: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+                            prefix,max[1],min[1],avg[1],max[1]/avg[1]);
+      EnGPar_Status_Message("%s: Edge Cut: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+                            prefix,max[2],min[2],avg[2],max[2]/avg[2]);
+      EnGPar_Status_Message("%s: Local Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+                            prefix,max[3],min[3],avg[3],max[3]/avg[3]);
+      EnGPar_Status_Message("%s: Total Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+                            prefix,max[4],min[4],avg[4],max[4]/avg[4]);
       for (int i=0;i<g->numEdgeTypes();i++) {
-        char edge_name[15];
-        sprintf(edge_name,"Edges type %d",i);
-        printf("ENGPAR STATUS: %s: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
+        char edge_name[30];
+        sprintf(edge_name,"%s: Edges type %d",prefix,i);
+        EnGPar_Status_Message("%s: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
                max[5+i],min[5+i],avg[5+i],max[5+i]/avg[5+i]);
       }
     }

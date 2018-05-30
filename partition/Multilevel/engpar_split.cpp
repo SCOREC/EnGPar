@@ -1,6 +1,7 @@
 #include <engpar_parmetis.h>
 #include <PCU.h>
 #include "../engpar.h"
+#include <engpar_support.h>
 namespace engpar {
 
   void expandParts(agi::Ngraph* g, MPI_Comm newComm) {
@@ -17,7 +18,7 @@ namespace engpar {
     SplitInput* inp = dynamic_cast<SplitInput*>(input);
     if (!inp){
       if (!PCU_Comm_Self()) {
-        fprintf(stderr,"[ERROR] Incorrect input provided\n");
+        EnGPar_Error_Message("Incorrect input provided\n");
       }
       assert(false);
     }

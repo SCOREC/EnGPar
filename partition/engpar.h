@@ -48,8 +48,6 @@ namespace engpar {
 
   ///@}
 
-
-
   
   /** \name Metrics */
   ///@{
@@ -61,7 +59,7 @@ namespace engpar {
   /** \brief Prints an evaluation of the partition of the Ngraph
    * \param g The graph
    */
-  void evaluatePartition(agi::Ngraph* g, std::string prefix = "");
+  void evaluatePartition(agi::Ngraph* g, const char* prefix = "");
 
   wgt_t getWeight(agi::Ngraph*,int,bool countGhosts=false);
   

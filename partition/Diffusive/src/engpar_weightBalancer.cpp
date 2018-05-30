@@ -34,10 +34,10 @@ namespace engpar {
       return false;
     Sides* sides = makeSides(inp->g,inp->primary_edge_type);
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
     Weights* targetWeights = makeWeights(inp->g,false, sides,-1);
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(),
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
     Weights** completedWs = NULL;
     Targets* targets = makeTargets(inp->step_factor,sides,targetWeights,sideTol,
@@ -51,7 +51,7 @@ namespace engpar {
     delete targetWeights;
         
     if (verbosity>=3)
-      printf("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
+      EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq;
     double t = PCU_Time();
     if (false)
@@ -88,8 +88,8 @@ namespace engpar {
     }
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
-        printf("  Step took %f seconds\n",stepTime);
-        printf("  Imbalances <v, e0, ...>: ");
+        EnGPar_Status_Message("  Step took %f seconds\n",stepTime);
+        EnGPar_Status_Message("  Imbalances <v, e0, ...>: ");
       }
       printImbalances(input->g);
       totStepTime+=stepTime;
@@ -97,8 +97,8 @@ namespace engpar {
     if (verbosity >= 2) {
       if (!PCU_Comm_Self()) {
         if (sd->isFull())
-          printf("    Slope: %f\n",sd->slope());
-        printf("    Migrating %d weight took %f seconds\n",numMigrate, 0.0);//migrTime->getTime("total"));
+          EnGPar_Status_Message("    Slope: %f\n",sd->slope());
+        EnGPar_Status_Message("    Migrating %d weight took %f seconds\n",numMigrate, 0.0);//migrTime->getTime("total"));
       }
     }
 
@@ -138,7 +138,7 @@ namespace engpar {
       */
     }
     if (1 == PCU_Comm_Peers()) {
-      printf("EnGPar ran in serial, nothing to do exiting...\n");
+      EnGPar_Warning_Message("Ran in serial, nothing to do exiting...\n");
       return;
     }
 
@@ -163,7 +163,7 @@ namespace engpar {
     sideTol = inp->g->numGlobalEdges()*10;
     
     if (!PCU_Comm_Self() && verbosity >= 0)
-      printf("Starting weight diffusion with imbalance: ");
+      EnGPar_Status_Message("Starting weight diffusion with imbalance: ");
     printImbalances(input->g);
 
     int step = 0;
@@ -177,10 +177,10 @@ namespace engpar {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
         if(step==inp->maxIterations)
-          printf("EnGPar ran to completion in %d iterations in %f seconds\n",
+          EnGPar_Status_Message("EnGPar ran to completion in %d iterations in %f seconds\n",
                  inp->maxIterations, time);
         else
-          printf("EnGPar converged in %d iterations in %f seconds\n",
+          EnGPar_Status_Message("EnGPar converged in %d iterations in %f seconds\n",
                  step,time);
       }
     }
@@ -191,9 +191,9 @@ namespace engpar {
       double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
-        printf("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
-        printf("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
-        printf("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
+        EnGPar_Status_Message("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
+        EnGPar_Status_Message("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
+        EnGPar_Status_Message("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
             distance_time, distance_time/time*100);
       }
     }
