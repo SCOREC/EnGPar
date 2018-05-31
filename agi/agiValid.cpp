@@ -1,5 +1,6 @@
 #include "ngraph.h"
 #include <PCU.h>
+#include <engpar_support.h>
 namespace agi {
 
   bool checkValidity(Ngraph* g) {
@@ -9,9 +10,17 @@ namespace agi {
     while ((vtx = g->iterate(vitr))) {
       i++;
     }
-    if(g->numLocalVtxs()!=i) return false;
+    if(g->numLocalVtxs()!=i) {
+      EnGPar_Error_Message("Number of local vertices does not match the number of "
+                           "vertices on process %d\n", PCU_Comm_Self());
+      return false;
+    }
     lid_t ig = PCU_Add_Long(i);
-    if(g->numGlobalVtxs()!=ig) return false;
+    if(g->numGlobalVtxs()!=ig) {
+      EnGPar_Error_Message("Number of global vertices does not match the sum of "
+                           "the number of vertices on each process\n");
+      return false;
+    }
     vitr = g->begin();
     while ((vtx = g->iterate(vitr))) {
       for (etype t = 0;t<g->numEdgeTypes();t++) {
@@ -22,7 +31,11 @@ namespace agi {
           j++;
         }
         g->destroy(eitr);
-        if(g->degree(vtx,t)!=j) return false;
+        if(g->degree(vtx,t)!=j) {
+          EnGPar_Error_Message("Process: %d Degree of vertex %ld does not match the "
+                               "number of edges adjacent to it.", PCU_Comm_Self(),vtx);
+          return false;
+        }
       }
     }
 
@@ -38,7 +51,12 @@ namespace agi {
             if (g->isEqual(other,vtx))
               break;
           }
-          if(!other) return false;
+          if(!other) {
+            EnGPar_Error_Message("Process %d: Vertex, %ld, is connected to edge, %ld, "
+                                 "but the edge is not connected to the vertex\n",
+                                 PCU_Comm_Self(),g->globalID(vtx),g->globalID(edge));
+            return false;
+          }
           g->destroy(pitr);
         }
         g->destroy(eitr);
@@ -69,12 +87,28 @@ namespace agi {
         }
       }
       g->destroy(eitr);
-      if(i!=g->numLocalEdges(t)) return false;
+      if(i!=g->numLocalEdges(t)) {
+        EnGPar_Error_Message("Process %d: Number of local edges does not match "
+                             "the number of actual edges\n",PCU_Comm_Self());
+        return false;
+      }
       j = PCU_Add_Long(j);
-      if(j!=g->numGlobalEdges(t)) return false;
+      if(j!=g->numGlobalEdges(t)) {
+        EnGPar_Error_Message("Number of global edges does not match the sum of "
+                             "the number of edges on each process\n");
+        return false;
+      }
+      if(l!=g->numLocalPins(t)) {
+        EnGPar_Error_Message("Process %d: Number of local pins does not match "
+                             "the number of actual pins\n",PCU_Comm_Self());
+        return false;
+      }
       k = PCU_Add_Long(k);
-      if(k!=g->numGlobalPins(t)) return false;
-      if(l!=g->numLocalPins(t)) return false;
+      if(k!=g->numGlobalPins(t)) {
+        EnGPar_Error_Message("Number of global pins does not match the sum of "
+                             "the number of pins on each process\n");
+        return false;
+      }
       eitr = g->begin(t);
       while ((edge = g->iterate(eitr))) {
         GraphVertex* other;
@@ -84,7 +118,11 @@ namespace agi {
           j++;
         }
         g->destroy(pitr);
-        if(g->degree(edge)!=j) return false;
+        if(g->degree(edge)!=j) {
+          EnGPar_Error_Message("Process: %d Degree of edge %ld does not match the "
+                               "number of vertices that it connects.", PCU_Comm_Self(),vtx);
+          return false;
+        }
       }
       g->destroy(eitr);
     }
@@ -92,8 +130,17 @@ namespace agi {
     GhostIterator* g_itr = g->beginGhosts();
     GraphVertex* gv;
     while ((gv = g->iterate(g_itr))) {
-      if(g->owner(gv)==PCU_Comm_Self()) return false;
-      if(g->owner(gv)>=PCU_Comm_Peers()) return false;
+      if(g->owner(gv)==PCU_Comm_Self()) {
+        EnGPar_Error_Message("Process %d: invalid ghost vertex, %d, that is owned by itself\n",
+                             PCU_Comm_Self(),g->globalID(gv));
+        return false;
+      }
+      if(g->owner(gv)>=PCU_Comm_Peers()) {
+        EnGPar_Error_Message("Process %d: ghost vertex, %d, is owned by a process that does "
+                             "not exist\n", PCU_Comm_Self(),g->globalID(gv));
+                             
+        return false;
+      }
     }
     
     return true;
