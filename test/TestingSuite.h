@@ -17,7 +17,7 @@ class TestingSuite {
   void addGeneralTest(generalTest t);
   void setTestingGraphs(std::vector<agi::Ngraph*>* gs);
 
-  int runTests() const;
+  int runTests(int trial = -1) const;
 
  private:
   char* n;
