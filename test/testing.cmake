@@ -12,12 +12,13 @@ function(mpi_test TESTNAME PROCS EXE)
   )
 endfunction(mpi_test)
 
-mpi_test(constructGraphSerial 1
-  ./constructGraph)
-mpi_test(constructGraph2 2
-  ./constructGraph)
-mpi_test(constructGraph4 4
-  ./constructGraph)
+mpi_test(ConstructTest_1 1
+  ./ConstructTestSuite)
+mpi_test(ConstructTest_2 2
+  ./ConstructTestSuite)
+mpi_test(ConstructTest_4 4
+  ./ConstructTestSuite)
+
 mpi_test(testMigration2 2
   ./testMigration)
 mpi_test(testMigration4 4
@@ -101,21 +102,6 @@ IF(ENABLE_PUMI)
     0
     1)
 ENDIF()
-mpi_test(buildSerialBinaryRing 1
-  ./buildBinaryGraph
-  "${GRAPHS}/ring.ebin")
-
-mpi_test(buildSerialBinaryTree 1
-  ./buildBinaryGraph
-  "${GRAPHS}/tree.ebin")
-
-mpi_test(buildParallelBinaryGraph2 2
-  ./buildBinaryGraph
-  "${GRAPHS}/gnutella.ebin")
-
-mpi_test(buildParallelBinaryGraph4 4
-  ./buildBinaryGraph
-  "${GRAPHS}/enron.ebin")
 
 mpi_test(testAdjacentSerial 1
   ./testAdjacentTraversal

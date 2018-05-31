@@ -50,6 +50,6 @@ int TestingSuite::runTests(int trial) const {
     if (failures==0) 
       EnGPar_Status_Message(-1,"All Tests Passed\n");
   }
-  return (failures==0);
+  return failures;
 }
 
