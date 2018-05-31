@@ -22,8 +22,9 @@ agi::Ngraph* buildGraph() {
   std::vector<agi::gid_t> edges;
   std::vector<agi::lid_t> degrees;
   std::vector<agi::gid_t> pins;
-  for (agi::gid_t i=0;i<local_verts;i++)
+  for (agi::gid_t i=0;i<local_verts;i++) {
     verts.push_back(local_verts*PCU_Comm_Self()+i);
+  }
   for (agi::gid_t i=0;i<local_verts;i++) {
     agi::gid_t e = local_verts*PCU_Comm_Self()+i;
     edges.push_back(e*2);
@@ -134,18 +135,16 @@ agi::Ngraph* buildGraphParts() {
       edges.push_back(e*2+1);
       degrees.push_back(2);
       pins.push_back((e+1)%global_verts);
-      if ((PCU_Comm_Self()+1)%PCU_Comm_Peers()!=PCU_Comm_Self()) {
-        owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
-      }
       pins.push_back(e);
     }
   }
-  if (PCU_Comm_Peers()>1) {
+    if (PCU_Comm_Peers()>1) {
     agi::gid_t e = (local_verts*PCU_Comm_Self()+global_verts-1)%global_verts;
     edges.push_back(e*2);
     degrees.push_back(2);
     pins.push_back((e+1)%global_verts);
     pins.push_back(e);
+    owners[e] = (PCU_Comm_Self()+PCU_Comm_Peers()-1) % PCU_Comm_Peers();
   }
   graph->constructEdges(edges.size(),&edges[0],
                                       &degrees[0],&pins[0]);
@@ -170,6 +169,7 @@ agi::Ngraph* buildGraphParts() {
   graph->constructEdges(edges2.size(),&edges2[0],
                                         &degrees2[0],&pins2[0]);
   graph->constructGhosts(owners);
+
   return graph;
 }
 
@@ -435,6 +435,7 @@ agi::Ngraph* buildDisconnected2Graph() {
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
   g->setCoords(cs);
   return g;
+ 
 }
 
 agi::Ngraph* buildEmptyGraph() {
@@ -501,6 +502,5 @@ agi::Ngraph* buildUnbalancedLineHG() {
   agi::Ngraph* g = agi::createEmptyGraph();
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
-  agi::checkValidity(g);
   return g;
 }
