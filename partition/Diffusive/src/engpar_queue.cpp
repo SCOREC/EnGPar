@@ -247,7 +247,7 @@ namespace engpar {
 
   Queue* createDistanceQueue(DiffusiveInput* input) {
     agi::Ngraph* g = input->g;
-    if (g->numLocalVtxs()==0) {
+    if (g->numLocalEdges()==0) {
       return new Queue(0);
     }
     agi::PNgraph* pg = g->publicize();

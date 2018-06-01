@@ -457,11 +457,11 @@ agi::Ngraph* buildEmptyGraph() {
     }
   }
   if (PCU_Comm_Self()==2) {
-    for (int i=0;i<5;i++)
+    for (int i=1;i<5;i++)
       verts.push_back(i);
     edges.push_back(1);
-    pins.push_back(0);
     pins.push_back(1);
+    pins.push_back(0);
     degrees.push_back(2);
     owners[0]=1;
   }
