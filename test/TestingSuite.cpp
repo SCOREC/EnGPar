@@ -29,16 +29,26 @@ int TestingSuite::runTests(int trial) const {
   //Run fine grain tests
   for (unsigned int i=0;i<fine_tests.size();i++) {
     int ierr = 0;
+    int fail = 0;
     if (trial==-1||num_tests==trial) {
-      EnGPar_Status_Message(-1,"Running Test %d: \"%s\"\n", num_tests,fine_names[i].c_str());
+      if (!PCU_Comm_Self())
+        EnGPar_Status_Message(-1,"Running Test %d: \"%s\".\n", num_tests,fine_names[i].c_str());
+      EnGPar_Start_Test();
       ierr = fine_tests[i]();
-      PCU_Barrier();
+      PCU_Barrier();      
     }
     if (ierr != 0) {
-      EnGPar_Error_Message("Test %d: \"%s\"failed with error code: %d\n", num_tests,
+      EnGPar_Error_Message("Test %d: \"%s\"failed with error code: %d.\n", num_tests,
                            fine_names[i].c_str(), ierr);
-      failures++;
+      fail=1;
     }
+    else if (EnGPar_Hit_Error()) {
+      EnGPar_Error_Message("Test %d: \"%s\" failed with error message.\n", num_tests,
+                           fine_names[i].c_str());
+      fail = 1;
+    }
+    failures += PCU_Max_Int(fail);
+    
     num_tests++;
   }
 
@@ -46,20 +56,30 @@ int TestingSuite::runTests(int trial) const {
   for (unsigned int i = 0; i < general_tests.size(); i++) {
     for (unsigned int j = 0;j < test_graphs.size(); j++) {
       int ierr = 0;
+      int fail = 0;
       if (trial==-1||num_tests==trial) {
-        EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %s\n", num_tests,
-                              general_names[i].c_str(), graph_names[j].c_str());
+        if (!PCU_Comm_Self())
+          EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %s.\n", num_tests,
+                                general_names[i].c_str(), graph_names[j].c_str());
+        EnGPar_Start_Test();
         ierr = general_tests[i](test_graphs[j]);
         PCU_Barrier();
       }
       if (ierr != 0) {
-        EnGPar_Error_Message("Test %d: \"%s\" with graph %s failed with error code: %d\n",
+        EnGPar_Error_Message("Test %d: \"%s\" with graph %s failed with error code: %d.\n",
                              num_tests, general_names[i].c_str(), graph_names[j].c_str(), ierr);
-        failures++;
+        fail = 1;
       }
+      else if (EnGPar_Hit_Error()) {
+        EnGPar_Error_Message("Test %d: \"%s\" failed with error message.\n", num_tests,
+                             general_names[i].c_str());
+        fail = 1;
+      }
+      failures += PCU_Max_Int(fail);
       num_tests++;
     }
   }
+  PCU_Barrier();
 
   if (!PCU_Comm_Self()&&trial==-1) {
     EnGPar_Status_Message(-1,"%d/%ld tests passed in %s\n",num_tests-failures,

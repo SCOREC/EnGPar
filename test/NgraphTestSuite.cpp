@@ -19,6 +19,8 @@ int traverseEdges(agi::Ngraph*);
 int testAdjacent(agi::Ngraph* g);
 int compareTraversal(agi::Ngraph* g);
 int testDistanceQueue(agi::Ngraph* g);
+int testMigration(agi::Ngraph* g);
+int testRepartition(agi::Ngraph* g);
 
 int main(int argc, char* argv[]) {
   int trial = -1;
@@ -48,6 +50,10 @@ int main(int argc, char* argv[]) {
   suite.addGeneralTest("Traverse Adjacency",testAdjacent);
   suite.addGeneralTest("Compare Traversals",compareTraversal);
   suite.addGeneralTest("Build Distance Queue", testDistanceQueue);
+  if (PCU_Comm_Peers()>1) {
+    suite.addGeneralTest("Migration",testMigration);
+    suite.addGeneralTest("Repartition", testRepartition);
+  }
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
@@ -341,5 +347,45 @@ int testDistanceQueue(agi::Ngraph* g) {
   engpar::Queue* q = engpar::createDistanceQueue(inp);
   delete q;
   delete input;
+  return 0;
+}
+
+int testMigration(agi::Ngraph* g) {
+  agi::Migration* plan = new agi::Migration(g);
+  agi::GraphVertex* v;
+  agi::VertexIterator* itr=g->begin();
+  while ((v = g->iterate(itr))) {
+    agi::GraphIterator* gitr = g->adjacent(v);
+    agi::GraphVertex* other;
+    while ((other=g->iterate(gitr))) {
+      int owner = g->owner(other);
+      if (owner>PCU_Comm_Self()) {
+        plan->insert(std::make_pair(v,owner));
+        break;
+      }
+    }
+    g->destroy(gitr);
+  }
+  g->setOriginalOwners();
+  g->migrate(plan);
+
+  agi::checkValidity(g);
+  return 0;
+}
+
+int testRepartition(agi::Ngraph* g) {
+  agi::part_t* partition = new agi::part_t[g->numLocalVtxs()];
+
+  for (int i=0;i<g->numLocalVtxs()/2;i++)
+    partition[i] = PCU_Comm_Self();
+
+  for (int i=g->numLocalVtxs()/2;i<g->numLocalVtxs();i++)
+    partition[i] = PCU_Comm_Self();
+  g->setOriginalOwners();
+  g->repartition(partition);
+  delete [] partition;
+
+  checkValidity(g);
+
   return 0;
 }

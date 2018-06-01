@@ -57,6 +57,13 @@ void EnGPar_Print(FILE* f, const char* prefix, const char* format, va_list args)
 
 }
 
+int test_flag;
+void EnGPar_Start_Test() {
+  test_flag=0;
+}
+bool EnGPar_Hit_Error() {
+  return test_flag>0;
+}
 void EnGPar_Status_Message(const char* format, ...) {
   va_list ap;
   va_start(ap,format);
@@ -80,6 +87,7 @@ void EnGPar_Warning_Message(const char* format, ...) {
 
 }
 void EnGPar_Error_Message(const char* format, ...) {
+  test_flag=1;
   va_list ap;
   va_start(ap,format);
   EnGPar_Print(stderr,"[ERROR] ENGPAR",format,ap);
