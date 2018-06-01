@@ -16,8 +16,8 @@ class TestingSuite {
   
   void addFineTest(std::string name, fineTest t);
   void addGeneralTest(std::string name, generalTest t);
-  void setTestingGraphs(std::vector<agi::Ngraph*>* gs);
-
+  void addTestGraph(std::string name, agi::Ngraph* g);
+  
   int runTests(int trial = -1) const;
 
  private:
@@ -26,6 +26,8 @@ class TestingSuite {
   std::vector<fineTest> fine_tests;
   std::vector<std::string> general_names;
   std::vector<generalTest> general_tests;
-  std::vector<agi::Ngraph*>* test_graphs;
+  std::vector<std::string> graph_names;
+  std::vector<agi::Ngraph*> test_graphs;
+  
 };
 #endif

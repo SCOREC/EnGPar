@@ -3,10 +3,11 @@
 
 #include <vector>
 #include <ngraph.h>
-void gatherBuildGraphs(std::vector<agi::Ngraph*>&);
+#include "TestingSuite.h"
+void gatherBuildGraphs(TestingSuite&);
 
-void gatherEBINGraphs(std::vector<agi::Ngraph*>&);
+void gatherEBINGraphs(TestingSuite&);
 
-void gatherBGDGraphs(std::vector<agi::Ngraph*>&);
+void gatherBGDGraphs(TestingSuite&);
 
 #endif

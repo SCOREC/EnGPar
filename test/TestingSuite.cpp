@@ -4,9 +4,9 @@ TestingSuite::TestingSuite(char* name) {
   n = name;
 }
 void TestingSuite::deleteTestGraphs() {
-  for (unsigned int i=0;i<test_graphs->size();i++)
-    agi::destroyGraph(test_graphs->at(i));
-  test_graphs->clear();
+  for (unsigned int i=0;i<test_graphs.size();i++)
+    agi::destroyGraph(test_graphs[i]);
+  test_graphs.clear();
 }
 
 void TestingSuite::addFineTest(std::string name, fineTest t) {
@@ -17,8 +17,9 @@ void TestingSuite::addGeneralTest(std::string name, generalTest t) {
   general_names.push_back(name);
   general_tests.push_back(t);
 }
-void TestingSuite::setTestingGraphs(std::vector<agi::Ngraph*>* gs) {
-  test_graphs = gs;
+void TestingSuite::addTestGraph(std::string name, agi::Ngraph* g) {
+  graph_names.push_back(name);
+  test_graphs.push_back(g);
 }
 
 int TestingSuite::runTests(int trial) const {
@@ -43,17 +44,17 @@ int TestingSuite::runTests(int trial) const {
 
   //Run general tests on each graph
   for (unsigned int i = 0; i < general_tests.size(); i++) {
-    for (unsigned int j = 0;j < test_graphs->size(); j++) {
+    for (unsigned int j = 0;j < test_graphs.size(); j++) {
       int ierr = 0;
       if (trial==-1||num_tests==trial) {
-        EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %d\n", num_tests,
-                              general_names[i].c_str(), j);
-        ierr = general_tests[i](test_graphs->at(j));
+        EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %s\n", num_tests,
+                              general_names[i].c_str(), graph_names[j].c_str());
+        ierr = general_tests[i](test_graphs[j]);
         PCU_Barrier();
       }
       if (ierr != 0) {
-        EnGPar_Error_Message("Test %d: \"%s\" with graph %d failed with error code: %d\n",
-                             num_tests, general_names[i].c_str(),j, ierr);
+        EnGPar_Error_Message("Test %d: \"%s\" with graph %s failed with error code: %d\n",
+                             num_tests, general_names[i].c_str(), graph_names[j].c_str(), ierr);
         failures++;
       }
       num_tests++;

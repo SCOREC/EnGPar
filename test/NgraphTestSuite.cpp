@@ -39,11 +39,9 @@ int main(int argc, char* argv[]) {
     suite.addFineTest("Build Aero Distance Queues",testAeroDQs);
   
   //Gather the graphs for the general tests
-  std::vector<agi::Ngraph*> test_graphs;
-  gatherBuildGraphs(test_graphs);
-  gatherEBINGraphs(test_graphs);
-  gatherBGDGraphs(test_graphs);
-  suite.setTestingGraphs(&test_graphs);
+  gatherBuildGraphs(suite);
+  gatherEBINGraphs(suite);
+  gatherBGDGraphs(suite);
   
   //Gather general tests that run on the graphs collected prior to this
   suite.addGeneralTest("Traverse Edges",traverseEdges);
