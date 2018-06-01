@@ -48,6 +48,8 @@ int main(int argc, char* argv[]) {
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests();
+
+  suite.deleteTestGraphs();
   EnGPar_Finalize();
   MPI_Finalize();
   return ierr;

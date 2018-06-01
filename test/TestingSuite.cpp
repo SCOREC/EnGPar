@@ -3,6 +3,11 @@
 TestingSuite::TestingSuite(char* name) {
   n = name;
 }
+void TestingSuite::deleteTestGraphs() {
+  for (unsigned int i=0;i<test_graphs->size();i++)
+    agi::destroyGraph(test_graphs->at(i));
+  test_graphs->clear();
+}
 
 void TestingSuite::addFineTest(fineTest t) {
   fine_tests.push_back(t);

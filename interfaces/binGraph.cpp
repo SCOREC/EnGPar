@@ -257,6 +257,7 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   edge_list[t] = new lid_t[total_recv];
   for(int i=0; i<total_recv; i++)
     edge_list[t][i] = static_cast<lid_t>(el[i]);
+  delete [] el;
   free(scounts);
   free(rcounts);
   free(sdispls);

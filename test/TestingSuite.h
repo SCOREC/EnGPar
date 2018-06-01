@@ -12,6 +12,7 @@ class TestingSuite {
   typedef int (*generalTest)(agi::Ngraph*);
 
   TestingSuite(char* name);
+  void deleteTestGraphs();
   
   void addFineTest(fineTest t);
   void addGeneralTest(generalTest t);

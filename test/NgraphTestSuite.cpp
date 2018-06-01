@@ -35,7 +35,8 @@ int main(int argc, char* argv[]) {
     suite.addFineTest(switchComm);
   suite.addFineTest(tagGraph);
   suite.addFineTest(tagHyperGraph);
-  suite.addFineTest(testAeroDQs);
+  if (PCU_Comm_Self()==1)
+    suite.addFineTest(testAeroDQs);
   
   //Gather the graphs for the general tests
   std::vector<agi::Ngraph*> test_graphs;
@@ -52,6 +53,8 @@ int main(int argc, char* argv[]) {
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
+
+  suite.deleteTestGraphs();
   EnGPar_Finalize();
   MPI_Finalize();
   return ierr;
@@ -136,7 +139,8 @@ int tagGraph() {
       return 3;
   }
   g->destroy(eitr);
-
+  g->destroyTag(tag);
+  
   agi::destroyGraph(g);
   return 0;
 }
