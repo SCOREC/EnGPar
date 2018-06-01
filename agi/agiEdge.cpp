@@ -83,7 +83,7 @@ namespace agi {
 
   GraphVertex* Ngraph::v(GraphEdge* edge) const {
     if (isHyperGraph) {
-      EnGPar_Error_Message("v(edge) not supported in hypergraph mode");
+      EnGPar_Error_Message("v(edge) not supported in hypergraph mode\n");
       return NULL;
     }
     if (edge==NULL) 

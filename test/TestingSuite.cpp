@@ -21,8 +21,10 @@ int TestingSuite::runTests(int trial) const {
   //Run fine grain tests
   for (unsigned int i=0;i<fine_tests.size();i++) {
     int ierr = 0;
-    if (trial==-1||num_tests==trial)
+    if (trial==-1||num_tests==trial) {
+      EnGPar_Status_Message(-1,"Running Fine Test %d\n", num_tests);
       ierr = fine_tests[i]();
+    }
     if (ierr != 0) {
       EnGPar_Error_Message("Test: %d, Fine Test %d failed with error code: %d\n", num_tests,i, ierr);
       failures++;
@@ -34,8 +36,10 @@ int TestingSuite::runTests(int trial) const {
   for (unsigned int i = 0; i < general_tests.size(); i++) {
     for (unsigned int j = 0;j < test_graphs->size(); j++) {
       int ierr = 0;
-      if (trial==-1||num_tests==trial)
+      if (trial==-1||num_tests==trial) {
+        EnGPar_Status_Message(-1,"Running test %d [General: %d Graph: %d]\n", num_tests,i,j);
         ierr = general_tests[i](test_graphs->at(j));
+      }
       if (ierr != 0) {
         EnGPar_Error_Message("Test: %d, General Test %d Graph %d failed with error code: %d\n", num_tests, i, j, ierr);
         failures++;

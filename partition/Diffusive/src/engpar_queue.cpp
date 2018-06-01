@@ -247,6 +247,9 @@ namespace engpar {
 
   Queue* createDistanceQueue(DiffusiveInput* input) {
     agi::Ngraph* g = input->g;
+    if (g->numLocalVtxs()==0) {
+      return new Queue(0);
+    }
     agi::PNgraph* pg = g->publicize();
     agi::etype t = 0;
     //Setup Inputs for first BFS traversal

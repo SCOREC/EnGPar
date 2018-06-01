@@ -9,7 +9,8 @@ void gatherBuildGraphs(std::vector<agi::Ngraph*>& graphs) {
   graphs.push_back(buildHyperGraph());
   graphs.push_back(buildGraphParts());
   graphs.push_back(buildHyperGraphParts());
-  graphs.push_back(buildRequirementsGraph());
+  if (PCU_Comm_Peers()==1)
+    graphs.push_back(buildRequirementsGraph());
   graphs.push_back(buildEmptyGraph());
   if (PCU_Comm_Peers()==2) {
     graphs.push_back(buildDisconnected2Graph());

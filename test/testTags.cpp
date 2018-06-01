@@ -88,7 +88,7 @@ void tagHyperGraph() {
 
   agi::Ngraph* g = buildHyperGraphParts();
 
-    agi::GraphTag* tag = g->createIntTag();
+  agi::GraphTag* tag = g->createIntTag();
   agi::VertexIterator* itr= g->begin();
   agi::GraphVertex* vtx;
 

@@ -42,13 +42,15 @@ int main(int argc, char* argv[]) {
   gatherEBINGraphs(test_graphs);
   gatherBGDGraphs(test_graphs);
   suite.setTestingGraphs(&test_graphs);
-  
-  suite.addGeneralTest(isValid);
 
+  //Gather general tests that run on the graphs collected prior to this
+  suite.addGeneralTest(isValid);
+  
+  //Run the tests and get the number of failures
   int ierr = suite.runTests();
   EnGPar_Finalize();
   MPI_Finalize();
-  return ierr;  
+  return ierr;
 }
 
 

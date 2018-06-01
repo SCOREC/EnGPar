@@ -116,6 +116,6 @@ if(IS_TESTING)
     "See sub module EnGPar-graphs")
   add_definitions(-DENGPAR_GRAPHS="${GRAPHS}")
   make_test(ConstructTestSuite ConstructTestSuite.cpp)
-
+  make_test(NgraphTestSuite NgraphTestSuite.cpp)
   include(testing.cmake)
 endif()

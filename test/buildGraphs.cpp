@@ -282,13 +282,13 @@ agi::Ngraph* buildRequirementsGraph() {
   degrees.push_back(0);
   degrees.push_back(4);
   degrees.push_back(2);
-
+  
   pins.push_back(1);
   pins.push_back(3);
   pins.push_back(5);
   pins.push_back(9);
   pins.push_back(1);
-  pins.push_back(1);
+  pins.push_back(3);
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
   return g;
