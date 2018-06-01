@@ -19,6 +19,13 @@ mpi_test(ConstructTest_2 2
 mpi_test(ConstructTest_4 4
   ./ConstructTestSuite)
 
+mpi_test(NgraphTest_1 1
+  ./NgraphTestSuite)
+mpi_test(NgraphTest_2 2
+  ./NgraphTestSuite)
+mpi_test(NgraphTest_4 4
+  ./NgraphTestSuite)
+
 mpi_test(testMigration2 2
   ./testMigration)
 mpi_test(testMigration4 4
@@ -102,41 +109,6 @@ IF(ENABLE_PUMI)
     0
     1)
 ENDIF()
-
-mpi_test(testAdjacentSerial 1
-  ./testAdjacentTraversal
-  "${GRAPHS}/cube/cube"
-  "${GRAPHS}/ring.ebin")
-
-mpi_test(testAdjacentParallel 2
-  ./testAdjacentTraversal
-  "${GRAPHS}/cube/4/"
-  "${GRAPHS}/tree.ebin")
-
-mpi_test(testEdgeRing 1
-  ./testEdgeTraversal
-  "${GRAPHS}/ring.ebin")
-
-mpi_test(testEdgeTree 2
-  ./testEdgeTraversal
-  "${GRAPHS}/tree.ebin")
-
-#Diffusive Load Balancing Tests
-
-mpi_test(testDistanceQueueSerial 1
-  ./testDistanceQueue)
-mpi_test(testDistanceQueueParallel 4
-  ./testDistanceQueue)
-
-# aero mesh tests
-mpi_test(testDistanceQueueAero25114 1
-  ./testDistanceQueue "${GRAPHS}/aero1Belm/graph128Ki_25114")
-mpi_test(testDistanceQueueAero88637 1
-  ./testDistanceQueue "${GRAPHS}/aero1Belm/graph128Ki_88637")
-mpi_test(testDistanceQueueAero81334 1
-  ./testDistanceQueue "${GRAPHS}/aero1Belm/afterMigr_81334")
-mpi_test(testDistanceQueueAero1457 1
-  ./testDistanceQueue "${GRAPHS}/aero1Belm/afterMigr_1457")
 
 if (ENABLE_PARMETIS)
   mpi_test(splitCube1to2 2
