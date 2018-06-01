@@ -9,10 +9,12 @@ void TestingSuite::deleteTestGraphs() {
   test_graphs->clear();
 }
 
-void TestingSuite::addFineTest(fineTest t) {
+void TestingSuite::addFineTest(std::string name, fineTest t) {
+  fine_names.push_back(name);
   fine_tests.push_back(t);
 }
-void TestingSuite::addGeneralTest(generalTest t) {
+void TestingSuite::addGeneralTest(std::string name, generalTest t) {
+  general_names.push_back(name);
   general_tests.push_back(t);
 }
 void TestingSuite::setTestingGraphs(std::vector<agi::Ngraph*>* gs) {
@@ -27,11 +29,13 @@ int TestingSuite::runTests(int trial) const {
   for (unsigned int i=0;i<fine_tests.size();i++) {
     int ierr = 0;
     if (trial==-1||num_tests==trial) {
-      EnGPar_Status_Message(-1,"Running Fine Test %d\n", num_tests);
+      EnGPar_Status_Message(-1,"Running Test %d: \"%s\"\n", num_tests,fine_names[i].c_str());
       ierr = fine_tests[i]();
+      PCU_Barrier();
     }
     if (ierr != 0) {
-      EnGPar_Error_Message("Test: %d, Fine Test %d failed with error code: %d\n", num_tests,i, ierr);
+      EnGPar_Error_Message("Test %d: \"%s\"failed with error code: %d\n", num_tests,
+                           fine_names[i].c_str(), ierr);
       failures++;
     }
     num_tests++;
@@ -42,11 +46,14 @@ int TestingSuite::runTests(int trial) const {
     for (unsigned int j = 0;j < test_graphs->size(); j++) {
       int ierr = 0;
       if (trial==-1||num_tests==trial) {
-        EnGPar_Status_Message(-1,"Running test %d [General: %d Graph: %d]\n", num_tests,i,j);
+        EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %d\n", num_tests,
+                              general_names[i].c_str(), j);
         ierr = general_tests[i](test_graphs->at(j));
+        PCU_Barrier();
       }
       if (ierr != 0) {
-        EnGPar_Error_Message("Test: %d, General Test %d Graph %d failed with error code: %d\n", num_tests, i, j, ierr);
+        EnGPar_Error_Message("Test %d: \"%s\" with graph %d failed with error code: %d\n",
+                             num_tests, general_names[i].c_str(),j, ierr);
         failures++;
       }
       num_tests++;

@@ -14,15 +14,17 @@ class TestingSuite {
   TestingSuite(char* name);
   void deleteTestGraphs();
   
-  void addFineTest(fineTest t);
-  void addGeneralTest(generalTest t);
+  void addFineTest(std::string name, fineTest t);
+  void addGeneralTest(std::string name, generalTest t);
   void setTestingGraphs(std::vector<agi::Ngraph*>* gs);
 
   int runTests(int trial = -1) const;
 
  private:
   char* n;
+  std::vector<std::string> fine_names;
   std::vector<fineTest> fine_tests;
+  std::vector<std::string> general_names;
   std::vector<generalTest> general_tests;
   std::vector<agi::Ngraph*>* test_graphs;
 };

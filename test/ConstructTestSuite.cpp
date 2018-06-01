@@ -28,13 +28,13 @@ int main(int argc, char* argv[]) {
   TestingSuite suite(argv[0]);
     
   //Gather specific tests that have more fine grain checks
-  suite.addFineTest(testGraph);
-  suite.addFineTest(testHyperGraph);
-  suite.addFineTest(testGraphParts);
-  suite.addFineTest(testHyperGraphParts);
-  suite.addFineTest(testBuildGraphs);
-  suite.addFineTest(testEBINGraphs);
-  suite.addFineTest(testBGDGraphs);
+  suite.addFineTest("Construct Graph",testGraph);
+  suite.addFineTest("Construct HyperGraph",testHyperGraph);
+  suite.addFineTest("Construct Graph in Parts",testGraphParts);
+  suite.addFineTest("Construct HyperGraph in Parts",testHyperGraphParts);
+  suite.addFineTest("Construct Build Graphs",testBuildGraphs);
+  suite.addFineTest("Construct .ebin Graphs",testEBINGraphs);
+  suite.addFineTest("Construct .bgd Graphs",testBGDGraphs);
   
   //Gather the graphs for the general tests
   std::vector<agi::Ngraph*> test_graphs;
@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
   suite.setTestingGraphs(&test_graphs);
 
   //Gather general tests that run on the graphs collected prior to this
-  suite.addGeneralTest(isValid);
+  suite.addGeneralTest("Check Validity",isValid);
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests();

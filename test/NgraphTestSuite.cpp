@@ -31,12 +31,12 @@ int main(int argc, char* argv[]) {
   TestingSuite suite(argv[0]);
     
   //Gather specific tests that have more fine grain checks
-  if (PCU_Comm_Self()>=2)
-    suite.addFineTest(switchComm);
-  suite.addFineTest(tagGraph);
-  suite.addFineTest(tagHyperGraph);
-  if (PCU_Comm_Self()==1)
-    suite.addFineTest(testAeroDQs);
+  if (PCU_Comm_Peers()>=2)
+    suite.addFineTest("Switch Comm", switchComm);
+  suite.addFineTest("Tag Graph", tagGraph);
+  suite.addFineTest("Tag HyperGraph", tagHyperGraph);
+  if (PCU_Comm_Peers()==1)
+    suite.addFineTest("Build Aero Distance Queues",testAeroDQs);
   
   //Gather the graphs for the general tests
   std::vector<agi::Ngraph*> test_graphs;
@@ -46,10 +46,10 @@ int main(int argc, char* argv[]) {
   suite.setTestingGraphs(&test_graphs);
   
   //Gather general tests that run on the graphs collected prior to this
-  suite.addGeneralTest(traverseEdges);
-  suite.addGeneralTest(testAdjacent);
-  suite.addGeneralTest(compareTraversal);
-  suite.addGeneralTest(testDistanceQueue);
+  suite.addGeneralTest("Traverse Edges",traverseEdges);
+  suite.addGeneralTest("Traverse Adjacency",testAdjacent);
+  suite.addGeneralTest("Compare Traversals",compareTraversal);
+  suite.addGeneralTest("Build Distance Queue", testDistanceQueue);
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
