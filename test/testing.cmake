@@ -26,6 +26,12 @@ mpi_test(NgraphTest_2 2
 mpi_test(NgraphTest_4 4
   ./NgraphTestSuite)
 
+mpi_test(WeightBalancer_2 2
+  ./PartitionTestSuite 6)
+mpi_test(WeightBalancer_4 4
+  ./PartitionTestSuite 6)
+
+
 IF(ENABLE_PUMI)
   mpi_test(buildSerialMeshGraph32 1
     ./buildMeshGraph
