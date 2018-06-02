@@ -55,17 +55,6 @@ function(make_test exename srcname)
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_test)
 
-#make_utility(constructGraph constructGraph.cpp)
-make_utility(testAdjacentTraversal testAdjacentTraversal.cpp)
-make_utility(testEdgeTraversal edgeTraversal.cpp)
-make_utility(testMigration testMigration.cpp)
-make_utility(constructAndPartition constructAndPartition.cpp)
-make_utility(testTags testTags.cpp)
-make_utility(splitCommunicator splitCommunicator.cpp)
-
-#make_utility(buildBinaryGraph buildBinaryGraph.cpp)
-
-make_utility(testDistanceQueue testDistanceQueue.cpp)
 make_utility(vtxBalance vtxBalance.cpp)
 make_utility(balance balance.cpp)
 make_utility(balanceMultiple balanceMultiple.cpp)
