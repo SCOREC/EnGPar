@@ -89,6 +89,7 @@ int switchComm() {
     agi::destroyGraph(g);
   }
   PCU_Switch_Comm(MPI_COMM_WORLD);
+  MPI_Comm_free(&new_comm);
   return 0;
 }
 

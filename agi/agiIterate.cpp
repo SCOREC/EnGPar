@@ -79,6 +79,7 @@ namespace agi {
     if (itr->isH) {
       if (itr->count >= degree(itr->edge)) {
         destroy(itr->pitr);
+        itr->pitr=NULL;
         GraphEdge* edge = iterate(itr->eitr);
         if (!edge)
           return NULL;
@@ -105,7 +106,10 @@ namespace agi {
     delete itr;
   }
   void Ngraph::destroy(GraphIterator* itr) const {
-    delete itr->eitr;
+    if (itr->pitr)
+      delete itr->pitr;
+    if (itr->eitr)
+      delete itr->eitr;
     delete itr;
   }
 }

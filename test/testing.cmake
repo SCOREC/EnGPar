@@ -26,15 +26,6 @@ mpi_test(NgraphTest_2 2
 mpi_test(NgraphTest_4 4
   ./NgraphTestSuite)
 
-mpi_test(testMigration2 2
-  ./testMigration)
-mpi_test(testMigration4 4
-  ./testMigration)
-mpi_test(constructAndPartition2 2
-  ./constructAndPartition)
-mpi_test(constructAndPartition4 4
-  ./constructAndPartition)
-
 IF(ENABLE_PUMI)
   mpi_test(buildSerialMeshGraph32 1
     ./buildMeshGraph
