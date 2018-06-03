@@ -17,6 +17,7 @@ class TestingSuite {
   void addFineTest(std::string name, fineTest t);
   void addGeneralTest(std::string name, generalTest t);
   void addTestGraph(std::string name, agi::Ngraph* g);
+  void fillEmptyTestGraphs();
   
   int runTests(int trial = -1) const;
 

@@ -16,9 +16,13 @@ int testWeightBalancer_1();
 int testWeightBalancer_4();
 int testWeightBalancer_100();
 
-int testGlobalSplit();
-int testLocalSplit();
-int testSplitAndBalance();
+int testGlobalSplit(agi::Ngraph*);
+int testLocalSplit(agi::Ngraph*);
+int testSplitAndBalance(agi::Ngraph*);
+
+void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
+
+#define SPLIT_TEST 4
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -31,8 +35,10 @@ int main(int argc, char* argv[]) {
                              "    operation 1 = balance\n"
                              "    operation 2 = balanceMultiple\n"
                              "    operation 3 = balanceWeights\n"
-                             "    operation 4 = ParMETIS split\n"
-                             ,argv[0]);
+                             "    operation %d = ParMETIS global split\n"
+                             "    operation %d = ParMETIS local split\n"
+                             "    operation %d = ParMETIS split and balance\n"
+                             ,argv[0],SPLIT_TEST,SPLIT_TEST+1,SPLIT_TEST+2);
 
     EnGPar_Finalize();
     MPI_Finalize();
@@ -51,21 +57,27 @@ int main(int argc, char* argv[]) {
   TestingSuite suite(argv[0]);
     
   //Gather specific tests that have more fine grain checks
-  //suite.addFineTest("Switch Comm", switchComm);
   if (operation==3) {
     suite.addFineTest("Weight Balancer with 1 Component",testWeightBalancer_1);
     suite.addFineTest("Weight Balancer with 4 Components",testWeightBalancer_4);
     suite.addFineTest("Weight Balancer with 100 Components",testWeightBalancer_100);
   }
-  else if (operation==4) {
-    suite.addFineTest("Global ParMETIS split",testGlobalSplit);
-    suite.addFineTest("Local ParMETIS split",testLocalSplit);
-    suite.addFineTest("Global Split and MC Balance",testSplitAndBalance);
+
+  bool isOriginal = true;
+  if (operation>=4) {
+    MPI_Comm newComm;
+    switchToOriginals(2, isOriginal,newComm);
+    //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
+    EnGPar_Switch_Comm(newComm);
   }
-  
+
   //Gather the graphs for the general tests
-  gatherEBINGraphs(suite);
-  gatherBGDGraphs(suite);
+  if (isOriginal) {
+    gatherEBINGraphs(suite);
+    gatherBGDGraphs(suite);
+  }
+  EnGPar_Switch_Comm(MPI_COMM_WORLD);
+  suite.fillEmptyTestGraphs();
   
   //Gather general tests that run on the graphs collected prior to this
   if (operation==0)
@@ -74,6 +86,12 @@ int main(int argc, char* argv[]) {
     suite.addGeneralTest("General Balancer",testBalancer);
   else if (operation==2)
     suite.addGeneralTest("Balance Twice",testMultipleBalances);
+  else if (operation == SPLIT_TEST)
+    suite.addGeneralTest("Global ParMETIS split",testGlobalSplit);
+  else if (operation == SPLIT_TEST+1)
+    suite.addGeneralTest("Local ParMETIS split",testLocalSplit);
+  else if (operation == SPLIT_TEST+2)
+    suite.addGeneralTest("Global Split and MC Balance",testSplitAndBalance);
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
@@ -247,12 +265,97 @@ int testMultipleBalances(agi::Ngraph* g) {
   return 0;
 }
 
-int testGlobalSplit() {
-  return 1;
+void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm) {
+  int self = PCU_Comm_Self();
+  int group;
+  int groupRank;
+  isOriginal = self%split_factor==0;
+
+  if (isOriginal) {
+    group=0;
+    groupRank=self/split_factor;
+  }
+  else {
+    group = 1;
+    groupRank = 0;
+  }
+  MPI_Comm_split(MPI_COMM_WORLD,group,groupRank,&newComm);
 }
-int testLocalSplit() {
-  return 1;
+
+int testGlobalSplit(agi::Ngraph* g) {
+  //Application code:
+  bool isOriginal = g->numLocalVtxs()>0;
+  MPI_Comm newComm;
+  int split_factor = 2;
+  switchToOriginals(split_factor, isOriginal, newComm);
+
+  //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
+  EnGPar_Switch_Comm(newComm);
+
+  //Create the input
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  engpar::Input* input = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                        tolerance,t);
+
+  engpar::split(input,engpar::GLOBAL_PARMETIS);
+
+  if (PCU_Get_Comm() != MPI_COMM_WORLD)
+    return 2;
+
+  if (g->numGlobalVtxs() / PCU_Comm_Peers() >= 20 && engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  
+  //Application continues:
+  MPI_Comm_free(&newComm);
+  return 0;
 }
-int testSplitAndBalance() {
-  return 1;
+
+int testLocalSplit(agi::Ngraph* g) {
+  
+  //Application code:
+  int split_factor = 2;
+  bool isOriginal = g->numLocalVtxs()>0;
+  MPI_Comm newComm;
+  switchToOriginals(split_factor, isOriginal, newComm);
+
+  //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
+  EnGPar_Switch_Comm(newComm);
+
+  //Create the input
+
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  int my_rank;
+  MPI_Comm_rank(MPI_COMM_WORLD,&my_rank);
+  agi::part_t* others = new agi::part_t[split_factor];
+  for (int i=0;i<split_factor;i++) {
+    others[i] = my_rank+i;
+  }
+
+  engpar::Input* input = engpar::createLocalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                       2,tolerance,others,t);
+
+  engpar::split(input,engpar::LOCAL_PARMETIS);
+
+  if (PCU_Get_Comm() != MPI_COMM_WORLD)
+    return 2;
+
+  if (g->numGlobalVtxs() / PCU_Comm_Peers() >= 20 && engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  
+  //Application continues:
+  MPI_Comm_free(&newComm);
+  
+  return 0;
+}
+int testSplitAndBalance(agi::Ngraph* g) {
+  int ierr = testGlobalSplit(g);
+  if (ierr>0)
+    return ierr;
+  ierr = testBalancer(g);
+  if (ierr>0)
+    return ierr+10;
+  
+  return 0;
 }

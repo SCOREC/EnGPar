@@ -22,6 +22,16 @@ void TestingSuite::addTestGraph(std::string name, agi::Ngraph* g) {
   test_graphs.push_back(g);
 }
 
+void TestingSuite::fillEmptyTestGraphs() {
+  unsigned int max_graphs = PCU_Max_Int(test_graphs.size());
+  for (unsigned int i=0;i<max_graphs;i++) {
+    if (test_graphs.size()<=i) {
+      test_graphs.push_back(agi::createEmptyGraph());
+      graph_names.push_back("");
+    }
+  }
+}
+
 int TestingSuite::runTests(int trial) const {
   //Accumulation of failed tests
   int failures = 0;
