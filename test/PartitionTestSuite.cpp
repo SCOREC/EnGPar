@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   }
 
   bool isOriginal = true;
-  if (operation>=4) {
+  if (operation>=SPLIT_TEST) {
     MPI_Comm newComm;
     switchToOriginals(2, isOriginal,newComm);
     //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
@@ -356,6 +356,5 @@ int testSplitAndBalance(agi::Ngraph* g) {
   ierr = testBalancer(g);
   if (ierr>0)
     return ierr+10;
-  
   return 0;
 }

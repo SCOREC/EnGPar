@@ -26,23 +26,6 @@ mpi_test(NgraphTest_2 2
 mpi_test(NgraphTest_4 4
   ./NgraphTestSuite)
 
-mpi_test(VertexBalancer_2 2
-  ./PartitionTestSuite 0)
-mpi_test(VertexBalancer_4 4
-  ./PartitionTestSuite 0)
-mpi_test(MultiCriteriaBalancer_2 2
-  ./PartitionTestSuite 1)
-mpi_test(MultiCriteriaBalancer_4 4
-  ./PartitionTestSuite 1)
-mpi_test(MultipleBalances_2 2
-  ./PartitionTestSuite 2)
-#mpi_test(MultipleBalances_4 4
-#  ./PartitionTestSuite 2)
-mpi_test(WeightBalancer_2 2
-  ./PartitionTestSuite 3)
-mpi_test(WeightBalancer_4 4
-  ./PartitionTestSuite 3)
-
 
 IF(ENABLE_PUMI)
   mpi_test(buildSerialMeshGraph32 1
@@ -119,103 +102,37 @@ IF(ENABLE_PUMI)
     1)
 ENDIF()
 
+mpi_test(VertexBalancer_2 2
+  ./PartitionTestSuite 0)
+mpi_test(VertexBalancer_4 4
+  ./PartitionTestSuite 0)
+mpi_test(MultiCriteriaBalancer_2 2
+  ./PartitionTestSuite 1)
+mpi_test(MultiCriteriaBalancer_4 4
+  ./PartitionTestSuite 1)
+mpi_test(MultipleBalances_2 2
+  ./PartitionTestSuite 2)
+mpi_test(MultipleBalances_4 4
+  ./PartitionTestSuite 2)
+mpi_test(WeightBalancer_2 2
+  ./PartitionTestSuite 3)
+mpi_test(WeightBalancer_4 4
+  ./PartitionTestSuite 3)
 if (ENABLE_PARMETIS)
-  mpi_test(splitCube1to2 2
-    ./split
-    "${GRAPHS}/cube/cube"
-    1
-    cake/)
-  
-  mpi_test(splitCube1to4 4
-    ./split
-    "${GRAPHS}/cube/cube"
-    1
-    cake/)
-
-  mpi_test(splitCube4to8 8
-    ./split
-    "${GRAPHS}/cube/4/"
-    4
-    cake/)
-
-  mpi_test(splitTorus4to6 6
-    ./split
-    "${GRAPHS}/torus/4/"
-    4
-    cake/)
-
-  mpi_test(splitTorus4to8 8
-    ./split
-    "${GRAPHS}/torus/4_01/"
-    4
-    cake/)
-
-
-  mpi_test(localSplit1to4 4
-    ./local_split
-    "${GRAPHS}/cube/cube"
-    4
-    cake/)
-
-  mpi_test(localSplit4to8 8
-    ./local_split
-    "${GRAPHS}/torus/4/"
-    2
-    cake/)
-
-  mpi_test(vtxBalanceCube 4
-    ./vtxBalance
-    "${GRAPHS}/cube/4/"
-    .1)
-
-  mpi_test(vtxBalanceTorus 4
-    ./vtxBalance
-    "${GRAPHS}/torus/4/"
-    .15)
-
-  mpi_test(vtxBalanceGraph 2
-    ./vtxBalance
-    "${GRAPHS}/gnutella.ebin"
-    .1)
-
-  mpi_test(balanceCube 4
-    ./balance
-    "${GRAPHS}/cube/4/")
-
-  mpi_test(balanceTorus 4
-    ./balance
-    "${GRAPHS}/torus/4/")
-
-  mpi_test(balanceTorusVtxFaceElm 4
-    ./balance
-    "${GRAPHS}/torus/4_01/"
-    yes)
-
-  mpi_test(balanceMultipleTorus 4
-    ./balanceMultiple
-    "${GRAPHS}/torus/4/")
-
-  mpi_test(balanceWeights4_100 4
-    ./balanceWeights
-    100
-    1.05)
-
-  mpi_test(splitAndBalanceCube 8
-    ./splitAndBalance
-    "${GRAPHS}/cube/4/"
-    2
-    cake/)
-
-  mpi_test(splitAndBalanceTorus 8
-    ./splitAndBalance
-    "${GRAPHS}/torus/4_01/"
-    2
-    cake/)
-  mpi_test(splitAndBalanceEqualParts 4
-    ./splitAndBalance
-    "${GRAPHS}/torus/4/"
-    1
-    cake/)
+  mpi_test(GlobalSplit_2 2
+    ./PartitionTestSuite 4)
+  mpi_test(GlobalSplit_4 4
+    ./PartitionTestSuite 4)
+  mpi_test(LocalSplit_2 2
+    ./PartitionTestSuite 5)
+  mpi_test(LocalSplit_4 4
+    ./PartitionTestSuite 5)
+  mpi_test(SplitAndBalance_2 2
+    ./PartitionTestSuite 6)
+  mpi_test(SplitAndBalance_4 4
+    ./PartitionTestSuite 6)
+  mpi_test(SplitAndBalance_8 8
+    ./PartitionTestSuite 6)
 
   IF(ENABLE_PUMI)
     mpi_test(splitAndBalanceMeshPUMI 8
@@ -232,11 +149,8 @@ if (ENABLE_PARMETIS)
       1
       2
       )
-
   endif()
 endif()
-  
-
 
 if (ENABLE_ZOLTAN)
 
