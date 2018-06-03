@@ -40,8 +40,8 @@ namespace engpar {
       EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(),
              targetWeights->print("Weights").c_str());
     Weights** completedWs = NULL;
-    Targets* targets = makeTargets(inp->step_factor,sides,targetWeights,sideTol,
-                                   completedWs,completed_weights);
+    Targets* targets = makeTargets(inp->g->isHyper(),inp->step_factor,sides,targetWeights,
+                                   sideTol, completedWs,completed_weights);
     delete sides;
     if (completedWs) {
       for (unsigned int i=0;i<completed_dimensions.size();i++)

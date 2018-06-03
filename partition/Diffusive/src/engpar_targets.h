@@ -8,12 +8,12 @@ namespace engpar {
 
   class Targets : public Container<wgt_t> {
   public:
-    Targets(double step_factor, Sides* s, Weights* targetW, int sideTol,
+    Targets(bool isHyper, double step_factor, Sides* s, Weights* targetW, int sideTol,
             Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;
       for (itr = s->begin();itr!=s->end();itr++) {
         int neighbor = itr->first;
-        bool canSend=s->get(neighbor)<=sideTol;
+        bool canSend=!isHyper || s->get(neighbor)<=sideTol;
         for (unsigned int i=0;i<completedTolerances.size();i++) {
           if (completedWs[i]->get(neighbor)>=completedTolerances[i])
             canSend=false;
@@ -32,7 +32,7 @@ namespace engpar {
       }
     }
   };
-  Targets* makeTargets(double step_factor, Sides* s, Weights* tW,int sT,
+  Targets* makeTargets(bool isHyper, double step_factor, Sides* s, Weights* tW,int sT,
                        Weights** cWs,std::vector<wgt_t>& cTs);
 
   Targets* makeTargets(DiffusiveInput* in, Sides* s, Weights* tW,int sT,

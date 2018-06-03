@@ -16,13 +16,13 @@ namespace engpar {
   Weights* makeWeights(agi::Ngraph* g, bool countGhosts, Sides* s, int target) {
     return new Weights(g,countGhosts,s,target);
   }
-  Targets* makeTargets(double sf, Sides* s, Weights* tW,int sT,
+  Targets* makeTargets(bool isHG, double sf, Sides* s, Weights* tW,int sT,
                        Weights** cWs, std::vector<wgt_t>& cTs) {
-    return new Targets(sf,s,tW,sT,cWs,cTs);
+    return new Targets(isHG, sf,s,tW,sT,cWs,cTs);
   }
 
   Targets* makeTargets(DiffusiveInput* in, Sides* s, Weights* tW,int sT,
                        Weights** cWs, std::vector<wgt_t>& cTs) {
-    return new Targets(in->step_factor,s,tW,sT,cWs,cTs);
+    return new Targets(in->g->isHyper(),in->step_factor,s,tW,sT,cWs,cTs);
   }
 }

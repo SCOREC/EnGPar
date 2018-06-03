@@ -8,15 +8,36 @@
 #include "TestingSuite.h"
 #include <engpar.h>
 
+int testVtxBalancer(agi::Ngraph*);
+int testBalancer(agi::Ngraph*);
+int testMultipleBalances(agi::Ngraph*);
+
 int testWeightBalancer_1();
 int testWeightBalancer_4();
 int testWeightBalancer_100();
 
+int testGlobalSplit();
+int testLocalSplit();
+int testSplitAndBalance();
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
+  if (argc==1) {
+    if (!PCU_Comm_Self())
+      EnGPar_Warning_Message("Usage: %s <operation> [trial number]\n"
+                             "    operation 0 = vtxBalance\n"
+                             "    operation 1 = balance\n"
+                             "    operation 2 = balanceMultiple\n"
+                             "    operation 3 = balanceWeights\n"
+                             "    operation 4 = ParMETIS split\n"
+                             ,argv[0]);
+
+    EnGPar_Finalize();
+    MPI_Finalize();
+    return 1;
+  }
   int operation = -1;
   if (argc>1)
     operation = atoi(argv[1]);
@@ -31,19 +52,28 @@ int main(int argc, char* argv[]) {
     
   //Gather specific tests that have more fine grain checks
   //suite.addFineTest("Switch Comm", switchComm);
-  if (operation==6) {
-    suite.addFineTest("WeightBalancer with 1 Component",testWeightBalancer_1);
-    suite.addFineTest("WeightBalancer with 4 Components",testWeightBalancer_4);
-    suite.addFineTest("WeightBalancer with 100 Components",testWeightBalancer_100);
+  if (operation==3) {
+    suite.addFineTest("Weight Balancer with 1 Component",testWeightBalancer_1);
+    suite.addFineTest("Weight Balancer with 4 Components",testWeightBalancer_4);
+    suite.addFineTest("Weight Balancer with 100 Components",testWeightBalancer_100);
+  }
+  else if (operation==4) {
+    suite.addFineTest("Global ParMETIS split",testGlobalSplit);
+    suite.addFineTest("Local ParMETIS split",testLocalSplit);
+    suite.addFineTest("Global Split and MC Balance",testSplitAndBalance);
   }
   
   //Gather the graphs for the general tests
-  gatherBuildGraphs(suite);
   gatherEBINGraphs(suite);
   gatherBGDGraphs(suite);
   
   //Gather general tests that run on the graphs collected prior to this
-  //suite.addGeneralTest("Traverse Edges",traverseEdges);
+  if (operation==0)
+    suite.addGeneralTest("Vertex Balancer",testVtxBalancer);
+  else if (operation==1)
+    suite.addGeneralTest("General Balancer",testBalancer);
+  else if (operation==2)
+    suite.addGeneralTest("Balance Twice",testMultipleBalances);
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
@@ -110,7 +140,7 @@ int testWeightBalancer_1() {
   agi::Ngraph* g = makeArtificialXGCMGraph(1);
   double step_factor = .25;
   engpar::WeightInput* input = engpar::createWeightInput(g,tol,step_factor,0);
-  engpar::balanceWeights(input,1);
+  engpar::balanceWeights(input,-1);
   //TODO: add balancing checks
   agi::checkValidity(g);
   agi::destroyGraph(g);
@@ -121,7 +151,7 @@ int testWeightBalancer_4() {
   agi::Ngraph* g = makeArtificialXGCMGraph(4);
   double step_factor = .25;
   engpar::WeightInput* input = engpar::createWeightInput(g,tol,step_factor,0);
-  engpar::balanceWeights(input,1);
+  engpar::balanceWeights(input,-1);
   //TODO: add balancing checks
   agi::checkValidity(g);
   agi::destroyGraph(g);
@@ -132,10 +162,97 @@ int testWeightBalancer_100() {
   agi::Ngraph* g = makeArtificialXGCMGraph(100);
   double step_factor = .25;
   engpar::WeightInput* input = engpar::createWeightInput(g,tol,step_factor,0);
-  engpar::balanceWeights(input,1);
+  engpar::balanceWeights(input,-1);
   //TODO: add balancing checks
   agi::checkValidity(g);
   agi::destroyGraph(g);
 
   return 0;
+}
+
+int testVtxBalancer(agi::Ngraph* g) {
+
+  //Create the balancer
+  engpar::balanceVertices(g, 1.1, .1, -1);
+
+  agi::checkValidity(g);
+  
+  if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  return 0;
+
+}
+int testBalancer(agi::Ngraph* g) {
+  double step_factor = 0.1;
+  engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
+  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+    input->addPriority(t,1.1);
+  input->addPriority(-1,1.1);
+
+  input->maxIterationsPerType=50;
+  input->maxIterations=75;
+
+  //Create the balancer
+  engpar::balance(input,-1);
+
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+
+  //Ensure the graph was balanced to the target tolerance
+  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+    if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,t)) >= 1.11)
+      return t+2;
+  if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  return 0;
+}
+int testMultipleBalances(agi::Ngraph* g) {
+
+  double step_factor = 0.1;
+  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(-1,1.1);
+
+  //Create the balancer
+  engpar::balance(input,-1);
+
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+
+  if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  
+  //Alter weights so odd processes are heavier than even processes
+  agi::wgt_t* weights = new agi::wgt_t[g->numLocalVtxs()];
+  agi::wgt_t w = PCU_Comm_Self()%2+1;
+
+  for (agi::lid_t i =0;i<g->numLocalVtxs();i++) {
+    weights[i] = w;
+  }
+  g->setWeights(weights);
+  delete [] weights;
+
+  g->resetOwnership();
+  
+  input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(-1,1.1);
+
+  //Create the balancer
+  engpar::balance(input,-1);
+
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+
+  if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 2;
+  return 0;
+}
+
+int testGlobalSplit() {
+  return 1;
+}
+int testLocalSplit() {
+  return 1;
+}
+int testSplitAndBalance() {
+  return 1;
 }

@@ -20,14 +20,15 @@ void gatherBuildGraphs(TestingSuite& suite) {
 
 void gatherEBINGraphs(TestingSuite& suite) {
   char file[1024];
-  //Ring graph
-  sprintf(file,"%s/ring.ebin",ENGPAR_GRAPHS);
-  suite.addTestGraph("Ring Binary Graph", agi::createBinGraph(file));
+  if (PCU_Comm_Peers() <= 2) {
+    //Ring graph
+    sprintf(file,"%s/ring.ebin",ENGPAR_GRAPHS);
+    suite.addTestGraph("Ring Binary Graph", agi::createBinGraph(file));
 
-  //Tree graph
-  sprintf(file,"%s/tree.ebin",ENGPAR_GRAPHS);
-  suite.addTestGraph("Tree Binary Graph", agi::createBinGraph(file));
-
+    //Tree graph
+    sprintf(file,"%s/tree.ebin",ENGPAR_GRAPHS);
+    suite.addTestGraph("Tree Binary Graph", agi::createBinGraph(file));
+  }
   //Gnutella graph
   sprintf(file,"%s/gnutella.ebin",ENGPAR_GRAPHS);
   suite.addTestGraph("Gnutella Binary Graph", agi::createBinGraph(file));

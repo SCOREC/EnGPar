@@ -26,10 +26,22 @@ mpi_test(NgraphTest_2 2
 mpi_test(NgraphTest_4 4
   ./NgraphTestSuite)
 
+mpi_test(VertexBalancer_2 2
+  ./PartitionTestSuite 0)
+mpi_test(VertexBalancer_4 4
+  ./PartitionTestSuite 0)
+mpi_test(MultiCriteriaBalancer_2 2
+  ./PartitionTestSuite 1)
+mpi_test(MultiCriteriaBalancer_4 4
+  ./PartitionTestSuite 1)
+mpi_test(MultipleBalances_2 2
+  ./PartitionTestSuite 2)
+#mpi_test(MultipleBalances_4 4
+#  ./PartitionTestSuite 2)
 mpi_test(WeightBalancer_2 2
-  ./PartitionTestSuite 6)
+  ./PartitionTestSuite 3)
 mpi_test(WeightBalancer_4 4
-  ./PartitionTestSuite 6)
+  ./PartitionTestSuite 3)
 
 
 IF(ENABLE_PUMI)

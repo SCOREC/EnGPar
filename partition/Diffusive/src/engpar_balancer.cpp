@@ -226,9 +226,11 @@ namespace engpar {
     sideTol = averageSides(sides);
     delete sides;
     
-    if (!PCU_Comm_Self() && verbosity >= 0)
-      EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
-    printImbalances(input->g);
+    if (verbosity >= 0) {
+      if (!PCU_Comm_Self())
+        EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
+      printImbalances(input->g);
+    }
     if (!PCU_Comm_Self() && verbosity >= 1)
       EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
