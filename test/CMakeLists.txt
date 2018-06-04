@@ -55,12 +55,8 @@ function(make_test exename srcname)
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_test)
 
-make_utility(vtxBalance vtxBalance.cpp)
 make_utility(balance balance.cpp)
-make_utility(balanceMultiple balanceMultiple.cpp)
-make_utility(balanceWeights balanceWeights.cpp)
 make_utility(split split.cpp)
-make_utility(local_split local_split.cpp)
 make_utility(splitAndBalance splitAndBalance.cpp)
 
 if (ENABLE_PUMI)
