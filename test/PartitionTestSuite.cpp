@@ -73,7 +73,7 @@ int main(int argc, char* argv[]) {
 
   //Gather the graphs for the general tests
   if (isOriginal) {
-    gatherEBINGraphs(suite);
+    //gatherEBINGraphs(suite);
     gatherBGDGraphs(suite);
   }
   EnGPar_Switch_Comm(MPI_COMM_WORLD);
@@ -211,7 +211,7 @@ int testBalancer(agi::Ngraph* g) {
   input->maxIterations=75;
 
   //Create the balancer
-  engpar::balance(input,-1);
+  engpar::balance(input,1);
 
   //Ensure the graph is still valid
   agi::checkValidity(g);

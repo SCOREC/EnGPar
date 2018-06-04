@@ -1,6 +1,7 @@
 #include "ngraph.h"
 #include <engpar_support.h>
 #include <cstring>
+#include <stdexcept>
 namespace agi {
 
   Ngraph* createEmptyGraph() {
@@ -578,5 +579,10 @@ namespace agi {
       }
       EnGPar_Status_Message("%s\n",edges);
     }
+  }
+  void Ngraph::makeUndirectedGraph() {
+    if (isHyper())
+      return;
+    throw std::runtime_error("makeUndirectedGraph() not implemented yet");
   }
 }

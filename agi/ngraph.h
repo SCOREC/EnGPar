@@ -87,6 +87,11 @@ public:
                       std::vector<lid_t>& degs,
                       std::vector<gid_t>& pins_to_verts,
                       std::unordered_map<gid_t,part_t>& owns);
+  /** \brief Adds edges to turn a traditional directed graph into an undirected graph.
+   * 
+   */
+  void makeUndirectedGraph();
+  
   /** \brief Removes all edges of type t from the graph.
    * \param t the edge type to be removed
    *
