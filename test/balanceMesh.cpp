@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   input->addPriority(-1,tol);
 
   //Create the balancer
-  int verbosity = 3;
+  int verbosity = 1;
   engpar::balance(input,verbosity);
 
   engpar::evaluatePartition(g);
