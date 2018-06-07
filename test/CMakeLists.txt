@@ -8,7 +8,7 @@ include_directories(
   ${PARMETIS_INCLUDE_DIRS}
   )
 
-if (KOKKOS_FOUND)
+if (ENABLE_KOKKOS)
   include_directories(${KOKKOS_INCLUDE_DIRS_RET})
 endif()
 
@@ -39,7 +39,7 @@ set(ALL_LIBS ${ALL_LIBS}
   ${KOKKOS_LIBRARIES}
   )
 
-if (KOKKOS_FOUND)
+if (ENABLE_KOKKOS)
   set(ALL_LIBS ${ALL_LIBS} kokkos)
 endif()
 
@@ -77,7 +77,7 @@ if (ZOLTAN_FOUND)
 endif()
 
 
-if (KOKKOS_FOUND)
+if (ENABLE_KOKKOS)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)
   make_utility(kokkosFor kokkosFor.cpp)
   make_utility(bfsSearch bfsSearch.cpp)
