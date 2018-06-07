@@ -2,15 +2,15 @@ set(CMAKE_MODULE_PATH
   ${CMAKE_MODULE_PATH}
   "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
 
-if (ENABLE_KOKKOS)
-  find_package(Kokkos MODULE REQUIRED)
-endif()
 include_directories(
   ../zoltan
   ${ZOLTAN_INCLUDE_DIRS}
   ${PARMETIS_INCLUDE_DIRS}
-  ${KOKKOS_INCLUDE_DIRS}
   )
+
+if (KOKKOS_FOUND)
+  include_directories(${KOKKOS_INCLUDE_DIRS_RET})
+endif()
 
 if(ENGPAR_FORTRAN_INTERFACE)
   set(ALL_LIBS engpar_ftn)
@@ -38,6 +38,10 @@ set(ALL_LIBS ${ALL_LIBS}
   ${PARMETIS_LIBRARIES}
   ${KOKKOS_LIBRARIES}
   )
+
+if (KOKKOS_FOUND)
+  set(ALL_LIBS ${ALL_LIBS} kokkos)
+endif()
 
 set(TESTING_SOURCES
   buildGraphs.cpp

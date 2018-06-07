@@ -29,6 +29,9 @@ target_include_directories(agi PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
+if (ENABLE_KOKKOS)
+  target_link_libraries(agi PUBLIC kokkos)
+endif()
 target_link_libraries(agi PUBLIC engpar_support)
 
 engpar_export_lib(agi "${AGI_HEADERS}")

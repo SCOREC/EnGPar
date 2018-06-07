@@ -86,15 +86,13 @@ if(ENGPAR_FORTRAN_INTERFACE)
   install(DIRECTORY ${CMAKE_Fortran_MODULE_DIRECTORY}/ DESTINATION include)
 endif()
 
-if (ENABLE_KOKKOS)
-  find_package(Kokkos MODULE REQUIRED)
-  add_definitions(-DKOKKOS_ENABLED)
-endif()
+include_directories(${SCOREC_PREFIX}/include)
 
-include_directories(
-  ${SCOREC_PREFIX}/include
-  ${KOKKOS_INCLUDE_DIRS}
-  )
+if (ENABLE_KOKKOS)
+  add_subdirectory(kokkos)
+  add_definitions(-DKOKKOS_ENABLED)
+  include_directories(${CMAKE_BINARY_DIR}/kokkos ${KOKKOS_INCLUDE_DIRS_RET})
+endif()
 
 macro(engpar_export_lib target headers)
   install(TARGETS ${target}
