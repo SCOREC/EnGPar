@@ -331,6 +331,8 @@ int testAeroDQs() {
   }
 
   while ((pDirent = readdir(pDir)) != NULL) {
+    if (pDirent->d_name[0]=='.')
+      continue;
     int n = sprintf(filePlace,"%s",pDirent->d_name);
     filePlace[n-6] = '\0';
     g->loadFromFile(aeroDir);
