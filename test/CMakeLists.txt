@@ -81,6 +81,7 @@ if (ENABLE_KOKKOS)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)
   make_utility(kokkosFor kokkosFor.cpp)
   make_utility(bfsSearch bfsSearch.cpp)
+  make_utility(kokkosColoring kokkosColoring.cpp)
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)

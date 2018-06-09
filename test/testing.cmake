@@ -172,6 +172,14 @@ if (ENABLE_KOKKOS)
     ./bfsSearch
     "${GRAPHS}/ring.ebin")
 
+  mpi_test(colorRing 1
+    ./kokkosColoring
+    "${GRAPHS}/ring.ebin")
+
+  mpi_test(colorTree 1
+    ./kokkosColoring
+    "${GRAPHS}/tree.ebin")
+
   mpi_test(bfsSearchTree 1
     ./bfsSearch
     "${GRAPHS}/tree.ebin")
