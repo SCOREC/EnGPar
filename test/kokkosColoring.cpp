@@ -25,7 +25,17 @@ int main(int argc, char* argv[]) {
 
   agi::lid_t numverts = pg->num_local_verts;
 
-  // insert awesome kokkos code here
+  agi::lid_t numedges = pg->num_local_edges[0];  // Add support for multiple edge types
+
+  //agi::lid_t* degree_list = pg->degree_list[0];
+  //agi::lid_t* edge_list = pg->edge_list[0];
+
+  // Create views for each part of the graph data-structure
+  
+  Kokkos::View<agi::lid_t*> degree_view ("degree_view",numverts);
+
+  Kokkos::View<agi::lid_t*> edge_view ("edge_view",numedges);
+ 
 
   destroyGraph(g);
   PCU_Barrier();
