@@ -39,10 +39,8 @@ set(VALGRIND_ARGS "" CACHE string
   "the command line arguments to VALGRIND")
 
 if (ENABLE_KOKKOS)
-  message("looking for kokkos")
   find_package(KokkosCore REQUIRED)
-  message("found kokkos")
-  #find_package(KokkosKernels REQUIRED)
+  find_package(KokkosKernels REQUIRED)
   add_definitions(-DKOKKOS_ENABLED)
   set(KOKKOS_ENABLED true)
   include_directories(${KokkosCore_INCLUDE_DIRS})
