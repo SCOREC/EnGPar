@@ -38,6 +38,32 @@ set(VALGRIND "" CACHE string
 set(VALGRIND_ARGS "" CACHE string
   "the command line arguments to VALGRIND")
 
+if (ENABLE_KOKKOS)
+  message("looking for kokkos")
+  find_package(KokkosCore REQUIRED)
+  message("found kokkos")
+  #find_package(KokkosKernels REQUIRED)
+  add_definitions(-DKOKKOS_ENABLED)
+  set(KOKKOS_ENABLED true)
+  include_directories(${KokkosCore_INCLUDE_DIRS})
+
+  message(STATUS "Kokkos enabled - Overriding compiler selection for consistency with Kokkos install")
+  set(CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER})
+  set(CMAKE_C_COMPILER ${KokkosCore_C_COMPILER})
+  set(CMAKE_FORTRAN_COMPILER ${KokkosCore_FORTRAN_COMPILER})
+  message(STATUS "Kokkos CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER}")
+  message(STATUS "Kokkos CMAKE_C_COMPILER ${KokkosCore_C_COMPILER}")
+  message(STATUS "Kokkos CMAKE_FORTRAN_COMPILER ${KokkosCore_FORTRAN_COMPILER}")
+
+  message(STATUS "Kokkos enabled - Overriding compiler flags for consistency with Kokkos install")
+  set(CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS})
+  set(CMAKE_C_FLAGS ${KokkosCore_C_FLAGS})
+  set(CMAKE_FORTRAN_FLAGS ${KokkosCore_FORTRAN_FLAGS})
+  message(STATUS "Kokkos CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS}")
+  message(STATUS "Kokkos CMAKE_C_FLAGS ${KokkosCore_C_FLAGS}")
+  message(STATUS "Kokkos CMAKE_FORTRAN_FLAGS ${KokkosCore_FORTRAN_FLAGS}")
+endif()
+
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
 
 option(ENABLE_PUMI "Build with PUMI interface" OFF)
@@ -88,11 +114,6 @@ endif()
 
 include_directories(${SCOREC_PREFIX}/include)
 
-if (ENABLE_KOKKOS)
-  add_subdirectory(kokkos)
-  add_definitions(-DKOKKOS_ENABLED)
-  include_directories(${CMAKE_BINARY_DIR}/kokkos ${KOKKOS_INCLUDE_DIRS_RET})
-endif()
 
 macro(engpar_export_lib target headers)
   install(TARGETS ${target}

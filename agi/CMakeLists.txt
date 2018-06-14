@@ -29,8 +29,8 @@ target_include_directories(agi PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
-if (ENABLE_KOKKOS)
-  target_link_libraries(agi PUBLIC kokkos)
+if (KOKKOS_ENABLED)
+  target_link_libraries(agi PUBLIC kokkoscore)
 endif()
 target_link_libraries(agi PUBLIC engpar_support)
 

@@ -8,8 +8,8 @@ include_directories(
   ${PARMETIS_INCLUDE_DIRS}
   )
 
-if (ENABLE_KOKKOS)
-  include_directories(${KOKKOS_INCLUDE_DIRS_RET})
+if (KOKKOS_ENABLED)
+  include_directories(${KokkosCore_INCLUDE_DIRS})
 endif()
 
 if(ENGPAR_FORTRAN_INTERFACE)
@@ -36,11 +36,10 @@ endif()
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
-  ${KOKKOS_LIBRARIES}
   )
 
-if (ENABLE_KOKKOS)
-  set(ALL_LIBS ${ALL_LIBS} kokkos)
+if (KOKKOS_ENABLED)
+  set(ALL_LIBS ${ALL_LIBS} ${KokkosCore_LIBRARIES})
 endif()
 
 set(TESTING_SOURCES
@@ -77,7 +76,7 @@ if (ZOLTAN_FOUND)
 endif()
 
 
-if (ENABLE_KOKKOS)
+if (KOKKOS_ENABLED)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)
   make_utility(kokkosFor kokkosFor.cpp)
   make_utility(bfsSearch bfsSearch.cpp)
