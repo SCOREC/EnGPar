@@ -33,7 +33,9 @@ int main(int argc, char* argv[]) {
   suite.addFineTest("Construct Graph in Parts",testGraphParts);
   suite.addFineTest("Construct HyperGraph in Parts",testHyperGraphParts);
   suite.addFineTest("Construct Build Graphs",testBuildGraphs);
+  #ifndef ENGPAR_BIG_ENDIAN
   suite.addFineTest("Construct .ebin Graphs",testEBINGraphs);
+  #endif
   suite.addFineTest("Construct .bgd Graphs",testBGDGraphs);
   
   //Gather the graphs for the general tests
