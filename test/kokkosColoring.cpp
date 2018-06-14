@@ -1,9 +1,9 @@
 #include <Kokkos_Core.hpp>
+#include <KokkosSparse_CrsMatrix.hpp>
 #include <binGraph.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <engpar_support.h>
-
 
 int main(int argc, char* argv[]) {
 
