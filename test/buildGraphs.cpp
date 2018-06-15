@@ -434,6 +434,7 @@ agi::Ngraph* buildDisconnected2Graph() {
   std::vector<agi::wgt_t> weights;
   g->constructGraph(true,verts,weights,edges,degrees,pins,owners);
   g->setCoords(cs);
+  delete [] cs;
   return g;
  
 }
