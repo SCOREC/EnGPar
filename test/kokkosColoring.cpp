@@ -1,9 +1,12 @@
 #include <Kokkos_Core.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
+#include <KokkosGraph_graph_color.hpp>
+#include <KokkosKernels_Handle.hpp>
 #include <binGraph.h>
 #include <mpi.h>
 #include <stdio.h>
 #include <engpar_support.h>
+#include <iostream>
 
 int main(int argc, char* argv[]) {
 
@@ -33,10 +36,12 @@ int main(int argc, char* argv[]) {
 
   // Create views for each part of the graph data-structure
   
-  Kokkos::View<agi::lid_t*> degree_view ("degree_view",numverts);
+  Kokkos::View<agi::lid_t*> degree_view ("degree_view",numverts+1);
 
   Kokkos::View<agi::lid_t*> edge_view ("edge_view",numedges);
  
+  Kokkos::View<agi::lid_t*> vals_view("vals_view",numedges);
+
   // Use parllel loops to fill the views
   
   Kokkos::parallel_for(numverts+1, KOKKOS_LAMBDA( const int i ) {
@@ -45,17 +50,52 @@ int main(int argc, char* argv[]) {
 
   Kokkos::parallel_for(numedges, KOKKOS_LAMBDA( const int i) {
     edge_view(i) = edge_list[i];
+    vals_view(i) = 1;
   });
 
-  // KokkosKernels::KokkosSparse::CrsMatrix<const agi::lid_t, ?, device>(numverts,numverts,numedges,degree_view,edge_view);
+  KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Serial::device_type, void, int>("graph", numverts, numverts, numedges, vals_view, degree_view, edge_view);
+//  KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Cuda::device_type, void, int>("graph", numverts-1, numverts-1, numedges, vals_view, degree_view, edge_view);
 
-  // KokkosKernelsHandle<const Kokkos::View<agi::lid_t,const Kokkos::View<agi::lid_t*>,const agi::lid_t> *kh = new KernelHandle;
-  // kh.set_team_work_size(16);
-  // kh.set_dynamic_scheduling(true);
-  // kh.create_graph_coloring_handle(COLORING_SERIAL);
-  //
-  // kh->destroy_graph_coloring_handle();
+  typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
+                                                           Kokkos::Serial::execution_space, 
+                                                           Kokkos::Serial::memory_space, 
+                                                           Kokkos::Serial::memory_space> KernelHandle;
+//  typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
+//                                                           Kokkos::Cuda::execution_space,
+//                                                           Kokkos::Cuda::CudaSpace,
+//                                                           Kokkos::Cuda::scratch_memory_space> KernelHandle;
 
+
+  KernelHandle *kh = new KernelHandle();
+  kh->set_team_work_size(16);
+  kh->set_dynamic_scheduling(true);
+  kh->create_graph_coloring_handle(KokkosGraph::COLORING_SERIAL);
+//  kh->create_graph_coloring_handle(KokkosGraph::COLORING_DEFAULT); 
+
+  KokkosGraph::Experimental::graph_color_symbolic
+	<KernelHandle, Kokkos::View<agi::lid_t*>, Kokkos::View<agi::lid_t*> >
+	(kh, numverts, numverts, degree_view, edge_view);
+
+  Kokkos::View<int*> vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
+
+  agi::checkValidity(g);
+  agi::GraphTag* tag = g->createIntTag(-1);
+  agi::GraphVertex* v;
+  agi::VertexIterator* vitr = g->begin();
+
+  // Assigning colors to the original graph
+  int i=0;
+  while ((v=g->iterate(vitr))) {
+    g->setIntTag(tag,v,vert_colors(i++));
+  }
+  
+
+  // Write the vtk files
+  std::string filename = "kokkos_color";
+//  agi::writeVTK(g,filename.c_str(),tag,-1);
+
+  // Finalize & Delete
+  kh->destroy_graph_coloring_handle();
   destroyGraph(g);
   PCU_Barrier();
   if (!PCU_Comm_Self())
