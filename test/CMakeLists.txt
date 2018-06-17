@@ -58,6 +58,7 @@ function(make_test exename srcname)
   target_link_libraries(${exename} ${ALL_LIBS})
 endfunction(make_test)
 
+make_utility(addCoords addCoords.cpp)
 make_utility(balance balance.cpp)
 make_utility(split split.cpp)
 make_utility(splitAndBalance splitAndBalance.cpp)

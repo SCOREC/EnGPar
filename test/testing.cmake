@@ -100,6 +100,15 @@ IF(ENABLE_PUMI)
     3
     0
     1)
+  
+  mpi_test(renderCube 4
+    ./render
+    "${GRAPHS}/cube/4/"
+    )
+  mpi_test(renderTorus 4
+    ./render
+    "${GRAPHS}/torus/4/"
+    )
 ENDIF()
 
 mpi_test(VertexBalancer_2 2

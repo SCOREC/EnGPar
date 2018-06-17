@@ -9,7 +9,7 @@ namespace engpar {
   agi::GraphVertex* getCavity(agi::Ngraph* g, agi::GraphEdge* edge, Cavity& others) {
     agi::PinIterator* pitr = g->pins(edge);
     agi::GraphVertex* vtx;
-    agi::GraphVertex* v;
+    agi::GraphVertex* v = NULL;
     while ((vtx = g->iterate(pitr))) {
       if (g->owner(vtx)==PCU_Comm_Self()) {
         v = vtx;

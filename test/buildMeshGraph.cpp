@@ -192,7 +192,7 @@ void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   m->end(mitr);
   for (int i=0;i<n;i++) {
     agi::EdgeIterator* eitr = g->begin(i);
-    char name[30];
+    char name[100];
     sprintf(name,"secondary_ids%d_global",i);
     id_nums = m->findGlobalNumbering(name);
     assert(id_nums);
