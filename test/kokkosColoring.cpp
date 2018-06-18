@@ -6,6 +6,8 @@
 #include <mpi.h>
 #include <stdio.h>
 #include <engpar_support.h>
+#include <cstring>
+
 #include <iostream>
 
 int main(int argc, char* argv[]) {
@@ -22,7 +24,8 @@ int main(int argc, char* argv[]) {
 
   Kokkos::initialize(argc,argv);
 
-  agi::Ngraph* g = agi::createBinGraph(argv[1]);
+  agi::Ngraph* g = agi::createEmptyGraph();
+  g->loadFromFile(argv[1]);
 
   agi::PNgraph* pg = g->publicize();
 
@@ -88,11 +91,18 @@ int main(int argc, char* argv[]) {
   while ((v=g->iterate(vitr))) {
     g->setIntTag(tag,v,vert_colors(i++));
   }
+
+  std::cout << "Numver of vertices: " << g->numLocalVtxs() << std::endl;
+  agi::GraphVertex* sanity_v;
+  agi::VertexIterator* sanity_vitr = g->begin();
+  while ((sanity_v=g->iterate(sanity_vitr))) {
+    std::cout << g->getIntTag(tag, sanity_v) << std::endl;
+  }
   
 
   // Write the vtk files
   std::string filename = "kokkos_color";
-//  agi::writeVTK(g,filename.c_str(),tag,-1);
+  agi::writeVTK(g,filename.c_str(),tag,-1);
 
   // Finalize & Delete
   kh->destroy_graph_coloring_handle();

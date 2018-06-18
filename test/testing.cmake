@@ -183,11 +183,11 @@ if (ENABLE_KOKKOS)
 
   mpi_test(colorRing 1
     ./kokkosColoring
-    "${GRAPHS}/ring.ebin")
+    "${GRAPHS}/ring_coords")
 
   mpi_test(colorTree 1
     ./kokkosColoring
-    "${GRAPHS}/tree.ebin")
+    "${GRAPHS}/tree_coords")
 
   mpi_test(bfsSearchTree 1
     ./bfsSearch
