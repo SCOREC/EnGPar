@@ -57,23 +57,17 @@ int main(int argc, char* argv[]) {
   });
 
   KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Serial::device_type, void, int>("graph", numverts, numverts, numedges, vals_view, degree_view, edge_view);
-//  KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Cuda::device_type, void, int>("graph", numverts-1, numverts-1, numedges, vals_view, degree_view, edge_view);
 
   typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
                                                            Kokkos::Serial::execution_space, 
                                                            Kokkos::Serial::memory_space, 
                                                            Kokkos::Serial::memory_space> KernelHandle;
-//  typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
-//                                                           Kokkos::Cuda::execution_space,
-//                                                           Kokkos::Cuda::CudaSpace,
-//                                                           Kokkos::Cuda::scratch_memory_space> KernelHandle;
 
 
   KernelHandle *kh = new KernelHandle();
   kh->set_team_work_size(16);
   kh->set_dynamic_scheduling(true);
   kh->create_graph_coloring_handle(KokkosGraph::COLORING_SERIAL);
-//  kh->create_graph_coloring_handle(KokkosGraph::COLORING_DEFAULT); 
 
   KokkosGraph::Experimental::graph_color_symbolic
 	<KernelHandle, Kokkos::View<agi::lid_t*>, Kokkos::View<agi::lid_t*> >
@@ -91,18 +85,19 @@ int main(int argc, char* argv[]) {
   while ((v=g->iterate(vitr))) {
     g->setIntTag(tag,v,vert_colors(i++));
   }
-
-  std::cout << "Numver of vertices: " << g->numLocalVtxs() << std::endl;
-  agi::GraphVertex* sanity_v;
-  agi::VertexIterator* sanity_vitr = g->begin();
-  while ((sanity_v=g->iterate(sanity_vitr))) {
-    std::cout << g->getIntTag(tag, sanity_v) << std::endl;
-  }
   
+  // Check that coloring is valid
+  agi::GraphEdge* e;
+  agi::EdgeIterator* eitr = g->begin(0);
+  while ((e=g->iterate(eitr))) {
+    int u = g->getIntTag(tag, g->u(e));
+    int v = g->getIntTag(tag, g->v(e));
+    assert(u!=v);
+  }
 
   // Write the vtk files
-  std::string filename = "kokkos_color";
-  agi::writeVTK(g,filename.c_str(),tag,-1);
+//  std::string filename = "kokkos_color";
+//  agi::writeVTK(g,filename.c_str(),tag,-1);
 
   // Finalize & Delete
   kh->destroy_graph_coloring_handle();
