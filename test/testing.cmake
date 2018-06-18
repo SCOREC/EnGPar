@@ -181,17 +181,29 @@ if (ENABLE_KOKKOS)
     ./bfsSearch
     "${GRAPHS}/ring.ebin")
 
-  mpi_test(colorRing 1
-    ./kokkosColoring
-    "${GRAPHS}/ring_coords")
-
-  mpi_test(colorTree 1
-    ./kokkosColoring
-    "${GRAPHS}/tree_coords")
-
   mpi_test(bfsSearchTree 1
     ./bfsSearch
     "${GRAPHS}/tree.ebin")
+
+  mpi_test(colorRing 1
+    ./kokkosColoring
+    "${GRAPHS}/ring.ebin")
+
+  mpi_test(colorTree 1
+    ./kokkosColoring
+    "${GRAPHS}/tree.ebin")
+
+  mpi_test(colorGoogle 1
+    ./kokkosColoring
+    "${GRAPHS}/google.ebin") 
+
+  mpi_test(colorEnron 1
+    ./kokkosColoring
+    "${GRAPHS}/enron.ebin")
+
+  mpi_test(colorNutella 1
+    ./kokkosColoring
+    "${GRAPHS}/gnutella.ebin")
 
 endif()
 

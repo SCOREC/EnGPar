@@ -10,32 +10,17 @@
 
 #include <iostream>
 
-int main(int argc, char* argv[]) {
-
-  MPI_Init(&argc,&argv);
-  EnGPar_Initialize();
-  if ( argc != 2 ) {
-    if ( !PCU_Comm_Self() )
-      printf("Usage: %s <binary_graph_file>",argv[0]);
-    EnGPar_Finalize();
-    MPI_Finalize();
-    assert(false);
-  }
-
-  Kokkos::initialize(argc,argv);
-
-  agi::Ngraph* g = agi::createEmptyGraph();
-  g->loadFromFile(argv[1]);
+void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
 
   agi::PNgraph* pg = g->publicize();
 
   const agi::lid_t numverts = pg->num_local_verts;
 
-  const agi::lid_t numedges = pg->num_local_edges[0];  // Add support for multiple edge types
+  const agi::lid_t numedges = pg->num_local_edges[t];
 
-  const agi::lid_t* degree_list = pg->degree_list[0]; // ^
+  const agi::lid_t* degree_list = pg->degree_list[t];
 
-  const agi::lid_t* edge_list = pg->edge_list[0]; // ^
+  const agi::lid_t* edge_list = pg->edge_list[t];
 
   // Create views for each part of the graph data-structure
   
@@ -89,22 +74,39 @@ int main(int argc, char* argv[]) {
   // Check that coloring is valid
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = g->begin(0);
+  int fails = 0;
   while ((e=g->iterate(eitr))) {
     int u = g->getIntTag(tag, g->u(e));
     int v = g->getIntTag(tag, g->v(e));
-    assert(u!=v);
+    if (u==v) ++fails;
+  }
+  std::cout << fails << std::endl;
+
+  kh->destroy_graph_coloring_handle();
+}
+
+int main(int argc, char* argv[]) {
+
+  MPI_Init(&argc,&argv);
+  EnGPar_Initialize();
+  if ( argc != 2 ) {
+    if ( !PCU_Comm_Self() )
+      printf("Usage: %s <binary_graph_file>",argv[0]);
+    EnGPar_Finalize();
+    MPI_Finalize();
+    assert(false);
   }
 
-  // Write the vtk files
-//  std::string filename = "kokkos_color";
-//  agi::writeVTK(g,filename.c_str(),tag,-1);
+  Kokkos::initialize(argc,argv);
 
-  // Finalize & Delete
-  kh->destroy_graph_coloring_handle();
+  agi::Ngraph* g = agi::createBinGraph(argv[1]);
+
+  Color_Graph(g);
+
   destroyGraph(g);
   PCU_Barrier();
   if (!PCU_Comm_Self())
-    printf("\nAll tests passed\n");
+    printf("\nAll tests passed\n"); 
   Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();
