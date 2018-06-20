@@ -338,9 +338,10 @@ int testLocalSplit(agi::Ngraph* g) {
 
   engpar::Input* input = engpar::createLocalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                        2,tolerance,others,t);
-
   engpar::split(input,engpar::LOCAL_PARMETIS);
 
+  delete [] others;
+  
   if (PCU_Get_Comm() != MPI_COMM_WORLD)
     return 2;
 
