@@ -10,6 +10,32 @@
 
 #include <iostream>
 
+
+bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
+
+  agi::PNgraph* pg = g->publicize();
+
+  const agi::lid_t numverts = pg->num_local_verts; 
+
+  const agi::lid_t* degree_list = pg->degree_list[t];
+
+  const agi::lid_t* edge_list = pg->edge_list[t];
+
+  for (int i=0; i<numverts; ++i) { 
+    for (int j=degree_list[i]; j<degree_list[i+1]; ++j) {
+      bool back_edge = false; 
+      for (int k=degree_list[edge_list[j]]; k<degree_list[1+edge_list[j]]; ++k) {
+        if (i == edge_list[k])
+          back_edge = true;
+      }
+      if (!back_edge)
+        return false;
+    }
+  }
+  return true;
+}
+
+
 void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
 
   agi::PNgraph* pg = g->publicize();
@@ -27,8 +53,6 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   Kokkos::View<agi::lid_t*> degree_view ("degree_view",numverts+1);
 
   Kokkos::View<agi::lid_t*> edge_view ("edge_view",numedges);
- 
-  Kokkos::View<agi::lid_t*> vals_view("vals_view",numedges);
 
   // Use parllel loops to fill the views
   
@@ -38,28 +62,36 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
 
   Kokkos::parallel_for(numedges, KOKKOS_LAMBDA( const int i) {
     edge_view(i) = edge_list[i];
-    vals_view(i) = 1;
   });
 
-  KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Serial::device_type, void, int>("graph", numverts, numverts, numedges, vals_view, degree_view, edge_view);
-
+  typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Serial::device_type, void, int> crsMat_t;
+  typedef crsMat_t::StaticCrsGraphType graph_t;
+  typedef graph_t::entries_type::non_const_type color_view_t;
+  typedef graph_t::row_map_type lno_view_t;
+  typedef graph_t::entries_type lno_nnz_view_t;
+  typedef graph_t::entries_type::non_const_type  color_view_t;
   typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
                                                            Kokkos::Serial::execution_space, 
                                                            Kokkos::Serial::memory_space, 
                                                            Kokkos::Serial::memory_space> KernelHandle;
 
+  // Create kernel handle
+  KernelHandle kh;
+  kh.set_team_work_size(16);
+  kh.set_dynamic_scheduling(true);
+  kh.create_graph_coloring_handle(KokkosGraph::COLORING_SERIAL);
 
-  KernelHandle *kh = new KernelHandle();
-  kh->set_team_work_size(16);
-  kh->set_dynamic_scheduling(true);
-  kh->create_graph_coloring_handle(KokkosGraph::COLORING_SERIAL);
-
+  // Run kokkos coloring
   KokkosGraph::Experimental::graph_color_symbolic
 	<KernelHandle, Kokkos::View<agi::lid_t*>, Kokkos::View<agi::lid_t*> >
-	(kh, numverts, numverts, degree_view, edge_view);
+	(&kh, numverts, numverts, degree_view, edge_view);
 
-  Kokkos::View<int*> vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
+  color_view_t vert_colors = kh.get_graph_coloring_handle()->get_vertex_colors();
 
+  // ########## IMPL CHECK ##########
+  assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, Kokkos::Serial::execution_space>(numverts, numverts, degree_view, edge_view, vert_colors)) );
+
+  // Move colors from kokkos graph to EnGPar graph
   agi::checkValidity(g);
   agi::GraphTag* tag = g->createIntTag(-1);
   agi::GraphVertex* v;
@@ -74,16 +106,19 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   // Check that coloring is valid
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = g->begin(0);
-  int fails = 0;
+  int conflicts = 0;
   while ((e=g->iterate(eitr))) {
     int u = g->getIntTag(tag, g->u(e));
     int v = g->getIntTag(tag, g->v(e));
-    if (u==v) ++fails;
+    if (u==v) ++conflicts;
   }
-  std::cout << fails << std::endl;
+  g->destroy(eitr);
+  assert(conflicts == 0);
 
-  kh->destroy_graph_coloring_handle();
+  kh.destroy_graph_coloring_handle();
+  
 }
+
 
 int main(int argc, char* argv[]) {
 
@@ -100,6 +135,8 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc,argv);
 
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
+
+  assert(Check_Directed(g));
 
   Color_Graph(g);
 

@@ -193,10 +193,6 @@ if (ENABLE_KOKKOS)
     ./kokkosColoring
     "${GRAPHS}/tree.ebin")
 
-  mpi_test(colorGoogle 1
-    ./kokkosColoring
-    "${GRAPHS}/google.ebin") 
-
   mpi_test(colorEnron 1
     ./kokkosColoring
     "${GRAPHS}/enron.ebin")
@@ -204,6 +200,14 @@ if (ENABLE_KOKKOS)
   mpi_test(colorNutella 1
     ./kokkosColoring
     "${GRAPHS}/gnutella.ebin")
+
+  mpi_test(colorRmat_22 1
+    ./kokkosColoring
+    "${GRAPHS}/rmat_22.ebin")
+
+  mpi_test(colorAsic 1
+    ./kokkosColoring
+    "${GRAPHS}/asic.ebin")
 
 endif()
 
