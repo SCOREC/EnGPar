@@ -1,10 +1,18 @@
 #!/bin/bash -x
 
 #load system modules
-source /usr/local/etc/bash_profile
-module load cmake/latest
-module load valgrind
+#source /etc/profile
+export SPACK_ROOT=/lore/cwsmith/software/spack
+export PATH=$SPACK_ROOT/bin:$PATH
+source $SPACK_ROOT/share/spack/setup-env.sh
+source /etc/profile.d/modules.sh
+source /etc/profile
+export MODULEPATH=$MODULEPATH:/opt/scorec/modules
+export CMAKE_PREFIX_PATH=$CMAKE_PREFIX_PATH:/lore/cwsmith/develop/trilinos/install-kokkos
+
 module load pumi
+
+cd /lore/diamog/cdash/repos/EnGPar
 
 #update this repo
 git pull

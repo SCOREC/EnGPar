@@ -20,6 +20,7 @@ void gatherBuildGraphs(TestingSuite& suite) {
 
 void gatherEBINGraphs(TestingSuite& suite) {
   char file[1024];
+  #ifndef ENGPAR_BIG_ENDIAN
   if (PCU_Comm_Peers() <= 2) {
     //Ring graph
     sprintf(file,"%s/ring.ebin",ENGPAR_GRAPHS);
@@ -32,6 +33,7 @@ void gatherEBINGraphs(TestingSuite& suite) {
   //Gnutella graph
   sprintf(file,"%s/gnutella.ebin",ENGPAR_GRAPHS);
   suite.addTestGraph("Gnutella Binary Graph", agi::createBinGraph(file));
+  #endif
 }
 
 void gatherBGDGraphs(TestingSuite& suite) {

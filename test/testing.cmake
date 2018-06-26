@@ -100,6 +100,15 @@ IF(ENABLE_PUMI)
     3
     0
     1)
+  
+  mpi_test(renderCube 4
+    ./render
+    "${GRAPHS}/cube/4/"
+    )
+  mpi_test(renderTorus 4
+    ./render
+    "${GRAPHS}/torus/4/"
+    )
 ENDIF()
 
 mpi_test(VertexBalancer_2 2
@@ -172,6 +181,10 @@ if (ENABLE_KOKKOS)
     ./bfsSearch
     "${GRAPHS}/ring.ebin")
 
+  mpi_test(bfsSearchTree 1
+    ./bfsSearch
+    "${GRAPHS}/tree.ebin")
+
   mpi_test(colorRing 1
     ./kokkosColoring
     "${GRAPHS}/ring.ebin")
@@ -180,9 +193,21 @@ if (ENABLE_KOKKOS)
     ./kokkosColoring
     "${GRAPHS}/tree.ebin")
 
-  mpi_test(bfsSearchTree 1
-    ./bfsSearch
-    "${GRAPHS}/tree.ebin")
+  mpi_test(colorEnron 1
+    ./kokkosColoring
+    "${GRAPHS}/enron.ebin")
+
+  mpi_test(colorNutella 1
+    ./kokkosColoring
+    "${GRAPHS}/gnutella.ebin")
+
+  mpi_test(colorRmat_22 1
+    ./kokkosColoring
+    "${GRAPHS}/rmat_22.ebin")
+
+  mpi_test(colorAsic 1
+    ./kokkosColoring
+    "${GRAPHS}/asic.ebin")
 
 endif()
 

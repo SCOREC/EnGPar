@@ -58,7 +58,8 @@ int main(int argc, char* argv[]) {
   //Write the vtk files
   std::string filename = "cake";
   agi::writeVTK(g,filename.c_str(),tag,0);
-  
+
+  g->destroyTag(tag);
   //Destroy graph
   agi::destroyGraph(g);
 

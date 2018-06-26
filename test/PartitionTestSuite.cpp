@@ -64,8 +64,8 @@ int main(int argc, char* argv[]) {
   }
 
   bool isOriginal = true;
+  MPI_Comm newComm;
   if (operation>=SPLIT_TEST) {
-    MPI_Comm newComm;
     switchToOriginals(2, isOriginal,newComm);
     //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
     EnGPar_Switch_Comm(newComm);
@@ -75,6 +75,9 @@ int main(int argc, char* argv[]) {
   if (isOriginal) {
     //gatherEBINGraphs(suite);
     gatherBGDGraphs(suite);
+  }
+  if (operation>=SPLIT_TEST) {
+    MPI_Comm_free(&newComm);
   }
   EnGPar_Switch_Comm(MPI_COMM_WORLD);
   suite.fillEmptyTestGraphs();

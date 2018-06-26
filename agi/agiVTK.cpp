@@ -54,78 +54,105 @@ namespace agi {
       for (int i=0;i<3;i++)
         ghost_cs[lid][i] = vals[i];
     }
-    
-    //Write the position of each edge
-    agi::GraphEdge* e;
-    agi::EdgeIterator* eitr = g->begin(0);
-    while ((e=g->iterate(eitr))) {
-      coord_t c = {0,0,0};
-      agi::PinIterator* pitr = g->pins(e);
-      int ghosts=0;
-      while ((v = g->iterate(pitr))) {
-        if (g->owner(v)!=PCU_Comm_Self()){
-          lid_t lid = g->localID(v)-g->numLocalVtxs();
-          for (int i=0;i<3;i++)
-            c[i]+=ghost_cs[lid][i];
+    if (g->isHyper()) {
+      //Write the position of each edge
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->begin(0);
+      while ((e=g->iterate(eitr))) {
+        coord_t c = {0,0,0};
+        agi::PinIterator* pitr = g->pins(e);
+        int ghosts=0;
+        while ((v = g->iterate(pitr))) {
+          if (g->owner(v)!=PCU_Comm_Self()){
+            lid_t lid = g->localID(v)-g->numLocalVtxs();
+            for (int i=0;i<3;i++)
+              c[i]+=ghost_cs[lid][i];
+          }
+          else {
+            const coord_t& cv = g->coord(v);
+            c[0]+=cv[0];c[1]+=cv[1];c[2]+=cv[2];
+          }
         }
-        else {
-          const coord_t& cv = g->coord(v);
-          c[0]+=cv[0];c[1]+=cv[1];c[2]+=cv[2];
+        g->destroy(pitr);
+        lid_t deg = g->degree(e)-ghosts;
+        for (int i=0;i<3;i++) {
+          c[i]/=deg;
         }
+        fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
       }
-      g->destroy(pitr);
-      lid_t deg = g->degree(e)-ghosts;
-      for (int i=0;i<3;i++) {
-        c[i]/=deg;
-      }
-      fprintf(f," %f %f %f\n",c[0],c[1],c[2]);
+      g->destroy(eitr);
     }
-    g->destroy(eitr);
     fprintf(f,"\n</DataArray>\n</Points>\n");
     delete [] ghost_cs;
   }
 
   void writeCells(Ngraph* g, FILE* f) {
     fprintf(f,"<Cells>\n");
-    fprintf(f,"<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n");
-    GraphEdge* e;
-    EdgeIterator* eitr = g->begin(0);
-    while ((e = g->iterate(eitr))) {
-      GraphVertex* v;
-      PinIterator* pitr = g->pins(e);
-      while ((v = g->iterate(pitr))) {
-        if (g->owner(v)==PCU_Comm_Self())
-          fprintf(f,"%d %d\n",g->localID(e)+g->numLocalVtxs(),g->localID(v));
+
+    if (g->isHyper()) {
+      fprintf(f,"<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n");
+      GraphEdge* e;
+      EdgeIterator* eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        GraphVertex* v;
+        PinIterator* pitr = g->pins(e);
+        while ((v = g->iterate(pitr))) {
+          if (g->owner(v)==PCU_Comm_Self())
+            fprintf(f,"%d %d\n",g->localID(e)+g->numLocalVtxs(),g->localID(v));
+        }
+        g->destroy(pitr);
       }
-      g->destroy(pitr);
-    }
-    g->destroy(eitr);
-    int off=0;
-    fprintf(f,"\n</DataArray>\n<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n");
-    eitr = g->begin(0);
-    while ((e = g->iterate(eitr))) {
-      GraphVertex* v;
-      PinIterator* pitr = g->pins(e);
-      while ((v = g->iterate(pitr))) {
-        if (g->owner(v)==PCU_Comm_Self())
-          fprintf(f," %d\n",off+=2);
+      g->destroy(eitr);
+      int off=0;
+      fprintf(f,"\n</DataArray>\n<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n");
+      eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        GraphVertex* v;
+        PinIterator* pitr = g->pins(e);
+        while ((v = g->iterate(pitr))) {
+          if (g->owner(v)==PCU_Comm_Self())
+            fprintf(f," %d\n",off+=2);
+        }
+        g->destroy(pitr);
       }
-      g->destroy(pitr);
-    }
-    g->destroy(eitr);
-    fprintf(f,"\n</DataArray>\n<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
-    eitr = g->begin(0);
-    while ((e = g->iterate(eitr))) {
-      GraphVertex* v;
-      PinIterator* pitr = g->pins(e);
-      while ((v = g->iterate(pitr))) {
-        if (g->owner(v)==PCU_Comm_Self())
-          fprintf(f," %d\n",3);
+      g->destroy(eitr);
+      fprintf(f,"\n</DataArray>\n<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
+      eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        GraphVertex* v;
+        PinIterator* pitr = g->pins(e);
+        while ((v = g->iterate(pitr))) {
+          if (g->owner(v)==PCU_Comm_Self())
+            fprintf(f," %d\n",3);
+        }
+        g->destroy(pitr);
       }
-      g->destroy(pitr);
+      g->destroy(eitr);
     }
-    g->destroy(eitr);
-    
+    else {
+      fprintf(f,"<DataArray type=\"Int32\" Name=\"connectivity\" format=\"ascii\">\n");
+      GraphEdge* e;
+      EdgeIterator* eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        GraphVertex* u = g->u(e);
+        GraphVertex* v = g->v(e);
+        fprintf(f,"%d %d\n",g->localID(u),g->localID(v));
+      }
+      g->destroy(eitr);
+      int off=0;
+      fprintf(f,"\n</DataArray>\n<DataArray type=\"Int32\" Name=\"offsets\" format=\"ascii\">\n");
+      eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        fprintf(f," %d\n",off+=2);
+      }
+      g->destroy(eitr);
+      fprintf(f,"\n</DataArray>\n<DataArray type=\"UInt8\" Name=\"types\" format=\"ascii\">\n");
+      eitr = g->begin(0);
+      while ((e = g->iterate(eitr))) {
+        fprintf(f," %d\n",3);
+      }
+      g->destroy(eitr);
+    }
     fprintf(f,"\n</DataArray>\n</Cells>\n");
   }
   void writePointData(Ngraph* g, FILE* f, GraphTag* tag,etype t) {
@@ -136,27 +163,32 @@ namespace agi {
     while ((v=g->iterate(vitr))) {
       fprintf(f,"%d\n",PCU_Comm_Self());
     }
-    agi::GraphEdge* e;
-    agi::EdgeIterator* eitr = g->begin(0);
-    while ((e=g->iterate(eitr))) {
-      fprintf(f,"%d\n",PCU_Comm_Self());
+    if (g->isHyper()) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->begin(0);
+      while ((e=g->iterate(eitr))) {
+        fprintf(f,"%d\n",PCU_Comm_Self());
+      }
+      g->destroy(eitr);
     }
-    g->destroy(eitr);
     fprintf(f,"</DataArray>\n");
 
-    fprintf(f,"<DataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\">\n");
-
-    vitr = g->begin();
-    while ((v=g->iterate(vitr))) {
-      fprintf(f,"0\n");
+    if (g->isHyper()) {
+      fprintf(f,"<DataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\">\n");
+      
+      vitr = g->begin();
+      while ((v=g->iterate(vitr))) {
+        fprintf(f,"0\n");
+      }
+      agi::EdgeIterator* eitr = g->begin(0);
+      agi::GraphEdge* e;
+      while ((e=g->iterate(eitr))) {
+        fprintf(f,"1\n");
     }
-    eitr = g->begin(0);
-    while ((e=g->iterate(eitr))) {
-      fprintf(f,"1\n");
+      g->destroy(eitr);
+      fprintf(f,"</DataArray>\n");
     }
-    g->destroy(eitr);
-    fprintf(f,"</DataArray>\n");
-    if (tag!=NULL&&t!=NO_TYPE) {
+    if (tag != NULL && t != NO_TYPE && (t == VTX_TYPE || g->isHyper())  ) {
       fprintf(f,"<DataArray type=\"Int32\" Name=\"Tag\" NumberOfComponents=\"1\" format=\"ascii\">\n");
       agi::GraphVertex* v;
       agi::VertexIterator* vitr = g->begin();
@@ -166,34 +198,40 @@ namespace agi {
         else
           fprintf(f,"-1\n");
       }
-      agi::GraphEdge* e;
-      agi::EdgeIterator* eitr = g->begin(0);
-      while ((e=g->iterate(eitr))) {
-        if (t==0)
-          fprintf(f,"%d\n",g->getIntTag(tag,e));
-        else
-          fprintf(f,"-1\n");
+      if (g->isHyper()) {
+        agi::GraphEdge* e;
+        agi::EdgeIterator* eitr = g->begin(0);
+        while ((e=g->iterate(eitr))) {
+          if (t==0)
+            fprintf(f,"%d\n",g->getIntTag(tag,e));
+          else
+            fprintf(f,"-1\n");
+        }
+        g->destroy(eitr);
       }
-      g->destroy(eitr);
       fprintf(f,"</DataArray>\n");
     }
     fprintf(f,"</PointData>\n");
   }
   
   gid_t getNumCells(Ngraph* g) {
-    gid_t total = 0;
-    EdgeIterator* eitr = g->begin(0);
-    GraphEdge* edge;
-    while ((edge = g->iterate(eitr))) {
-      PinIterator* pitr = g->pins(edge);
-      GraphVertex* v;
-      while ((v = g->iterate(pitr))) {
-        total+=(g->owner(v)==PCU_Comm_Self());
+    if (g->isHyper()) {
+      gid_t total = 0;
+      EdgeIterator* eitr = g->begin(0);
+      GraphEdge* edge;
+      while ((edge = g->iterate(eitr))) {
+        PinIterator* pitr = g->pins(edge);
+        GraphVertex* v;
+        while ((v = g->iterate(pitr))) {
+          total+=(g->owner(v)==PCU_Comm_Self());
+        }
+        g->destroy(pitr);
       }
-      g->destroy(pitr);
+      g->destroy(eitr);
+      return total;
     }
-    g->destroy(eitr);
-    return total;
+    else
+      return g->numLocalEdges();
   }
 
   void writePPoints(FILE* pf) {
@@ -202,11 +240,12 @@ namespace agi {
     fprintf(pf,"</PPoints>\n");
 
   }
-  void writePPointData(FILE* pf, GraphTag* tag, etype t) {
+  void writePPointData(FILE* pf, agi::Ngraph* g, GraphTag* tag, etype t) {
     fprintf(pf,"<PPointData>\n");
     fprintf(pf,"<PDataArray type=\"Int32\" Name=\"Part\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
+    if (g->isHyper())
     fprintf(pf,"<PDataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
-    if (tag!=NULL&&t!=NO_TYPE) {
+    if (tag != NULL && t != NO_TYPE && (t == VTX_TYPE || g->isHyper())  ) {
       fprintf(pf,"<PDataArray type=\"Int32\" Name=\"Tag\" NumberOfComponents=\"1\" format=\"ascii\"/>\n");
     }
     fprintf(pf,"</PPointData>\n");
@@ -220,11 +259,11 @@ namespace agi {
     }
   }
   
-  void writePVTU(FILE* pf,const char* prefix, GraphTag* tag, etype t) {
+  void writePVTU(FILE* pf,const char* prefix, agi::Ngraph* g, GraphTag* tag, etype t) {
       fprintf(pf,"<VTKFile type=\"PUnstructuredGrid\">\n");
       fprintf(pf,"<PUnstructuredGrid GhostLevel=\"0\">\n");
       writePPoints(pf);
-      writePPointData(pf,tag,t);
+      writePPointData(pf, g, tag,t);
       writePSources(pf,prefix);
       fprintf(pf,"</PUnstructuredGrid>\n");
       fprintf(pf,"</VTKFile>\n");
@@ -237,8 +276,11 @@ namespace agi {
     fprintf(f,"<VTKFile type=\"UnstructuredGrid\">\n");
     fprintf(f,"<UnstructuredGrid>\n");
     gid_t numCells = getNumCells(g);
+    lid_t numPoints = g->numLocalVtxs();
+    if (g->isHyper())
+      numPoints+= g->numLocalEdges();
     fprintf(f,"<Piece NumberOfPoints=\"%d\" NumberOfCells=\"%ld\">\n",
-            g->numLocalVtxs()+g->numLocalEdges(),numCells);
+            numPoints,numCells);
     writePoints(g,f);
     writeCells(g,f);
     writePointData(g,f,tag,t);
@@ -251,7 +293,7 @@ namespace agi {
       char pfilename[256];
       sprintf(pfilename,"%s.pvtu",prefix);
       FILE* pf = fopen(pfilename,"w");
-      writePVTU(pf,prefix,tag,t);
+      writePVTU(pf,prefix,g,tag,t);
       fclose(pf);
     }
   }
