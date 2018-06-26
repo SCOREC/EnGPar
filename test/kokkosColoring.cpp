@@ -1,10 +1,7 @@
 #include <Kokkos_Core.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
-<<<<<<< HEAD
-=======
 #include <KokkosGraph_graph_color.hpp>
 #include <KokkosKernels_Handle.hpp>
->>>>>>> lucas_coloring
 #include <binGraph.h>
 #include <mpi.h>
 #include <stdio.h>
