@@ -28,8 +28,10 @@ bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
         if (i == edge_list[k])
           back_edge = true;
       }
-      if (!back_edge)
+      if (!back_edge) {
+        std::cout << "Directed graphs are not supported" << std::endl;
         return false;
+      }
     }
   }
   return true;
@@ -64,34 +66,34 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
     edge_view(i) = edge_list[i];
   });
 
-  typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Serial::device_type, void, int> crsMat_t;
+  typedef Kokkos::DefaultExecutionSpace exe_space;
+  typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Device<exe_space,exe_space::memory_space>, void, int> crsMat_t;
   typedef crsMat_t::StaticCrsGraphType graph_t;
   typedef graph_t::entries_type::non_const_type color_view_t;
   typedef graph_t::row_map_type lno_view_t;
   typedef graph_t::entries_type lno_nnz_view_t;
   typedef graph_t::entries_type::non_const_type  color_view_t;
-  typedef KokkosKernels::Experimental::KokkosKernelsHandle<agi::lid_t, agi::lid_t, agi::lid_t,
-                                                           Kokkos::Serial::execution_space, 
-                                                           Kokkos::Serial::memory_space, 
-                                                           Kokkos::Serial::memory_space> KernelHandle;
+  typedef KokkosKernels::Experimental::KokkosKernelsHandle <agi::lid_t, agi::lid_t, agi::lid_t, 
+            exe_space, exe_space::memory_space, exe_space::memory_space> KernelHandle; 
 
   // Create kernel handle
-  KernelHandle kh;
-  kh.set_team_work_size(16);
-  kh.set_dynamic_scheduling(true);
-  kh.create_graph_coloring_handle(KokkosGraph::COLORING_SERIAL);
+  KernelHandle* kh = new KernelHandle();
+  kh->set_team_work_size(16);
+  kh->set_dynamic_scheduling(true);
+  kh->create_graph_coloring_handle(KokkosGraph::COLORING_DEFAULT);
 
   // Run kokkos coloring
-  KokkosGraph::Experimental::graph_color_symbolic
+  KokkosGraph::Experimental::graph_color
 	<KernelHandle, Kokkos::View<agi::lid_t*>, Kokkos::View<agi::lid_t*> >
-	(&kh, numverts, numverts, degree_view, edge_view);
+	(kh, numverts, numverts, degree_view, edge_view);
 
-  color_view_t vert_colors = kh.get_graph_coloring_handle()->get_vertex_colors();
+  color_view_t vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
 
   // ########## IMPL CHECK ##########
-  assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, Kokkos::Serial::execution_space>(numverts, numverts, degree_view, edge_view, vert_colors)) );
+  assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, exe_space>
+                (numverts, numverts, degree_view, edge_view, vert_colors)) );
 
-  // Move colors from kokkos graph to EnGPar graph
+  // Assign colors from kokkos graph to EnGPar graph
   agi::checkValidity(g);
   agi::GraphTag* tag = g->createIntTag(-1);
   agi::GraphVertex* v;
@@ -115,7 +117,7 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   g->destroy(eitr);
   assert(conflicts == 0);
 
-  kh.destroy_graph_coloring_handle();
+  kh->destroy_graph_coloring_handle();
   
 }
 

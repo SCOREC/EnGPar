@@ -103,7 +103,7 @@ int main (int argc, char* argv[]) {
   // typeid here, so the name might get a bit mangled by the linker,
   // but you should still be able to figure out what it is.
   printf ("Hello World on Kokkos execution space %s\n",
-          typeid (Kokkos::DefaultExecutionSpace).name ());
+          typeid (Kokkos::DefaultExecutionSpace::memory_space).name ());
 
   // Run the above functor on the default Kokkos execution space in
   // parallel, with a parallel for loop count of 15.
