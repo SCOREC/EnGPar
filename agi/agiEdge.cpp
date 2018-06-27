@@ -5,9 +5,14 @@
 #include <engpar_support.h>
 #include "Iterators/PinIterator.h"
 #include "Iterators/GraphIterator.h"
+#include "agi_typeconvert.h"
 
 namespace agi {
 
+  GraphEdge* PNgraph::getEdge(lid_t lid,etype t) {
+    return reinterpret_cast<GraphEdge*>( toPtr(num_types*lid+t+1) );
+  }
+  
   void Ngraph::getResidence(GraphEdge* e, Peers& residence) const {
     //residence.clear();
     agi::PinIterator* pitr = pins(e);

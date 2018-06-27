@@ -8,6 +8,7 @@
 #ifdef HAS_PARMETIS
 #include <parmetis.h>
 #endif
+#include <agiMigration.h>
 namespace engpar {
   
 #ifdef HAS_PARMETIS

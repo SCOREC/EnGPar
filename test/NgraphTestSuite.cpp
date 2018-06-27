@@ -9,7 +9,7 @@
 #include "../partition/Diffusive/engpar_diffusive_input.h"
 #include "../partition/Diffusive/src/engpar_queue.h"
 #include <dirent.h>
-
+#include <agiMigration.h>
 int switchComm();
 int tagGraph();
 int tagHyperGraph();

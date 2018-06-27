@@ -20,6 +20,10 @@ set(AGI_SOURCES
 
 set(AGI_HEADERS
   ngraph.h
+  pngraph.h
+  agi.h
+  agi_types.h
+  
   )
 
 add_library(agi ${AGI_SOURCES})

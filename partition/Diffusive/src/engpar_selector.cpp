@@ -2,6 +2,7 @@
 #include "../engpar.h"
 #include <set>
 #include <PCU.h>
+#include <agiMigration.h>
 namespace engpar {
 
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,

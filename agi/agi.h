@@ -9,7 +9,7 @@
 #include <unordered_map>
 #include "agi_types.h"
 //ID types
-//TODO: discuss what these should be?
+
 namespace agi {
   
   typedef AGI_GID_T gid_t;
@@ -25,13 +25,13 @@ namespace agi {
   typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
   typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
 
-//Definitions for edge types
-//static size of edge types
+  //Definitions for edge types
+  //static size of edge types
 #define MAX_TYPES 7
-typedef int etype;
+  typedef int etype;
 #define NO_TYPE -2
 #define VTX_TYPE -1
-//predefined edge type for split vtx
+  //predefined edge type for split vtx
 #define SPLIT_TYPE MAX_TYPES-1 
 }
 #endif
