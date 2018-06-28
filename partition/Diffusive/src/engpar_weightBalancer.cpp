@@ -2,9 +2,11 @@
 #include "engpar_weightSelector.h"
 #include "engpar_queue.h"
 #include <PCU.h>
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include <engpar_support.h>
 #include <agiMigration.h>
+#include "../engpar_weight_input.h"
+
 namespace engpar {
 
 

@@ -2,7 +2,7 @@
 #define __ENGPAR_WEIGHT_INPUT_H__
 
 #include <ngraph.h>
-#include "../engpar_input.h"
+#include <engpar_input.h>
 namespace engpar {
   
   class WeightInput : public Input {

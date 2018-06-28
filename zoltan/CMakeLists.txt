@@ -30,3 +30,5 @@ if (ENABLE_ZOLTAN)
 endif()
 
 engpar_export_lib(agi_zoltan "")
+
+bob_end_subdir()

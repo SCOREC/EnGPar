@@ -1,5 +1,5 @@
 #include <engpar_support.h>
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include "engpar_sides.h"
 #include "engpar_weights.h"
 #include "engpar_balancer.h"

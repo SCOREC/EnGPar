@@ -1,7 +1,11 @@
-
 #Setting Version Number, Project Name
-cmake_minimum_required (VERSION 2.8)
-project(EnGPar)
+cmake_minimum_required (VERSION 3.0)
+project(EnGPar VERSION 1.1.0 LANGUAGES CXX C)
+
+include(cmake/bob.cmake)
+
+
+bob_begin_package()
 
 set(CMAKE_MODULE_PATH 
    ${CMAKE_MODULE_PATH} 
@@ -80,11 +84,18 @@ if (ENABLE_KOKKOS)
 endif()
 
 macro(engpar_export_lib target headers)
-  install(TARGETS ${target}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+  bob_export_target(${target})
   install(FILES ${headers} DESTINATION include)
+#  install(TARGETS ${target} EXPORT ${tgt_name}-target
+#    RUNTIME DESTINATION bin
+#    LIBRARY DESTINATION lib
+#    ARCHIVE DESTINATION lib)
+#  install(FILES ${headers} DESTINATION include)
+
+#  install(EXPORT ${target}-target NAMESPACE ${PROJECT_NAME}::
+#    DESTINATION lib/cmake/${PROJECT_NAME})
+#  set(${PROJECT_NAME}_EXPORTED_TARGETS
+#    ${${PROJECT_NAME}_EXPORTED_TARGETS} ${target} PARENT_SCOPE)
 endmacro(engpar_export_lib)
 
 add_subdirectory(support)
@@ -102,3 +113,6 @@ if(ENGPAR_FORTRAN_INTERFACE)
 endif()
 
 add_subdirectory(test)
+
+
+bob_end_package()

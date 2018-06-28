@@ -2,6 +2,8 @@
 #include "engpar_support.h"
 #include "ngraph.h"
 #include "engpar.h"
+#include <engpar_split_input.h>
+#include <engpar_diffusive_input.h>
 
 void cengpar_initialize() {
   EnGPar_Initialize();

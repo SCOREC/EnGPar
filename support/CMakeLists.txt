@@ -27,3 +27,5 @@ target_include_directories(engpar_support
   )
 
 engpar_export_lib(engpar_support "${SUPPORT_HEADERS}")
+
+bob_end_subdir()

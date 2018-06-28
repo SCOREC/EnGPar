@@ -20,3 +20,5 @@ include_directories(${CMAKE_SOURCE_DIR}/agi)
 set_source_files_properties(engpar.f90 PROPERTIES COMPILE_FLAGS -cpp)
 set(HEADERS)
 engpar_export_lib(engpar_ftn "${HEADERS}")
+
+bob_end_subdir()

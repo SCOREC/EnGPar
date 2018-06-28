@@ -12,6 +12,8 @@ set(ENGPAR_SOURCES
   )
 
 set(ENGPAR_HEADERS
+  engpar_diffusive_input.h
+  engpar_weight_input.h
   )
 
 add_library(diffusive ${ENGPAR_SOURCES})
@@ -21,6 +23,8 @@ target_include_directories(diffusive PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
-target_link_libraries(diffusive PUBLIC agi)
+target_link_libraries(diffusive PUBLIC engpar_metrics)
 
 engpar_export_lib(diffusive "${ENGPAR_HEADERS}")
+
+bob_end_subdir()

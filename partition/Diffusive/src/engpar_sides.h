@@ -4,7 +4,9 @@
 #include <ngraph.h>
 #include <PCU.h>
 #include "engpar_container.h"
-#include "../engpar.h"
+#include <engpar_metrics.h>
+#include "engpar_diffusive_input.h"
+
 namespace engpar {
   class Sides : public Container<int>  {
   public:

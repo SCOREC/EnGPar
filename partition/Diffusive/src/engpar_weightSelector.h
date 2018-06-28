@@ -1,10 +1,11 @@
 #ifndef ENGPAR_WEIGHT_SELECTOR_H__
 #define ENGPAR_WEIGHT_SELECTOR_H__
 
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include "engpar_sides.h"
 #include "engpar_targets.h"
 #include "engpar_queue.h"
+#include "engpar_weight_input.h"
 
 namespace agi {
   class WeightMigration;

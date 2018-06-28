@@ -1,9 +1,10 @@
 #ifndef ENGPAR_TARGETS_H
 #define ENGPAR_TARGETS_H
 
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include "engpar_container.h"
 #include "engpar_weights.h"
+#include "engpar_diffusive_input.h"
 namespace engpar {
 
   class Targets : public Container<wgt_t> {

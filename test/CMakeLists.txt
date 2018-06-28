@@ -18,12 +18,8 @@ endif()
 
 set(ALL_LIBS
   ${ALL_LIBS}
-  engpar_support
-  agi
   interfaces
   agi_zoltan
-  diffusive
-  multilevel
   engpar
 )
 
@@ -110,3 +106,5 @@ if(IS_TESTING)
   make_test(PartitionTestSuite PartitionTestSuite.cpp)
   include(testing.cmake)
 endif()
+
+bob_end_subdir()

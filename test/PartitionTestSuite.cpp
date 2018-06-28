@@ -7,6 +7,10 @@
 #include "gatherGraphs.h"
 #include "TestingSuite.h"
 #include <engpar.h>
+#include <engpar_split_input.h>
+#include <engpar_diffusive_input.h>
+#include <engpar_weight_input.h>
+#include <engpar_metrics.h>
 
 int testVtxBalancer(agi::Ngraph*);
 int testBalancer(agi::Ngraph*);

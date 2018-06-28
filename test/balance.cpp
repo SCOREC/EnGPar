@@ -4,6 +4,8 @@
 #include <binGraph.h>
 #include <cstring>
 #include "buildGraphs.h"
+#include <engpar_diffusive_input.h>
+#include <engpar_metrics.h>
 
 bool cmpebin(char* str) {
   return strlen(str)>4&&strcmp(str+strlen(str)-5,".ebin")==0;             

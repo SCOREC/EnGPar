@@ -2,18 +2,14 @@
 #define ENGPAR_H__
 
 #include <ngraph.h>
-#include "Diffusive/engpar_diffusive_input.h"
-#include "Diffusive/engpar_weight_input.h"
-#include "Multilevel/engpar_split_input.h"
+#include <engpar_diffusive_input.h>
+#include <engpar_weight_input.h>
+#include <engpar_split_input.h>
 #include "engpar_types.h"
 namespace engpar {
 
   /** \name Partition Routines */
   ///@{
-  enum SPLIT_METHOD {
-    GLOBAL_PARMETIS,
-    LOCAL_PARMETIS
-  };
 
   void split(Input*, SPLIT_METHOD method);
 
@@ -48,27 +44,10 @@ namespace engpar {
 
   ///@}
 
-  
-  /** \name Metrics */
-  ///@{
-  /** \brief Calculates the imbalance across all processes of the provided weight
-   * \param w The weight of this process
-   * \return The imbalance
-   */
-  double EnGPar_Get_Imbalance(wgt_t w);
   /** \brief Prints an evaluation of the partition of the Ngraph
    * \param g The graph
    */
   void evaluatePartition(agi::Ngraph* g, const char* prefix = "");
-
-  wgt_t getWeight(agi::Ngraph*,int,bool countGhosts=false);
-  
-  void printImbalances(agi::Ngraph* g);
-
-  ///@}
-
-
-  
 }
 
 

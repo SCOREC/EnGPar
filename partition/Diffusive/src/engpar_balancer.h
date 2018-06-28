@@ -7,6 +7,7 @@
 #include "engpar_selector.h"
 #include "engpar_sd.h"
 #include "agiMigrationTimers.h"
+#include "../engpar_diffusive_input.h"
 
 namespace engpar {
   wgt_t getMaxWeight(agi::Ngraph*, int);

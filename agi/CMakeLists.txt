@@ -1,5 +1,4 @@
 set(PACKAGE_VERSION "1.0")
-project(agi)
 
 set(AGI_DEFINITIONS
   )
@@ -67,5 +66,7 @@ if (ENABLE_KOKKOS)
   target_link_libraries(agi PUBLIC kokkos)
 endif()
 target_link_libraries(agi PUBLIC engpar_support)
-target_compile_definitions(agi PUBLIC ${AGI_DEFINITIONS})
+target_compile_definitions(agi INTERFACE ${AGI_DEFINITIONS})
 engpar_export_lib(agi "${AGI_HEADERS}")
+
+bob_end_subdir()
