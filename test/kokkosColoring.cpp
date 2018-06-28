@@ -76,6 +76,9 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   typedef KokkosKernels::Experimental::KokkosKernelsHandle <agi::lid_t, agi::lid_t, agi::lid_t, 
             exe_space, exe_space::memory_space, exe_space::memory_space> KernelHandle; 
 
+  // sanity check to see execution space
+  printf ("Execution space: %s \n", typeid (exe_space).name());
+
   // Create kernel handle
   KernelHandle* kh = new KernelHandle();
   kh->set_team_work_size(16);
@@ -139,7 +142,9 @@ int main(int argc, char* argv[]) {
 
   assert(Check_Directed(g));
 
+  double t0 = PCU_Time();
   Color_Graph(g);
+  std::cout << "Coloring time: " << PCU_Time()-t0 << std::endl;
 
   destroyGraph(g);
   PCU_Barrier();
