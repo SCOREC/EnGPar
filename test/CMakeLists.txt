@@ -79,7 +79,6 @@ endif()
 
 if (KOKKOS_ENABLED)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)
-  make_utility(kokkosFor kokkosFor.cpp)
   make_utility(bfsSearch bfsSearch.cpp)
   make_utility(kokkosColoring kokkosColoring.cpp)
 endif()
