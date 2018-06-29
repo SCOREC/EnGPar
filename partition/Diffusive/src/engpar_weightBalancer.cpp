@@ -89,11 +89,12 @@ namespace engpar {
       delete plan;
     }
     if (verbosity >= 1) {
+      char buffer[100];
+      getImbalances(input->g, buffer);
       if (!PCU_Comm_Self()) {
         EnGPar_Status_Message("  Step took %f seconds\n",stepTime);
-        EnGPar_Status_Message("  Imbalances <v, e0, ...>: ");
+        EnGPar_Status_Message("  Imbalances <v, e0, ...>: %s\n",buffer);
       }
-      printImbalances(input->g);
       totStepTime+=stepTime;
     }
     if (verbosity >= 2) {
@@ -163,10 +164,11 @@ namespace engpar {
 
     //Set side tolerance to arbitrarily high number such that it will be ignored in targeting
     sideTol = inp->g->numGlobalEdges()*10;
-    
+
+    char buffer[100];
+    getImbalances(input->g,buffer);
     if (!PCU_Comm_Self() && verbosity >= 0)
-      EnGPar_Status_Message("Starting weight diffusion with imbalance: ");
-    printImbalances(input->g);
+      EnGPar_Status_Message("Starting weight diffusion with imbalance: %s\n",buffer);
 
     int step = 0;
     double time = PCU_Time();

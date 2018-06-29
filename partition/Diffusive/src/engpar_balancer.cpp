@@ -150,11 +150,12 @@ namespace engpar {
       delete plan;
     
     if (verbosity >= 1) {
+      char buffer[100];
+      getImbalances(input->g,buffer);
       if (!PCU_Comm_Self()) {
         EnGPar_Status_Message("  Step took %f seconds\n",stepTime);
-        EnGPar_Status_Message("  Imbalances <v, e0, ...>: ");
+        EnGPar_Status_Message("  Imbalances <v, e0, ...>: %s\n",buffer);
       }
-      printImbalances(input->g);
       totStepTime+=stepTime;
     }
     if (verbosity >= 2) {
@@ -227,9 +228,11 @@ namespace engpar {
     delete sides;
     
     if (verbosity >= 0) {
+      char buffer[100];
+      getImbalances(input->g, buffer);
       if (!PCU_Comm_Self())
-        EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
-      printImbalances(input->g);
+        EnGPar_Status_Message("Starting criteria type %d with imbalances: %s\n",
+                              target_dimension,buffer);
     }
     if (!PCU_Comm_Self() && verbosity >= 1)
       EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
@@ -278,9 +281,12 @@ namespace engpar {
         sideTol = averageSides(sides);
         delete sides;
 
+        char buffer[100];
+        getImbalances(input->g,buffer);
         if (!PCU_Comm_Self() && verbosity >= 0)
-          EnGPar_Status_Message("Starting criteria type %d with imbalances: ",target_dimension);
-        printImbalances(input->g);
+          EnGPar_Status_Message("Starting criteria type %d with imbalances: %s\n",
+                                target_dimension,buffer);
+
         if (!PCU_Comm_Self() && verbosity >= 1)
           EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
