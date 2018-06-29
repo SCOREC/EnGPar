@@ -197,8 +197,11 @@ int testWeightBalancer_100() {
 
 int testVtxBalancer(agi::Ngraph* g) {
 
+  double step_factor = 0.1;
+  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(-1,1.1);
   //Create the balancer
-  engpar::balanceVertices(g, 1.1, .1, -1);
+  engpar::balance(input,-1);
 
   agi::checkValidity(g);
   

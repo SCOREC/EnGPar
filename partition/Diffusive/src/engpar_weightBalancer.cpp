@@ -86,7 +86,7 @@ namespace engpar {
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
     else {
-      //delete plan;
+      delete plan;
     }
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {
