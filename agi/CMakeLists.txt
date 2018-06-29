@@ -26,7 +26,7 @@ if (BIG_ENDIAN)
   set(AGI_DEFINITIONS
     ${AGI_DEFINITIONS}
     -DENGPAR_BIG_ENDIAN)
-  add_definitions(-D_ENGPAR_BIG_ENDIAN)
+  add_definitions(-DENGPAR_BIG_ENDIAN)
 endif()
 
 
