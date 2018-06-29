@@ -1,11 +1,6 @@
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
-
 include_directories(
   ../zoltan
   ${ZOLTAN_INCLUDE_DIRS}
-  ${PARMETIS_INCLUDE_DIRS}
   )
 
 if (ENABLE_KOKKOS)
@@ -31,7 +26,6 @@ endif()
 
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
-  ${PARMETIS_LIBRARIES}
   ${KOKKOS_LIBRARIES}
   )
 

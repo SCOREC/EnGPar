@@ -59,14 +59,6 @@ if (ENABLE_ZOLTAN)
 endif()
 
 
-
-option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
-if (ENABLE_PARMETIS)
-  find_package(Parmetis MODULE REQUIRED)
-  add_definitions(-DHAS_PARMETIS)
-endif()
-
 option(ENGPAR_FORTRAN_INTERFACE "enable fortran interface" OFF)
 message(STATUS "ENGPAR_FORTRAN_INTERFACE: ${ENGPAR_FORTRAN_INTERFACE}")
 if(ENGPAR_FORTRAN_INTERFACE)
@@ -79,23 +71,12 @@ include_directories(${SCOREC_PREFIX}/include)
 
 if (ENABLE_KOKKOS)
   add_subdirectory(kokkos)
-  add_definitions(-DKOKKOS_ENABLED)
   include_directories(${CMAKE_BINARY_DIR}/kokkos ${KOKKOS_INCLUDE_DIRS_RET})
 endif()
 
 macro(engpar_export_lib target headers)
   bob_export_target(${target})
   install(FILES ${headers} DESTINATION include)
-#  install(TARGETS ${target} EXPORT ${tgt_name}-target
-#    RUNTIME DESTINATION bin
-#    LIBRARY DESTINATION lib
-#    ARCHIVE DESTINATION lib)
-#  install(FILES ${headers} DESTINATION include)
-
-#  install(EXPORT ${target}-target NAMESPACE ${PROJECT_NAME}::
-#    DESTINATION lib/cmake/${PROJECT_NAME})
-#  set(${PROJECT_NAME}_EXPORTED_TARGETS
-#    ${${PROJECT_NAME}_EXPORTED_TARGETS} ${target} PARENT_SCOPE)
 endmacro(engpar_export_lib)
 
 add_subdirectory(support)

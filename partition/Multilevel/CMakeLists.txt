@@ -20,6 +20,14 @@ target_include_directories(multilevel PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
+option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
+message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
+if (ENABLE_PARMETIS)
+  find_package(Parmetis MODULE REQUIRED)
+  add_definitions(-DHAS_PARMETIS)
+  target_compile_definitions(multilevel INTERFACE -DHAS_PARMETIS)
+endif()
+
 if (ENABLE_PARMETIS)
   target_include_directories(multilevel PRIVATE
     ${PARMETIS_INCLUDE_DIRS}

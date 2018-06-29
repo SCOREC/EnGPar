@@ -63,6 +63,10 @@ target_include_directories(agi PUBLIC
   )
 
 if (ENABLE_KOKKOS)
+  set(AGI_DEFINITIONS
+    ${AGI_DEFINITIONS}
+    -DKOKKOS_ENABLED)
+  add_definitions(-DKOKKOS_ENABLED)
   target_link_libraries(agi PUBLIC kokkos)
 endif()
 target_link_libraries(agi PUBLIC engpar_support)
