@@ -39,7 +39,7 @@ bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
 
 
 void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
-
+  
   agi::PNgraph* pg = g->publicize();
 
   const agi::lid_t numverts = pg->num_local_verts;
@@ -51,23 +51,32 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   const agi::lid_t* edge_list = pg->edge_list[t];
 
   // Create views for each part of the graph data-structure
-  
-  Kokkos::View<agi::lid_t*> degree_view ("degree_view",numverts+1);
+  Kokkos::View<agi::lid_t*, Kokkos::CudaHostPinnedSpace> degree_view ("degree_view",numverts+1);
 
-  Kokkos::View<agi::lid_t*> edge_view ("edge_view",numedges);
+  Kokkos::View<agi::lid_t*, Kokkos::CudaHostPinnedSpace> edge_view ("edge_view",numedges);
 
-  // Use parllel loops to fill the views
-  
-  Kokkos::parallel_for(numverts+1, KOKKOS_LAMBDA( const int i ) {
+  // ########## ERROR ##########
+  // Find a way to transfer list info to view info 
+  // Use parllel loops to fill the views  
+//  Kokkos::parallel_for(numverts+1, KOKKOS_LAMBDA( const int i ) { 
+//    degree_view(i) = degree_list[i];
+//  });
+//
+//  Kokkos::parallel_for(numedges, KOKKOS_LAMBDA( const int i ) {
+//    edge_view(i) = edge_list[i];
+//  });
+
+  for (int i=0; i<numverts+1; ++i) {
     degree_view(i) = degree_list[i];
-  });
-
-  Kokkos::parallel_for(numedges, KOKKOS_LAMBDA( const int i) {
+  }
+  for (int i=0; i<numedges; ++i) {
     edge_view(i) = edge_list[i];
-  });
-
-  typedef Kokkos::DefaultExecutionSpace exe_space;
-  typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Device<exe_space,exe_space::memory_space>, void, int> crsMat_t;
+  }
+   
+//  typedef Kokkos::DefaultExecutionSpace exe_space;
+  typedef Kokkos::CudaHostPinnedSpace exe_space;
+//  `typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, Kokkos::Device<exe_space,exe_space::memory_space>, void, int> crsMat_t;
+  typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, exe_space::device_type, void, int> crsMat_t;
   typedef crsMat_t::StaticCrsGraphType graph_t;
   typedef graph_t::entries_type::non_const_type color_view_t;
   typedef graph_t::row_map_type lno_view_t;
@@ -87,27 +96,30 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
 
   // Run kokkos coloring
   KokkosGraph::Experimental::graph_color
-	<KernelHandle, Kokkos::View<agi::lid_t*>, Kokkos::View<agi::lid_t*> >
+	<KernelHandle, Kokkos::View<agi::lid_t*, Kokkos::CudaHostPinnedSpace>, Kokkos::View<agi::lid_t*, Kokkos::CudaHostPinnedSpace> >
 	(kh, numverts, numverts, degree_view, edge_view);
 
+  // Retrieve coloring off of device
   color_view_t vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
+  //color_view_t::HostMirror vert_colors = Kokkos::create_mirror_view(kh->get_graph_coloring_handle()->get_vertex_colors()); 
+  //Kokkos::deep_copy(device_vert_colors, vert_colors);
 
   // ########## IMPL CHECK ##########
-  assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, exe_space>
-                (numverts, numverts, degree_view, edge_view, vert_colors)) );
+  //assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, exe_space>
+  //              (numverts, numverts, degree_view, edge_view, vert_colors)) );
 
   // Assign colors from kokkos graph to EnGPar graph
   agi::checkValidity(g);
   agi::GraphTag* tag = g->createIntTag(-1);
   agi::GraphVertex* v;
-  agi::VertexIterator* vitr = g->begin();
-
+  agi::VertexIterator* vitr = g->begin(); 
+  
   // Assigning colors to the original graph
   int i=0;
   while ((v=g->iterate(vitr))) {
     g->setIntTag(tag,v,vert_colors(i++));
   }
-  
+
   // Check that coloring is valid
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = g->begin(0);
@@ -137,7 +149,7 @@ int main(int argc, char* argv[]) {
   }
 
   Kokkos::initialize(argc,argv);
-
+  
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
 
   assert(Check_Directed(g));
