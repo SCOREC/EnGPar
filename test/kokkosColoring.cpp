@@ -8,8 +8,6 @@
 #include <engpar_support.h>
 #include <cstring>
 
-#include <iostream>
-
 
 bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
 
@@ -29,7 +27,7 @@ bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
           back_edge = true;
       }
       if (!back_edge) {
-        std::cout << "Directed graphs are not supported" << std::endl;
+        printf ("Directed graphs are not supported\n");
         return false;
       }
     }
@@ -92,13 +90,13 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
 	(kh, numverts, numverts, degree_view, edge_view);
 
   // Retrieve coloring off of device
-  color_view_t device_vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
-  color_view_t::HostMirror vert_colors = Kokkos::create_mirror_view(device_vert_colors);   
-  Kokkos::deep_copy(vert_colors, device_vert_colors);
+  color_view_t vert_colors = kh->get_graph_coloring_handle()->get_vertex_colors();
+  color_view_t::HostMirror host_vert_colors = Kokkos::create_mirror_view(vert_colors);   
+  Kokkos::deep_copy(host_vert_colors, vert_colors);
 
   // ########## IMPL CHECK ##########
   assert( (0==KokkosKernels::Impl::kk_is_d1_coloring_valid <lno_view_t, lno_nnz_view_t, color_view_t, exe_space>
-                (numverts, numverts, degree_view, edge_view, device_vert_colors)) );
+                (numverts, numverts, degree_view, edge_view, vert_colors)) );
 
   // Assign colors from kokkos graph to EnGPar graph
   agi::checkValidity(g);
@@ -109,7 +107,7 @@ void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   // Assigning colors to the original graph
   int i=0;
   while ((v=g->iterate(vitr))) {
-    g->setIntTag(tag,v,vert_colors(i++));
+    g->setIntTag(tag,v,host_vert_colors(i++));
   }
 
   // Check that coloring is valid
@@ -148,7 +146,7 @@ int main(int argc, char* argv[]) {
 
   double t0 = PCU_Time();
   Color_Graph(g);
-  std::cout << "Coloring time: " << PCU_Time()-t0 << std::endl;
+  printf ("Coloring time: %f\n", PCU_Time()-t0);
 
   destroyGraph(g);
   PCU_Barrier();
