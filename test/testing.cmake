@@ -193,10 +193,6 @@ if (ENABLE_KOKKOS)
     ./kokkosColoring
     "${GRAPHS}/gnutella.ebin")
 
-  mpi_test(colorRmat_22 1
-    ./kokkosColoring
-    "${GRAPHS}/rmat_22.ebin")
-
   mpi_test(colorAsic 1
     ./kokkosColoring
     "${GRAPHS}/asic.ebin")
