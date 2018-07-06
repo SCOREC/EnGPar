@@ -46,18 +46,6 @@ if (ENABLE_PARMETIS)
     )
 endif()
 
-if (ENABLE_KOKKOS)
-  target_include_directories(coloring PUBLIC
-    ${KokkosCore_INCLUDE_DIRS}
-    )
-  target_include_directories(coloring PRIVATE
-    ${KokkosKernels_INCLUDE_DIRS}
-    )
-  target_link_libraries(coloring PUBLIC
-    ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES}
-    )
-endif()
-
 engpar_export_lib(engpar "${ENGPAR_HEADERS}")
 
 bob_end_subdir()
