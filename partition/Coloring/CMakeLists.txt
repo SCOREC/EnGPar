@@ -1,4 +1,5 @@
 set(COLORING_SOURCE engpar_kokkosColoring.cpp)
+set(COLORING_HEADERS engpar_coloring_input.h)
 
 add_library(coloring ${COLORING_SOURCE})
 
@@ -21,4 +22,6 @@ if (ENABLE_KOKKOS)
     )
 endif()
 
-engpar_export_lib(coloring "")
+engpar_export_lib(coloring ${COLORING_HEADERS})
+
+bob_end_subdir()
