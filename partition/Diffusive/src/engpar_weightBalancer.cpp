@@ -2,8 +2,10 @@
 #include "engpar_weightSelector.h"
 #include "engpar_queue.h"
 #include <PCU.h>
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include <engpar_support.h>
+#include <agiMigration.h>
+#include "../engpar_weight_input.h"
 
 namespace engpar {
 
@@ -84,7 +86,7 @@ namespace engpar {
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
     else {
-      //delete plan;
+      delete plan;
     }
     if (verbosity >= 1) {
       if (!PCU_Comm_Self()) {

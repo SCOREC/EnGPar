@@ -9,6 +9,7 @@
 #include <engpar_input.h>
 #include <binGraph.h>
 #include <parma.h>
+#include <engpar_diffusive_input.h>
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);

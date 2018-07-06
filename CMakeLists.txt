@@ -1,7 +1,11 @@
-
 #Setting Version Number, Project Name
-cmake_minimum_required (VERSION 2.8)
-project(EnGPar)
+cmake_minimum_required (VERSION 3.0)
+project(EnGPar VERSION 1.1.0 LANGUAGES CXX C)
+
+include(cmake/bob.cmake)
+
+
+bob_begin_package()
 
 set(CMAKE_MODULE_PATH 
    ${CMAKE_MODULE_PATH} 
@@ -78,29 +82,6 @@ if (ENABLE_ZOLTAN)
   find_package(Zoltan MODULE REQUIRED)
 endif()
 
-option(LONG_LOCAL_INDICES "Turn on if a 32 byte int is too small for local indices [ON|OFF]" OFF)
-if (LONG_LOCAL_INDICES)
-  message(STATUS "Local indices are 64 bytes")
-  add_definitions(-DLOCAL_ID_TYPE=int64_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT64_T)
-else()
-  message(STATUS "Local indices are 32 bytes")
-  add_definitions(-DLOCAL_ID_TYPE=int32_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT32_T)
-endif()
-option(BIG_ENDIAN "Turn on if on a big endian machine [ON|OFF]" OFF)
-if (BIG_ENDIAN)
-  message(STATUS "BIG_ENDIAN is enabled")
-  add_definitions(-D_ENGPAR_BIG_ENDIAN)
-endif()
-
-
-option(ENABLE_PARMETIS "Enable ParMETIS iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_PARMETIS: " ${ENABLE_PARMETIS})
-if (ENABLE_PARMETIS)
-  find_package(Parmetis MODULE REQUIRED)
-  add_definitions(-DHAS_PARMETIS)
-endif()
 
 option(ENGPAR_FORTRAN_INTERFACE "enable fortran interface" OFF)
 message(STATUS "ENGPAR_FORTRAN_INTERFACE: ${ENGPAR_FORTRAN_INTERFACE}")
@@ -112,12 +93,8 @@ endif()
 
 include_directories(${SCOREC_PREFIX}/include)
 
-
 macro(engpar_export_lib target headers)
-  install(TARGETS ${target}
-    RUNTIME DESTINATION bin
-    LIBRARY DESTINATION lib
-    ARCHIVE DESTINATION lib)
+  bob_export_target(${target})
   install(FILES ${headers} DESTINATION include)
 endmacro(engpar_export_lib)
 
@@ -136,3 +113,6 @@ if(ENGPAR_FORTRAN_INTERFACE)
 endif()
 
 add_subdirectory(test)
+
+
+bob_end_package()

@@ -1,9 +1,9 @@
 #include "engpar_balancer.h"
 #include "engpar_queue.h"
 #include <PCU.h>
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include <engpar_support.h>
-
+#include <agiMigration.h>
 namespace {
   void printMigrationStats(agi::MigrationTimers* migrTime) {
     double maxSetup = migrTime->processMax("setup");

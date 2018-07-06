@@ -1,11 +1,6 @@
-set(CMAKE_MODULE_PATH
-  ${CMAKE_MODULE_PATH}
-  "${CMAKE_CURRENT_SOURCE_DIR/../cmake/}")
-
 include_directories(
   ../zoltan
   ${ZOLTAN_INCLUDE_DIRS}
-  ${PARMETIS_INCLUDE_DIRS}
   )
 
 if (KOKKOS_ENABLED)
@@ -18,12 +13,8 @@ endif()
 
 set(ALL_LIBS
   ${ALL_LIBS}
-  engpar_support
-  agi
   interfaces
   agi_zoltan
-  diffusive
-  multilevel
   engpar
 )
 
@@ -36,6 +27,7 @@ endif()
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
+  ${KOKKOS_LIBRARIES}
   )
 
 if (KOKKOS_ENABLED)
@@ -109,3 +101,5 @@ if(IS_TESTING)
   make_test(PartitionTestSuite PartitionTestSuite.cpp)
   include(testing.cmake)
 endif()
+
+bob_end_subdir()

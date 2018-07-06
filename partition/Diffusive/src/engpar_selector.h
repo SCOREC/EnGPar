@@ -1,7 +1,7 @@
 #ifndef ENGPAR_SELECTOR_H
 #define ENGPAR_SELECTOR_H
 
-#include "../engpar.h"
+#include <engpar_metrics.h>
 #include "engpar_sides.h"
 #include "engpar_targets.h"
 #include "engpar_queue.h"

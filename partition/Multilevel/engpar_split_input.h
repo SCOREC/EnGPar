@@ -1,7 +1,7 @@
 #ifndef __SPLIT_INPUT_H__
 #define __SPLIT_INPUT_H__
 
-#include "../engpar_input.h"
+#include <engpar_input.h>
 #include <ngraph.h>
 #include <PCU.h>
 

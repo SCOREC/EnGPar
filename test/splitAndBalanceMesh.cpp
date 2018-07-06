@@ -13,6 +13,8 @@
 #include <apfZoltan.h>
 #include <apfPartition.h>
 #include <pcu_util.h>
+#include <engpar_split_input.h>
+#include <engpar_diffusive_input.h>
 
 void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm);
 MPI_Comm splitGraph(agi::Ngraph*&, apf::Mesh2*&, char* model, char* mesh, int split_factor);

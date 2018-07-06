@@ -7,6 +7,10 @@
 #include "gatherGraphs.h"
 #include "TestingSuite.h"
 #include <engpar.h>
+#include <engpar_split_input.h>
+#include <engpar_diffusive_input.h>
+#include <engpar_weight_input.h>
+#include <engpar_metrics.h>
 
 int testVtxBalancer(agi::Ngraph*);
 int testBalancer(agi::Ngraph*);
@@ -193,8 +197,11 @@ int testWeightBalancer_100() {
 
 int testVtxBalancer(agi::Ngraph* g) {
 
+  double step_factor = 0.1;
+  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  input->addPriority(-1,1.1);
   //Create the balancer
-  engpar::balanceVertices(g, 1.1, .1, -1);
+  engpar::balance(input,-1);
 
   agi::checkValidity(g);
   
@@ -338,9 +345,10 @@ int testLocalSplit(agi::Ngraph* g) {
 
   engpar::Input* input = engpar::createLocalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                        2,tolerance,others,t);
-
   engpar::split(input,engpar::LOCAL_PARMETIS);
 
+  delete [] others;
+  
   if (PCU_Get_Comm() != MPI_COMM_WORLD)
     return 2;
 

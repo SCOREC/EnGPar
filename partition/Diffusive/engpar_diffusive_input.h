@@ -2,7 +2,7 @@
 #define __ENGPAR_DIFFUSIVE_INPUT_H__
 
 #include <ngraph.h>
-#include "../engpar_input.h"
+#include <engpar_input.h>
 namespace engpar {
   
   class DiffusiveInput : public Input {

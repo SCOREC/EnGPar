@@ -1,5 +1,34 @@
 set(PACKAGE_VERSION "1.0")
-project(agi)
+
+set(AGI_DEFINITIONS
+  )
+option(LONG_LOCAL_INDICES "Turn on if a 32 byte int is too small for local indices [ON|OFF]" OFF)
+if (LONG_LOCAL_INDICES)
+  message(STATUS "Local indices are 64 bytes")
+  set(AGI_DEFINITIONS
+    ${AGI_DEFINITIONS}
+    -DLOCAL_ID_TYPE=int64_t
+    -DLOCAL_ID_FTYPE=C_INT64_T)
+  add_definitions(-DLOCAL_ID_TYPE=int64_t)
+  add_definitions(-DLOCAL_ID_FTYPE=C_INT64_T)
+else()
+  message(STATUS "Local indices are 32 bytes")
+    set(AGI_DEFINITIONS
+      ${AGI_DEFINITIONS}
+      -DLOCAL_ID_TYPE=int32_t
+      -DLOCAL_ID_FTYPE=C_INT32_T)
+  add_definitions(-DLOCAL_ID_TYPE=int32_t)
+  add_definitions(-DLOCAL_ID_FTYPE=C_INT32_T)
+endif()
+option(BIG_ENDIAN "Turn on if on a big endian machine [ON|OFF]" OFF)
+if (BIG_ENDIAN)
+  message(STATUS "BIG_ENDIAN is enabled")
+  set(AGI_DEFINITIONS
+    ${AGI_DEFINITIONS}
+    -DENGPAR_BIG_ENDIAN)
+  add_definitions(-DENGPAR_BIG_ENDIAN)
+endif()
+
 
 set(AGI_SOURCES
   agiConstruct.cpp
@@ -20,6 +49,10 @@ set(AGI_SOURCES
 
 set(AGI_HEADERS
   ngraph.h
+  pngraph.h
+  agi.h
+  agi_types.h
+  
   )
 
 add_library(agi ${AGI_SOURCES})
@@ -30,5 +63,7 @@ target_include_directories(agi PUBLIC
   )
 
 target_link_libraries(agi PUBLIC engpar_support)
-
+target_compile_definitions(agi INTERFACE ${AGI_DEFINITIONS})
 engpar_export_lib(agi "${AGI_HEADERS}")
+
+bob_end_subdir()

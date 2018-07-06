@@ -3,7 +3,6 @@
 
 #include <stdexcept>
 #include "pngraph.h"
-#include "agiMigration.h"
 /** \file ngraph.h
     \brief The N-Graph interface 
 */
@@ -17,7 +16,8 @@ class PinIterator;
 class EdgeIterator;
 class GraphIterator;
 class GraphTag;
-
+class Migration;
+class WeightMigration;
 class MigrationTimers;
 
 /** \class Ngraph

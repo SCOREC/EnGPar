@@ -1,7 +1,8 @@
 #ifndef __ENGPAR_QUEUE_H__
 #define __ENGPAR_QUEUE_H__
 #include <ngraph.h>
-#include "../engpar.h"
+#include <engpar_metrics.h>
+#include "../engpar_diffusive_input.h"
 
 namespace engpar {
   class ShrinkingArray {

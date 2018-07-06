@@ -34,3 +34,5 @@ else()
 endif()
 
 engpar_export_lib(interfaces "${INTERFACE_HEADERS}")
+
+bob_end_subdir()

@@ -11,6 +11,10 @@
 
 namespace agi {
 
+  GraphVertex* PNgraph::getVertex(lid_t lid) {
+    return reinterpret_cast<GraphVertex*>( toPtr(lid+1) );
+  }
+
 const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
   lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){

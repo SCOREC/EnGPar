@@ -8,7 +8,6 @@
 #include <map>
 #include <cassert>
 #include "agi.h"
-#include "agi_typeconvert.h"
 
 namespace agi {
 
@@ -147,13 +146,8 @@ class PNgraph {
    */
   gid_t* edge_unmap[MAX_TYPES];  
 
-  GraphVertex* getVertex(lid_t lid) {
-    return reinterpret_cast<GraphVertex*>( toPtr(lid+1) );
-  }
-  GraphEdge* getEdge(lid_t lid,etype t) {
-    return reinterpret_cast<GraphEdge*>( toPtr(num_types*lid+t+1) );
-  }
-  
+  GraphVertex* getVertex(lid_t lid);
+  GraphEdge* getEdge(lid_t lid,etype t);
 };
 
 }
