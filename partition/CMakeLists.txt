@@ -2,6 +2,8 @@ add_subdirectory(Diffusive)
 
 add_subdirectory(Multilevel)
 
+add_subdirectory(Coloring)
+
 set(ENGPAR_SOURCES
   engpar_input.cpp
   engpar.cpp
@@ -11,6 +13,7 @@ set(ENGPAR_HEADERS
   engpar.h
   )
 
+
 add_library(engpar ${ENGPAR_SOURCES})
 
 target_include_directories(engpar PUBLIC
@@ -18,7 +21,7 @@ target_include_directories(engpar PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
-target_link_libraries(engpar PUBLIC agi diffusive multilevel)
+target_link_libraries(engpar PUBLIC agi diffusive multilevel coloring)
 
 
 if (ENABLE_PARMETIS)

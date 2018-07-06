@@ -1,13 +1,15 @@
 #ifndef __ENGPAR_KOKKOS_COLORING__
 #define __ENGPAR_KOKKOS_COLORING__
 
+#include <agi.h>
+
 namespace engpar {
   class ColoringInput;
   /** \brief return a host array with the coloring
    *  \remark this supports procedures that will use the
    *  coloring on the host
    */
-  agi::lid_t* EnGPar_KokkosColoring(ColoringInput*);
+  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors);
 }
 
 #ifdef KOKKOS_ENABLED
@@ -20,7 +22,8 @@ namespace engpar {
    *  \remark this supports procedures that will use the
    *  coloring on the device
    */
-  kkLidView EnGPar_KokkosColoring(ColoringInput*);
+  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, kkLidView colors);
 }
 
-#endif
+#endif //KOKKOS_ENABLED
+#endif // __ENGPAR_KOKKOS_COLORING__
