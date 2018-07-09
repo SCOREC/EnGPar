@@ -5,8 +5,10 @@
 #include <binGraph.h>
 #include <mpi.h>
 #include <stdio.h>
-#include <engpar_support.h>
 #include <cstring>
+#include "engpar_support.h"
+#include "engpar_input.h"
+#include "engpar_kokkosColoring.h"
 
 
 bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
@@ -39,13 +41,9 @@ bool Check_Directed(agi::Ngraph* g, agi::etype t=0) {
 void Color_Graph(agi::Ngraph* g, agi::etype t=0) {
   
   agi::PNgraph* pg = g->publicize();
-
   const agi::lid_t numverts = pg->num_local_verts;
-
   const agi::lid_t numedges = pg->num_local_edges[t];
-
   const agi::lid_t* degree_list = pg->degree_list[t];
-
   const agi::lid_t* edge_list = pg->edge_list[t];
 
   // Create views for each part of the graph data-structure
@@ -141,12 +139,37 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc,argv);
   
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
+  //assert(Check_Directed(g));
 
-  assert(Check_Directed(g));
-
+  // Call EnGPar graph coloring
   double t0 = PCU_Time();
-  Color_Graph(g);
+  //Color_Graph(g); 
+  engpar::ColoringInput* in = engpar::createColoringInput(g, -1);
+  agi::lid_t** colors = new agi::lid_t*[1];
+  engpar::EnGPar_KokkosColoring(in, colors); 
   printf ("Coloring time: %f\n", PCU_Time()-t0);
+
+  // Assign colors to graph vertices
+  agi::GraphTag* tag = g->createIntTag(-1);
+  agi::GraphVertex* v;
+  agi::VertexIterator* vitr = g->begin();
+  int i=0;
+  while ((v=g->iterate(vitr))) {
+    g->setIntTag(tag, v, (*colors)[i++]);
+  }
+
+  // Check that the coloring is valid
+  agi::GraphEdge* e;
+  agi::EdgeIterator* eitr = g->begin(0);
+  int conflicts = 0;
+  while ((e=g->iterate(eitr))) {
+    int u = g->getIntTag(tag, g->u(e));
+    int v = g->getIntTag(tag, g->v(e));
+    if (u==v) ++conflicts;
+  }
+  g->destroy(eitr);
+  printf("%i\n",conflicts);
+  assert(conflicts == 0);
 
   destroyGraph(g);
   PCU_Barrier();
