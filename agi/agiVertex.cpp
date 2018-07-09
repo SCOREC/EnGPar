@@ -168,7 +168,7 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
   }
   VEVIterator* Ngraph::vev_end(GraphVertex* vtx, etype t) const {
     lid_t index = fromPtr(vtx);
-    lid_t start = vev_offsets[t][index+1]*num_types+t;
+    lid_t start = vev_offsets[t][index+1]*num_types+num_types+t;
     return reinterpret_cast<VEVIterator*>(toPtr(start+1));
   }
   

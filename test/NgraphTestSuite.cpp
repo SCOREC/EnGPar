@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     trial = atoi(argv[1]);
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  EnGPar_Set_Verbosity(-1);
+  EnGPar_Set_Verbosity(3);
   //Create the testing suite
   TestingSuite suite(argv[0]);
     
@@ -408,12 +408,12 @@ int testVEVAdjacency(agi::Ngraph* g) {
     agi::VEVIterator* aitr = g->vev_begin(v);
     while ((other = g->iterate(gitr))) {
       agi::GraphVertex* adj = g->iterate(aitr);
-      if (adj!=other)
+      if (adj!=other) {
         return 1;
+      }
     }
     g->destroy(gitr);
   }
-  
   g->create_vev_adjacency(0,true);
   vitr = g->begin();
   while ((v = g->iterate(vitr))) {
@@ -424,14 +424,16 @@ int testVEVAdjacency(agi::Ngraph* g) {
       unique_adj.insert(other);
     }
     g->destroy(gitr);
+    unique_adj.erase(v);
     agi::VEVIterator* aitr = g->vev_begin(v);
     agi::GraphVertex* adj;
     unsigned int count = 0;
     //    while ((adj = g->iterate(aitr))) {
-    for (;aitr!=g->vev_end(v); adj = g->iterate(aitr)) {
+    for (adj = g->iterate(aitr);aitr!=g->vev_end(v); adj = g->iterate(aitr)) {
       count++;
-      if (unique_adj.find(adj)==unique_adj.end())
+      if (unique_adj.find(adj)==unique_adj.end()) {
         return 2;
+      }
     }
     if (count!=unique_adj.size())
       return 3;
@@ -448,12 +450,13 @@ int testEVEAdjacency(agi::Ngraph* g) {
     agi::PinIterator* pitr = g->pins(e);
     agi::GraphVertex* v;
     while ((v = g->iterate(pitr))) {
-      agi::EdgeIterator* eitr2;
+      agi::EdgeIterator* eitr2 = g->edges(v);
       agi::GraphEdge* other;
       while ((other = g->iterate(eitr2))) {
         agi::GraphEdge* adj = g->iterate(aitr);
-        if (other != adj)
+        if (other != adj) {
           return 1;
+        }
       }
       g->destroy(eitr2);
     }
@@ -468,7 +471,7 @@ int testEVEAdjacency(agi::Ngraph* g) {
     agi::PinIterator* pitr = g->pins(e);
     agi::GraphVertex* v;
     while ((v = g->iterate(pitr))) {
-      agi::EdgeIterator* eitr2;
+      agi::EdgeIterator* eitr2 = g->edges(v);
       agi::GraphEdge* other;
       while ((other = g->iterate(eitr2))) {
         unique_adj.insert(other);
@@ -476,12 +479,12 @@ int testEVEAdjacency(agi::Ngraph* g) {
       g->destroy(eitr2);
     }
     g->destroy(pitr);
-
+    unique_adj.erase(e);
     agi::EVEIterator* aitr = g->eve_begin(e);
     agi::GraphEdge* adj;
     unsigned int count = 0;
     //    while ((adj = g->iterate(aitr))) {
-    for (;aitr!=g->eve_end(e); adj = g->iterate(aitr)) {
+    for (adj = g->iterate(aitr); aitr != g->eve_end(e); adj = g->iterate(aitr)) {
       count++;
       if (unique_adj.find(adj)==unique_adj.end())
         return 2;

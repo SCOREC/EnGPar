@@ -161,7 +161,7 @@ namespace agi {
     uintptr_t id = (uintptr_t)(edge)-1;
     etype type = id%num_types;
     id/=num_types;
-    lid_t start = eve_offsets[type][id+1]*num_types+type;
+    lid_t start = eve_offsets[type][id+1]*num_types+num_types+type;
     return reinterpret_cast<EVEIterator*>(toPtr(start+1));
   }
 

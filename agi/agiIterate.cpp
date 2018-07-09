@@ -46,7 +46,12 @@ namespace agi {
     uintptr_t id = (uintptr_t)(vevItr)-1;
     etype type = id%num_types;
     id/=num_types;
-    lid_t index = vev_lists[type][id];
+    lid_t index;
+    if (id >= (unsigned)vev_offsets[type][num_local_verts])
+      index = -1;
+    else
+      index = vev_lists[type][id];
+    id*=num_types;
     id+=num_types;
     vevItr = reinterpret_cast<VEVIterator*>(toPtr(id+1));
     return reinterpret_cast<GraphVertex*>(toPtr(index+1));
@@ -111,7 +116,12 @@ namespace agi {
     uintptr_t id = (uintptr_t)(eveItr)-1;
     etype type = id%num_types;
     id/=num_types;
-    lid_t index = eve_lists[type][id]*num_types+type;
+    lid_t index;
+    if (id >= (unsigned)eve_offsets[type][num_local_edges[type]])
+      index = -1;
+    else
+      index = eve_lists[type][id]*num_types+type;
+    id*=num_types;
     id+=num_types;
     eveItr = reinterpret_cast<EVEIterator*>(toPtr(id+1));
     return reinterpret_cast<GraphEdge*>(toPtr(index+1));
