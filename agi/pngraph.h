@@ -146,6 +146,39 @@ class PNgraph {
    */
   gid_t* edge_unmap[MAX_TYPES];  
 
+
+  /* Second Adjacencies */
+
+  /** \brief A stricly increasing list of the offsets for vertex-edge-vertex adjacencies
+   *
+   * size = num_local_verts+1
+   * Each entry represents the offset into the beginning of the vertex's second adjacencies.
+   * The 'degree' is calculated by: vev_list[type][i+1] - vev_list[type][i]
+   */
+  lid_t* vev_offsets[MAX_TYPES];
+  /** \brief The list of vertex-edge-vertex adjacencies for each vertex
+   *
+   * size = vev_offsets[type][num_local_verts]
+   * The starting position for a given vertex is found at vev_offsets[type][vertex]
+   * and goes up to vev_offsets[type][vertex+1].
+   */
+  lid_t* vev_lists[MAX_TYPES];
+
+  /** \brief A stricly increasing list of the offsets for edge-vertex-edge adjacencies
+   *
+   * size = num_local_edges[type]+1
+   * Each entry represents the offset into the beginning of the edges's second adjacencies.
+   * The 'degree' is calculated by: eve_list[type][i+1] - eve_list[type][i]
+   */
+  lid_t* eve_offsets[MAX_TYPES];
+  /** \brief The list of edge-vertex-edge adjacencies for each edge
+   *
+   * size = eve_offsets[type][num_local_edges[type]]
+   * The starting position for a given edge is found at eve_offsets[type][edge]
+   * and goes up to eve_offsets[type][edge+1].
+   */
+  lid_t* eve_lists[MAX_TYPES];
+  
   GraphVertex* getVertex(lid_t lid);
   GraphEdge* getEdge(lid_t lid,etype t);
 };

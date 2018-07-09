@@ -15,6 +15,7 @@ class GhostIterator;
 class PinIterator;
 class EdgeIterator;
 class GraphIterator;
+class AdjacentIterator;
 class GraphTag;
 class Migration;
 class WeightMigration;
@@ -281,6 +282,33 @@ public:
    * \return an iterator that can loop over each vertex connected to this hyperedge
    */
   PinIterator* pins(GraphEdge* edge) const;
+
+  /** \brief Constructs second adjacency information for vertex-edge-vertex through the given edge type
+   * \param t the edge type
+   * \param compress whether or not to combine duplicate adjacencies into 1 entry
+   */
+  void create_vev_adjacency(etype t, bool compress = true);
+  /** \brief Constructs second adjacency information for edge-vertex-edge with the given edge type through vertices
+   * \param t the edge type
+   * \param compress whether or not to combine duplicate adjacencies into 1 entry
+   */
+  void create_eve_adjacency(etype t, bool compress = true);
+
+  /** \brief Creates an iterator over the vertex-edge-vertex adjacencies.
+   * \param vtx the graph vertex
+   * \param t the edge type
+   * 
+   * The adjacency must be first constructed by create_vev_adjacency(t)
+   */
+  AdjacentIterator* vev_adjacent(GraphVertex* vtx, etype t=0) const {}
+  /** \brief Creates an iterator over the edge-vertex-edge adjacencies.
+   * \param edge the graph edge
+   * 
+   * The adjacency must be first constructed by create_eve_adjacency(t)
+   */
+  AdjacentIterator* eve_adjacent(GraphEdge* edge) const {}
+
+  
   ///@}
 
   /** \name Tag Data */
