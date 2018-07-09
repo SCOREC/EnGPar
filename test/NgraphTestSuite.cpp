@@ -399,15 +399,99 @@ int testRepartition(agi::Ngraph* g) {
 
 int testVEVAdjacency(agi::Ngraph* g) {
   g->create_vev_adjacency(0,false);
+
+  agi::GraphVertex* v;
+  agi::VertexIterator* vitr = g->begin();
+  while ((v = g->iterate(vitr))) {
+    agi::GraphIterator* gitr = g->adjacent(v);
+    agi::GraphVertex* other;
+    agi::VEVIterator* aitr = g->vev_begin(v);
+    while ((other = g->iterate(gitr))) {
+      agi::GraphVertex* adj = g->iterate(aitr);
+      if (adj!=other)
+        return 1;
+    }
+    g->destroy(gitr);
+  }
   
   g->create_vev_adjacency(0,true);
-
+  vitr = g->begin();
+  while ((v = g->iterate(vitr))) {
+    std::unordered_set<agi::GraphVertex*> unique_adj;
+    agi::GraphIterator* gitr = g->adjacent(v);
+    agi::GraphVertex* other;
+    while ((other = g->iterate(gitr))) {
+      unique_adj.insert(other);
+    }
+    g->destroy(gitr);
+    agi::VEVIterator* aitr = g->vev_begin(v);
+    agi::GraphVertex* adj;
+    unsigned int count = 0;
+    //    while ((adj = g->iterate(aitr))) {
+    for (;aitr!=g->vev_end(v); adj = g->iterate(aitr)) {
+      count++;
+      if (unique_adj.find(adj)==unique_adj.end())
+        return 2;
+    }
+    if (count!=unique_adj.size())
+      return 3;
+  }
+  return 0;
 }
 
 int testEVEAdjacency(agi::Ngraph* g) {
   g->create_eve_adjacency(0,false);
-
+  agi::GraphEdge* e;
+  agi::EdgeIterator* eitr = g->begin(0);
+  while ((e = g->iterate(eitr))) {
+    agi::EVEIterator* aitr = g->eve_begin(e);
+    agi::PinIterator* pitr = g->pins(e);
+    agi::GraphVertex* v;
+    while ((v = g->iterate(pitr))) {
+      agi::EdgeIterator* eitr2;
+      agi::GraphEdge* other;
+      while ((other = g->iterate(eitr2))) {
+        agi::GraphEdge* adj = g->iterate(aitr);
+        if (other != adj)
+          return 1;
+      }
+      g->destroy(eitr2);
+    }
+    g->destroy(pitr);
+  }
+  g->destroy(eitr);
+  
   g->create_eve_adjacency(0,true);
+  eitr = g->begin(0);
+  while ((e = g->iterate(eitr))) {
+    std::unordered_set<agi::GraphEdge*> unique_adj;
+    agi::PinIterator* pitr = g->pins(e);
+    agi::GraphVertex* v;
+    while ((v = g->iterate(pitr))) {
+      agi::EdgeIterator* eitr2;
+      agi::GraphEdge* other;
+      while ((other = g->iterate(eitr2))) {
+        unique_adj.insert(other);
+      }
+      g->destroy(eitr2);
+    }
+    g->destroy(pitr);
+
+    agi::EVEIterator* aitr = g->eve_begin(e);
+    agi::GraphEdge* adj;
+    unsigned int count = 0;
+    //    while ((adj = g->iterate(aitr))) {
+    for (;aitr!=g->eve_end(e); adj = g->iterate(aitr)) {
+      count++;
+      if (unique_adj.find(adj)==unique_adj.end())
+        return 2;
+    }
+    if (count!=unique_adj.size())
+      return 3;
+
+  }
+  g->destroy(eitr);
+  return 0;
 }
 
 

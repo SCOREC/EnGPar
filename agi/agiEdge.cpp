@@ -150,4 +150,19 @@ namespace agi {
   
   }
 
+  EVEIterator* Ngraph::eve_begin(GraphEdge* edge) const {
+    uintptr_t id = (uintptr_t)(edge)-1;
+    etype type = id%num_types;
+    id/=num_types;
+    lid_t start = eve_offsets[type][id]*num_types+type;
+    return reinterpret_cast<EVEIterator*>(toPtr(start+1));
+  }
+  EVEIterator* Ngraph::eve_end(GraphEdge* edge) const {
+    uintptr_t id = (uintptr_t)(edge)-1;
+    etype type = id%num_types;
+    id/=num_types;
+    lid_t start = eve_offsets[type][id+1]*num_types+type;
+    return reinterpret_cast<EVEIterator*>(toPtr(start+1));
+  }
+
 }

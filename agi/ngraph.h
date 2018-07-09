@@ -15,7 +15,8 @@ class GhostIterator;
 class PinIterator;
 class EdgeIterator;
 class GraphIterator;
-class AdjacentIterator;
+class VEVIterator;
+class EVEIterator;
 class GraphTag;
 class Migration;
 class WeightMigration;
@@ -300,14 +301,15 @@ public:
    * 
    * The adjacency must be first constructed by create_vev_adjacency(t)
    */
-  AdjacentIterator* vev_adjacent(GraphVertex* vtx, etype t=0) const {}
+  VEVIterator* vev_begin(GraphVertex* vtx, etype t=0) const;
+  VEVIterator* vev_end(GraphVertex* vtx, etype t=0) const;
   /** \brief Creates an iterator over the edge-vertex-edge adjacencies.
    * \param edge the graph edge
    * 
    * The adjacency must be first constructed by create_eve_adjacency(t)
    */
-  AdjacentIterator* eve_adjacent(GraphEdge* edge) const {}
-
+  EVEIterator* eve_begin(GraphEdge* edge) const;
+  EVEIterator* eve_end(GraphEdge* edge) const;
   
   ///@}
 
@@ -435,6 +437,7 @@ public:
    */
   GraphVertex* iterate(GhostIterator*& vitr) const;
 
+  GraphVertex* iterate(VEVIterator*& vevItr) const;
   /** \brief Iterates the edge iterator
    * \param eitr the edge iterator
    * \return the current graph edge
@@ -455,6 +458,7 @@ public:
    * \return the edge
    */
   GraphEdge* edge(GraphIterator* gitr) const;
+  GraphEdge* iterate(EVEIterator*& eveItr) const;
   //Destroys iterator
   /** \brief Cleans up the memory of an edge iterator
    * \param eitr the edge iterator
