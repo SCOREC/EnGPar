@@ -21,6 +21,8 @@ int compareTraversal(agi::Ngraph* g);
 int testDistanceQueue(agi::Ngraph* g);
 int testMigration(agi::Ngraph* g);
 int testRepartition(agi::Ngraph* g);
+int testVEVAdjacency(agi::Ngraph* g);
+int testEVEAdjacency(agi::Ngraph* g);
 
 int main(int argc, char* argv[]) {
   int trial = -1;
@@ -54,6 +56,8 @@ int main(int argc, char* argv[]) {
     suite.addGeneralTest("Migration",testMigration);
     suite.addGeneralTest("Repartition", testRepartition);
   }
+  suite.addGeneralTest("VEV adjacency", testVEVAdjacency);
+  suite.addGeneralTest("EVE adjacency", testEVEAdjacency);
   
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
@@ -392,3 +396,19 @@ int testRepartition(agi::Ngraph* g) {
 
   return 0;
 }
+
+int testVEVAdjacency(agi::Ngraph* g) {
+  g->create_vev_adjacency(0,false);
+  
+  g->create_vev_adjacency(0,true);
+
+}
+
+int testEVEAdjacency(agi::Ngraph* g) {
+  g->create_eve_adjacency(0,false);
+
+  g->create_eve_adjacency(0,true);
+}
+
+
+

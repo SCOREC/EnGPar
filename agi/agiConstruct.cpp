@@ -27,6 +27,10 @@ namespace agi {
       num_local_pins[i]=0;
       pin_degree_list[i]=NULL;
       pin_list[i]=NULL;
+      vev_offsets[i] = NULL;
+      vev_lists[i] = NULL;
+      eve_offsets[i] = NULL;
+      eve_lists[i] = NULL;
     }
 
     local_unmap = NULL;
@@ -523,6 +527,14 @@ namespace agi {
         delete [] pin_list[i];
       pin_list[i] = NULL;
       edge_mapping[i].clear();
+      if (vev_offsets[i])
+        delete [] vev_offsets[i];
+      if (vev_lists[i])
+        delete [] vev_lists[i];
+      if (eve_offsets[i])
+        delete [] eve_offsets[i];
+      if (eve_lists[i])
+        delete [] eve_lists[i];
     }
     if (local_unmap)
       delete [] local_unmap;
@@ -657,6 +669,8 @@ namespace agi {
       GraphVertex* v;
       PinIterator* pitr = pins(e);
       while ((v = iterate(pitr))) {
+        if (owner(v)!=PCU_Comm_Self())
+          continue;
         GraphEdge* other;
         EdgeIterator* eitr2 = edges(v);
         while ((other = iterate(eitr2))) {
@@ -684,6 +698,8 @@ namespace agi {
       GraphVertex* v;
       PinIterator* pitr = pins(e);
       while ((v = iterate(pitr))) {
+        if (owner(v)!=PCU_Comm_Self())
+          continue;
         GraphEdge* other;
         EdgeIterator* eitr2 = edges(v);
         while ((other = iterate(eitr2))) {
