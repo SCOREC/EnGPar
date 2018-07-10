@@ -67,11 +67,11 @@ int TestingSuite::runTests(int trial) const {
     for (unsigned int j = 0;j < test_graphs.size(); j++) {
       int ierr = 0;
       int fail = 0;
+      EnGPar_Start_Test();
       if (trial==-1||num_tests==trial) {
         if (!PCU_Comm_Self())
           EnGPar_Status_Message(-1,"Running test %d: \"%s\" with graph: %s.\n", num_tests,
                                 general_names[i].c_str(), graph_names[j].c_str());
-        EnGPar_Start_Test();
         ierr = general_tests[i](test_graphs[j]);
         PCU_Barrier();
       }

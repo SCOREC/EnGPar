@@ -27,6 +27,10 @@ namespace agi {
       num_local_pins[i]=0;
       pin_degree_list[i]=NULL;
       pin_list[i]=NULL;
+      vev_offsets[i] = NULL;
+      vev_lists[i] = NULL;
+      eve_offsets[i] = NULL;
+      eve_lists[i] = NULL;
     }
 
     local_unmap = NULL;
@@ -523,6 +527,14 @@ namespace agi {
         delete [] pin_list[i];
       pin_list[i] = NULL;
       edge_mapping[i].clear();
+      if (vev_offsets[i])
+        delete [] vev_offsets[i];
+      if (vev_lists[i])
+        delete [] vev_lists[i];
+      if (eve_offsets[i])
+        delete [] eve_offsets[i];
+      if (eve_lists[i])
+        delete [] eve_lists[i];
     }
     if (local_unmap)
       delete [] local_unmap;
@@ -584,5 +596,126 @@ namespace agi {
     if (isHyper())
       return;
     throw std::runtime_error("makeUndirectedGraph() not implemented yet");
+  }
+
+  void Ngraph::create_vev_adjacency(etype t, bool compress) {
+    if (vev_offsets[t]) {
+      delete [] vev_offsets[t];
+      delete [] vev_lists[t];
+    }
+      
+    vev_offsets[t] = new lid_t[num_local_verts+1];
+    vev_offsets[t][0] = 0;
+    int id = 1;
+    GraphVertex* v;
+    VertexIterator* vitr = begin();
+    //Count the number of ajacencies and fill offset array
+    while ((v = iterate(vitr))) {
+      int count = 0;
+      std::unordered_set<GraphVertex*> unique_adj;
+      GraphIterator* gitr = adjacent(v);
+      GraphVertex* other;
+      while ((other = iterate(gitr))) {
+        count++;
+        unique_adj.insert(other);
+      }
+      destroy(gitr);
+      unique_adj.erase(v);
+      if (compress)
+        vev_offsets[t][id] = vev_offsets[t][id-1] + unique_adj.size();
+      else
+        vev_offsets[t][id] = vev_offsets[t][id-1] + count;
+      id++;
+    }
+
+    vev_lists[t] = new lid_t[vev_offsets[t][num_local_verts]];
+    vitr = begin();
+    id =0;
+    //Populate the adjacency list by repeating the operation
+    while ((v = iterate(vitr))) {
+      std::unordered_set<GraphVertex*> unique_adj;
+      GraphIterator* gitr = adjacent(v);
+      GraphVertex* other;
+      while ((other = iterate(gitr))) {
+        if (compress)
+          unique_adj.insert(other);
+        else
+          vev_lists[t][id++] = localID(other);
+      }
+      destroy(gitr);
+      unique_adj.erase(v);
+      std::unordered_set<GraphVertex*>::iterator itr;
+      for (itr = unique_adj.begin(); itr != unique_adj.end(); itr++)
+        vev_lists[t][id++] = localID(*itr);
+    }
+    
+  }
+
+  void Ngraph::create_eve_adjacency(etype t, bool compress) {
+    if (eve_offsets[t]) {
+      delete [] eve_offsets[t];
+      delete [] eve_lists[t];
+    }
+      
+    eve_offsets[t] = new lid_t[num_local_edges[t]+1];
+    eve_offsets[t][0] = 0;
+    int id = 1;
+    GraphEdge* e;
+    EdgeIterator* eitr = begin(t);
+    //Count the number of ajacencies and fill offset array
+    while ((e = iterate(eitr))) {
+      int count = 0;
+      std::unordered_set<GraphEdge*> unique_adj;
+      GraphVertex* v;
+      PinIterator* pitr = pins(e);
+      while ((v = iterate(pitr))) {
+        if (owner(v)!=PCU_Comm_Self())
+          continue;
+        GraphEdge* other;
+        EdgeIterator* eitr2 = edges(v);
+        while ((other = iterate(eitr2))) {
+          count++;
+          unique_adj.insert(other);
+        }
+        destroy(eitr2);
+      }
+      destroy(pitr);
+      unique_adj.erase(e);
+      if (compress)
+        eve_offsets[t][id] = eve_offsets[t][id-1] + unique_adj.size();
+      else
+        eve_offsets[t][id] = eve_offsets[t][id-1] + count;
+      id++;
+    }
+    destroy(eitr);
+
+    eve_lists[t] = new lid_t[eve_offsets[t][num_local_edges[t]]];
+    eitr = begin(t);
+    id =0;
+    //Populate the adjacency list by repeating the operation
+    while ((e = iterate(eitr))) {
+      std::unordered_set<GraphEdge*> unique_adj;
+      GraphVertex* v;
+      PinIterator* pitr = pins(e);
+      while ((v = iterate(pitr))) {
+        if (owner(v)!=PCU_Comm_Self())
+          continue;
+        GraphEdge* other;
+        EdgeIterator* eitr2 = edges(v);
+        while ((other = iterate(eitr2))) {
+          if (compress)
+            unique_adj.insert(other);
+          else
+            eve_lists[t][id++] = localID(other);
+        }
+        destroy(eitr2);
+      }
+      destroy(pitr);
+      unique_adj.erase(e);
+      std::unordered_set<GraphEdge*>::iterator itr;
+      for (itr = unique_adj.begin(); itr != unique_adj.end(); itr++)
+        eve_lists[t][id++] = localID(*itr);
+    }
+    destroy(eitr);
   }
 }

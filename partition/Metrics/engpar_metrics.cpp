@@ -36,17 +36,13 @@ namespace engpar {
     return max*1.0/avg;
   }
 
-  void printImbalances(agi::Ngraph* g) {
-    char imbalances[100];
-    int n=0;
+  void getImbalances(agi::Ngraph* g,char* imbalances) {
     for (agi::etype type = -1;type<g->numEdgeTypes();type++) {
       agi::wgt_t w = getWeight(g,type);
       double imb = EnGPar_Get_Imbalance(w);
       if (!PCU_Comm_Self())
-        n+=sprintf(imbalances+n, "%2.4f ", imb);
+        imbalances+=sprintf(imbalances, "%2.4f ", imb);
     }
-    if (!PCU_Comm_Self())
-      printf("%s\n",imbalances);
   }
   
   void printMaxMinAvgImb(agi::lid_t my_val,std::string prefix) {

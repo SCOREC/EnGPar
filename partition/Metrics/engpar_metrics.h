@@ -15,7 +15,7 @@ namespace engpar {
 
   wgt_t getWeight(agi::Ngraph*,int,bool countGhosts=false);
   
-  void printImbalances(agi::Ngraph* g);
+  void getImbalances(agi::Ngraph* g, char*);
   ///@}  
 }
 

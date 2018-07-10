@@ -42,6 +42,20 @@ namespace agi {
     itr = reinterpret_cast<GhostIterator*>(toPtr(index+1));
     return vtx;
   }
+  GraphVertex* Ngraph::iterate(VEVIterator*& vevItr) const {
+    uintptr_t id = (uintptr_t)(vevItr)-1;
+    etype type = id%num_types;
+    id/=num_types;
+    lid_t index;
+    if (id >= (unsigned)vev_offsets[type][num_local_verts])
+      index = -1;
+    else
+      index = vev_lists[type][id];
+    id*=num_types;
+    id+=num_types;
+    vevItr = reinterpret_cast<VEVIterator*>(toPtr(id+1));
+    return reinterpret_cast<GraphVertex*>(toPtr(index+1));
+  }
 
   GraphEdge* Ngraph::iterate(EdgeIterator*& itr) const {
     if (itr->loc>=itr->end)
@@ -98,6 +112,21 @@ namespace agi {
   GraphEdge* Ngraph::edge(GraphIterator* itr) const {
     return itr->edge;
   }
+  GraphEdge* Ngraph::iterate(EVEIterator*& eveItr) const {
+    uintptr_t id = (uintptr_t)(eveItr)-1;
+    etype type = id%num_types;
+    id/=num_types;
+    lid_t index;
+    if (id >= (unsigned)eve_offsets[type][num_local_edges[type]])
+      index = -1;
+    else
+      index = eve_lists[type][id]*num_types+type;
+    id*=num_types;
+    id+=num_types;
+    eveItr = reinterpret_cast<EVEIterator*>(toPtr(id+1));
+    return reinterpret_cast<GraphEdge*>(toPtr(index+1));
+  }
+
   
   void Ngraph::destroy(EdgeIterator* itr) const {
     delete itr;

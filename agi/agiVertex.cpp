@@ -161,4 +161,16 @@ bool Ngraph::isEqual(GraphVertex* u,GraphVertex* v) const {
       owners[i] = newRanks[owners[i]];
   }
 
+  VEVIterator* Ngraph::vev_begin(GraphVertex* vtx, etype t) const {
+    lid_t index = fromPtr(vtx);
+    lid_t start = vev_offsets[t][index]*num_types+t;
+    return reinterpret_cast<VEVIterator*>(toPtr(start+1));
+  }
+  VEVIterator* Ngraph::vev_end(GraphVertex* vtx, etype t) const {
+    lid_t index = fromPtr(vtx);
+    lid_t start = vev_offsets[t][index+1]*num_types+num_types+t;
+    return reinterpret_cast<VEVIterator*>(toPtr(start+1));
+  }
+  
 }
+
