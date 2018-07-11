@@ -27,21 +27,20 @@ namespace engpar {
   }
 
   agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors) { 
-    // FIXME - make this work with edges 
     agi::PNgraph* pg = in->g->publicize();
-    // Retrieve relavent information from graph
-    agi::lid_t numverts = pg->num_local_verts;
-    agi::lid_t numdges = pg->num_local_edges[in->edgeType];
-    agi::lid_t* adj_offsets;
-    agi::lid_t* adj_list;
+    // Retrieve relavent information from graph  
+    agi::lid_t* adj_offsets = nullptr;
+    agi::lid_t* adj_lists = nullptr;
     agi::lid_t numEnts = 0;
     if (in->primaryType == VTX_TYPE) {
+      // Vertex colorings
       in->g->create_vev_adjacency(in->edgeType, true);
       numEnts = in->g->numLocalVtxs();
       adj_offsets = pg->vev_offsets[in->edgeType];
       adj_lists = pg->vev_lists[in->edgeType];
     }
     else {
+      // Edge coloring
       in->g->create_eve_adjacency(in->edgeType);
       numEnts = in->g->numLocalEdges(in->edgeType);
       adj_offsets = pg->eve_offsets[in->edgeType];
@@ -49,10 +48,10 @@ namespace engpar {
     }
     kkLidView colors_d("colors_device", numEnts);
     // Create views
-    kkLidView adj_offsets_view ("adj_offsets_view", numverts+1);
-    hostToDevice(adj_offsest_view, adj_offsets);
-    kkLidView adj_lists_view ("adj_lists_view", numedges);
-    hostToDevice(adj_lists_view, ajd_lists);
+    kkLidView adj_offsets_view ("adj_offsets_view", numEnts+1);
+    hostToDevice(adj_offsets_view, adj_offsets);
+    kkLidView adj_lists_view ("adj_lists_view", adj_offsets[numEnts]);
+    hostToDevice(adj_lists_view, adj_lists);
     // Typedefs to simplify kokkos template calls
     typedef Kokkos::DefaultExecutionSpace exe_space;
     typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, exe_space::device_type, void, int> crsMat_t;
