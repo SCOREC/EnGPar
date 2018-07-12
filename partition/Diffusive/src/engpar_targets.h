@@ -32,12 +32,41 @@ namespace engpar {
         }
       }
     }
+    Targets(bool isHyper, double, Sides* s, agi::WeightPartitionMap* wp_map,
+            int sideTol, Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
+      Sides::iterator itr;
+      for (itr = s->begin();itr!=s->end();itr++) {
+        int neighbor = itr->first;
+        bool canSend=!isHyper || s->get(neighbor)<=sideTol;
+        for (unsigned int i=0;i<completedTolerances.size();i++) {
+          if (completedWs[i]->get(neighbor)>=completedTolerances[i])
+            canSend=false;
+        }
+        if (!canSend)
+          continue;
+        agi::WeightPartitionMap::iterator itr;
+        for (itr = wp_map->begin(); itr != wp_map->end(); itr++) {
+          std::unordered_map<agi::gid_t,agi::wgt_t>::iterator inner_itr;
+          for (inner_itr = itr->second.begin(); inner_itr != itr->second.end(); inner_itr++) {
+            part_t neighbor = inner_itr->first;
+            wgt_t diff = inner_itr->second;
+            wgt_t sideFraction = s->get(neighbor);
+            sideFraction /= s->total();
+            wgt_t scaledW = diff * sideFraction;
+            set(neighbor,scaledW);
+          }
+        }
+      }
+    }
   };
   Targets* makeTargets(bool isHyper, double step_factor, Sides* s, Weights* tW,int sT,
                        Weights** cWs,std::vector<wgt_t>& cTs);
 
   Targets* makeTargets(DiffusiveInput* in, Sides* s, Weights* tW,int sT,
                        Weights** cWs,std::vector<wgt_t>& cTs);
+
+  Targets* makePartWeightTargets(DiffusiveInput* in, Sides* s, agi::WeightPartitionMap* wp_map,
+                                 int sT, Weights** cWs, std::vector<wgt_t>& cTs);
 }
 
 #endif

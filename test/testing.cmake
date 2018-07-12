@@ -127,21 +127,25 @@ mpi_test(WeightBalancer_2 2
   ./PartitionTestSuite 3)
 mpi_test(WeightBalancer_4 4
   ./PartitionTestSuite 3)
+mpi_test(PartWeightBalancer_2 2
+  ./PartitionTestSuite 4)
+mpi_test(PartWeightBalancer_4 4
+  ./PartitionTestSuite 4)
 if (ENABLE_PARMETIS)
   mpi_test(GlobalSplit_2 2
-    ./PartitionTestSuite 4)
+    ./PartitionTestSuite 10)
   mpi_test(GlobalSplit_4 4
-    ./PartitionTestSuite 4)
+    ./PartitionTestSuite 10)
   mpi_test(LocalSplit_2 2
-    ./PartitionTestSuite 5)
+    ./PartitionTestSuite 11)
   mpi_test(LocalSplit_4 4
-    ./PartitionTestSuite 5)
+    ./PartitionTestSuite 11)
   mpi_test(SplitAndBalance_2 2
-    ./PartitionTestSuite 6)
+    ./PartitionTestSuite 12)
   mpi_test(SplitAndBalance_4 4
-    ./PartitionTestSuite 6)
+    ./PartitionTestSuite 12)
   mpi_test(SplitAndBalance_8 8
-    ./PartitionTestSuite 6)
+    ./PartitionTestSuite 12)
 
   IF(ENABLE_PUMI)
     mpi_test(splitAndBalanceMeshPUMI 8

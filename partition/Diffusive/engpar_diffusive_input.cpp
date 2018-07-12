@@ -7,7 +7,6 @@ namespace engpar {
     step_factor=0.1;
     sides_edge_type = 0;
     selection_edge_type = 0;
-    useDistanceQueue = true;
     if (g->isHyper())
       useDistanceQueue = true;
     else
@@ -16,6 +15,7 @@ namespace engpar {
     countGhosts=false;
     minConnectivity=1;
     connectivityType=0;
+    runPartWeightBalancer = false;
   }
 
   void DiffusiveInput::addPriority(int type, double tolerance) {

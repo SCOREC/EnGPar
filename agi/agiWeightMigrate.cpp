@@ -49,7 +49,7 @@ namespace agi {
     delete plan;
   }
 
-  const WeightPartitionMap* Ngraph::getWeightPartition() const {
+  WeightPartitionMap* Ngraph::getWeightPartition() {
     return &wp_map;
   }
 }

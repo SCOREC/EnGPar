@@ -37,6 +37,12 @@ namespace engpar {
      * defaults to .1 
      */
     double step_factor;
+
+    /** \brief Whether or not to run a global weight balancer to aid in diffusive load balancing
+     *
+     * defaults to false
+     */
+    bool runPartWeightBalancer;
     
     /** \brief The edge type used for determining part boundaries 
      *

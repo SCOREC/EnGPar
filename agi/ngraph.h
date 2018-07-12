@@ -494,7 +494,7 @@ public:
    * \return a map from global id to part id
    */
   virtual PartitionMap* getPartition();
-  const WeightPartitionMap* getWeightPartition() const;
+  WeightPartitionMap* getWeightPartition();
 
   // \cond
   void migrate(Migration* plan, MigrationTimers* mt = NULL);

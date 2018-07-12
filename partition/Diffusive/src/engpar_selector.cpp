@@ -222,7 +222,6 @@ namespace engpar {
     }
   };
 
-
   void Selector::calculatePlanWeights(agi::Migration* plan, std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
     agi::Migration::iterator itr;
     for(itr = plan->begin();itr!=plan->end();itr++) {
@@ -254,7 +253,6 @@ namespace engpar {
       }
     }
     delete [] peerEdges;
-
   }
 
   void Selector::receiveIncomingWeight(MigrComm& incoming) {
@@ -420,6 +418,40 @@ namespace engpar {
     plan->clear();
     for(size_t i=0; i < keep.size(); i++)
       plan->insert(keep[i]);
+  }
+
+  void Selector::calculatePlanWeight(agi::Migration* plan, int target_dimension,
+                                     std::unordered_map<part_t,wgt_t>& weights) {
+    PeerEdgeSet peerEdges;
+    agi::Migration::iterator itr;
+    for(itr = plan->begin();itr!=plan->end();itr++) {
+      agi::GraphVertex* vtx = *itr;
+      const int dest = plan->get(vtx);
+      if (target_dimension!=-1)
+        insertInteriorEdges(vtx, dest, peerEdges[dest],
+                            target_dimension);
+      else
+        weights[dest]+=g->weight(vtx);
+    }
+    if (target_dimension!=-1) {
+      PeerEdgeSet::iterator pitr;
+      for (pitr = peerEdges.begin(); pitr != peerEdges.end(); pitr++) {
+        weights[pitr->first] = weight(pitr->second);
+      }
+    }
+  }
+
+  void Selector::updatePartWeight(agi::Migration* plan, int target_dimension, agi::WeightPartitionMap* wp_map) {
+    std::unordered_map<part_t,wgt_t> weights;
+    calculatePlanWeight(plan,target_dimension,weights);
+
+    agi::WeightPartitionMap::iterator itr;
+    for (itr = wp_map->begin(); itr != wp_map->end(); itr++) {
+      std::unordered_map<part_t,wgt_t>::iterator inner_itr;
+      for (inner_itr = weights.begin(); inner_itr != weights.end(); inner_itr++) {
+        itr->second[inner_itr->first] -= inner_itr->second;
+      }
+    }
   }
 
 
