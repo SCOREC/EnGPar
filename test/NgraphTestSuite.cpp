@@ -450,6 +450,8 @@ int testEVEAdjacency(agi::Ngraph* g) {
     agi::PinIterator* pitr = g->pins(e);
     agi::GraphVertex* v;
     while ((v = g->iterate(pitr))) {
+      if (g->owner(v)!=PCU_Comm_Self())
+        continue;
       agi::EdgeIterator* eitr2 = g->edges(v);
       agi::GraphEdge* other;
       while ((other = g->iterate(eitr2))) {
@@ -471,6 +473,8 @@ int testEVEAdjacency(agi::Ngraph* g) {
     agi::PinIterator* pitr = g->pins(e);
     agi::GraphVertex* v;
     while ((v = g->iterate(pitr))) {
+      if (g->owner(v)!=PCU_Comm_Self())
+        continue;
       agi::EdgeIterator* eitr2 = g->edges(v);
       agi::GraphEdge* other;
       while ((other = g->iterate(eitr2))) {
