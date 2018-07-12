@@ -29,6 +29,9 @@ namespace agi {
       v_weights[localID(mine)]-=w;
       PCU_COMM_PACK(owner(peer),gid);
       PCU_COMM_PACK(owner(peer),w);
+
+      //Update interior plan
+      wp_map[globalID(mine)][gid] += w;
     }
     PCU_Comm_Send();
     //Receive the weight in the plan
@@ -46,4 +49,7 @@ namespace agi {
     delete plan;
   }
 
+  const WeightPartitionMap* Ngraph::getWeightPartition() const {
+    return &wp_map;
+  }
 }

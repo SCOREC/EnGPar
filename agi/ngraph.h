@@ -494,6 +494,7 @@ public:
    * \return a map from global id to part id
    */
   virtual PartitionMap* getPartition();
+  const WeightPartitionMap* getWeightPartition() const;
 
   // \cond
   void migrate(Migration* plan, MigrationTimers* mt = NULL);
@@ -548,6 +549,8 @@ public:
                  std::vector<wgt_t>&,std::vector<lid_t>&,
                  std::vector<gid_t>&,std::unordered_map<gid_t,part_t>&,
                  etype);
+
+  WeightPartitionMap wp_map;
   // \endcond
 };
  

@@ -24,6 +24,7 @@ namespace agi {
   typedef std::unordered_map<gid_t,part_t> PartitionMap;
   typedef std::unordered_map<lid_t,part_t> VertexPartitionMap;
   typedef std::unordered_map<lid_t,part_t> EdgePartitionMap;
+  typedef std::unordered_map<gid_t,std::unordered_map<gid_t,wgt_t> > WeightPartitionMap;
 
   //Definitions for edge types
   //static size of edge types
