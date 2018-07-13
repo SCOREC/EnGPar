@@ -51,7 +51,7 @@ namespace engpar {
     return new WeightInput(g,t,sf,et);
   }
 
-  ColoringInput* createColoringInput(agi::Ngraph* g, agi::lid_t primaryType) {
-    return new ColoringInput(g,primaryType);
+  ColoringInput* createColoringInput(agi::Ngraph* g, agi::lid_t primaryType, bool vtxColoring) {
+    return new ColoringInput(g,primaryType,vtxColoring);
   }
 }
