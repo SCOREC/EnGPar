@@ -34,14 +34,18 @@ namespace engpar {
     agi::lid_t numEnts = 0;
     if (in->primaryType == VTX_TYPE) {
       // Vertex colorings
-      in->g->create_vev_adjacency(in->edgeType, true);
+      double t0 = PCU_Time();
+      in->g->create_vev_adjacency(in->edgeType);
+      printf ("eve partition time: %f\n", PCU_Time()-t0); 
       numEnts = in->g->numLocalVtxs();
       adj_offsets = pg->vev_offsets[in->edgeType];
       adj_lists = pg->vev_lists[in->edgeType];
     }
     else {
       // Edge coloring
+      double t0 = PCU_Time();
       in->g->create_eve_adjacency(in->edgeType);
+      printf ("eve partition time: %f\n", PCU_Time()-t0); 
       numEnts = in->g->numLocalEdges(in->edgeType);
       adj_offsets = pg->eve_offsets[in->edgeType];
       adj_lists = pg->eve_lists[in->edgeType];
@@ -68,8 +72,10 @@ namespace engpar {
     kh->set_dynamic_scheduling(true);
     kh->create_graph_coloring_handle(KokkosGraph::COLORING_DEFAULT);
     // Run kokkos Coloring and delete handle
+    double t0 = PCU_Time();
     KokkosGraph::Experimental::graph_color<KernelHandle, kkLidView, kkLidView>
       (kh, numEnts, numEnts, adj_offsets_view, adj_lists_view);
+    printf ("Coloring time: %f\n", PCU_Time()-t0);
     colors_d = kh->get_graph_coloring_handle()->get_vertex_colors();
     kh->destroy_graph_coloring_handle();  
     // Move coloring into array on host 

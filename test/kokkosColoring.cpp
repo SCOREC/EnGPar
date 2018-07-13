@@ -1,15 +1,9 @@
-#include <Kokkos_Core.hpp>
-#include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosGraph_graph_color.hpp>
-#include <KokkosKernels_Handle.hpp>
+#include <engpar_support.h>
+#include <engpar.h>
+#include <engpar_input.h>
 #include <binGraph.h>
-#include <mpi.h>
-#include <stdio.h>
-#include <cstring>
+#include <engpar_kokkosColoring.h>
 #include <set>
-#include "engpar_support.h"
-#include "engpar_input.h"
-#include "engpar_kokkosColoring.h"
 
 
 bool checkDirected(agi::Ngraph* g, agi::etype t=0) {
@@ -36,11 +30,9 @@ bool checkDirected(agi::Ngraph* g, agi::etype t=0) {
 
 void vertColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on vertices
-  double t0 = PCU_Time(); 
   engpar::ColoringInput* in = engpar::createColoringInput(g, VTX_TYPE);
   agi::lid_t** colors = new agi::lid_t*[1];
   engpar::EnGPar_KokkosColoring(in, colors); 
-  printf ("Coloring time: %f\n", PCU_Time()-t0);
   // Assign colors to graph vertices
   agi::GraphTag* tag = g->createIntTag(-1);
   agi::GraphVertex* v;
@@ -66,11 +58,9 @@ void vertColor(agi::Ngraph* g, agi::etype t=0) {
 
 void edgeColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on edges
-  double t0 = PCU_Time();
   engpar::ColoringInput* in = engpar::createColoringInput(g, t);
   agi::lid_t** colors = new agi::lid_t*[1];
   engpar::EnGPar_KokkosColoring(in, colors);
-  printf ("Coloring time: %f\n", PCU_Time()-t0);
   // assign colors to edges
   agi::GraphTag* tag = g->createIntTag(t);
   agi::GraphEdge* e;
@@ -115,10 +105,9 @@ int main(int argc, char* argv[]) {
   
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
   //assert(checkDirected(g));
-  for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t) {
-    vertColor(g, t);
+  vertColor(g);
+  for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t)
     edgeColor(g, t);
-  }
 
   destroyGraph(g);
   PCU_Barrier();

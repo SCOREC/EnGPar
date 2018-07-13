@@ -197,6 +197,16 @@ if (ENABLE_KOKKOS)
     ./kokkosColoring
     "${GRAPHS}/asic.ebin")
 
+  mpi_test(colorMeshPipe 1
+    ./kokkosMeshColoring
+    "${MESHES}/pipe/pipe.dmg"
+    "${MESHES}/pipe/pipe.smb")
+
+  mpi_test(colorMeshTorus 4
+    ./kokkosMeshColoring
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb")
+
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
