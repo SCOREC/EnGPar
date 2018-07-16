@@ -16,7 +16,8 @@ namespace engpar {
 
 #include <Kokkos_Core.hpp>
 namespace engpar {
-  typedef Kokkos::View<agi::lid_t*> kkLidView;
+  typedef Kokkos::DefaultExecutionSpace exe_space;
+  typedef Kokkos::View<agi::lid_t*, exe_space::device_type> kkLidView;
 
   /** \brief return a kokkos device view with the coloring
    *  \remark this supports procedures that will use the

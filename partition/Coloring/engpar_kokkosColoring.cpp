@@ -56,8 +56,7 @@ namespace engpar {
     hostToDevice(adj_offsets_view, adj_offsets);
     kkLidView adj_lists_view ("adj_lists_view", adj_offsets[numEnts]);
     hostToDevice(adj_lists_view, adj_lists);
-    // Typedefs to simplify kokkos template calls
-    typedef Kokkos::DefaultExecutionSpace exe_space;
+    // Typedefs to simplify kokkos template calls 
     typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, exe_space::device_type, void, int> crsMat_t;
     typedef crsMat_t::StaticCrsGraphType graph_t;
     typedef graph_t::entries_type::non_const_type color_view_t;
@@ -65,7 +64,7 @@ namespace engpar {
     typedef graph_t::entries_type lno_nnz_view_t;
     typedef graph_t::entries_type::non_const_type  color_view_t;
     typedef KokkosKernels::Experimental::KokkosKernelsHandle <agi::lid_t, agi::lid_t, agi::lid_t, 
-            exe_space, exe_space::memory_space, exe_space::memory_space> KernelHandle; 
+            exe_space::execution_space, exe_space::memory_space, exe_space::memory_space> KernelHandle; 
     // Create kernel handle which will call graph color
     KernelHandle* kh = new KernelHandle();
     kh->set_team_work_size(16);
