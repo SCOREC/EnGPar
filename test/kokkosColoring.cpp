@@ -30,7 +30,7 @@ bool checkDirected(agi::Ngraph* g, agi::etype t=0) {
 
 void vertColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on vertices
-  engpar::ColoringInput* in = engpar::createColoringInput(g, VTX_TYPE);
+  engpar::ColoringInput* in = engpar::createColoringInput(g, t, true);
   agi::lid_t** colors = new agi::lid_t*[1];
   engpar::EnGPar_KokkosColoring(in, colors); 
   // Assign colors to graph vertices
@@ -58,7 +58,7 @@ void vertColor(agi::Ngraph* g, agi::etype t=0) {
 
 void edgeColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on edges
-  engpar::ColoringInput* in = engpar::createColoringInput(g, t);
+  engpar::ColoringInput* in = engpar::createColoringInput(g, t, false);
   agi::lid_t** colors = new agi::lid_t*[1];
   engpar::EnGPar_KokkosColoring(in, colors);
   // assign colors to edges
@@ -106,9 +106,10 @@ int main(int argc, char* argv[]) {
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
   //assert(checkDirected(g));
   vertColor(g);
-  for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t)
+  for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t) {
+    vertColor(g, t);
     edgeColor(g, t);
-
+  }
   destroyGraph(g);
   PCU_Barrier();
   if (!PCU_Comm_Self())

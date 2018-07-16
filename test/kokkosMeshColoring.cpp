@@ -12,6 +12,20 @@
 #include <set>
 
 
+apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t) {
+  apf::MeshEntity* vtx;
+  apf::MeshIterator* it = m->begin(0);
+  apf::Field* f = apf::createLagrangeField(m, "my_field", apf::SCALAR, 1);
+  int val;
+  while ((vtx = m->iterate(it))) {
+    m->getIntTag(vtx, t, &val);
+    apf::setScalar(f, vtx, 0, (double) val);
+  }
+  m->end(it);
+  return f;
+}
+
+
 agi::lid_t* edgeColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on edges
   engpar::ColoringInput* in = engpar::createColoringInput(g, t);
@@ -59,21 +73,25 @@ int main(int argc, char* argv[]) {
   // Load mesh
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
-  int edges[2] = {0,2};
-  agi::Ngraph* g = agi::createAPFGraph(m,3,edges,2);
+  int edges[1] = {0};
+  agi::Ngraph* g = agi::createAPFGraph(m,3,edges,1);
   agi::lid_t** colors = new agi::lid_t*[g->numEdgeTypes()];
   for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t)
-    colors[t] = edgeColor(g, 0);
+    colors[t] = edgeColor(g, t);
+
   // Move colors to mesh 
   apf::MeshTag* coloring = m->createIntTag("coloring",1);
-  apf::MeshIterator* vitr = m->begin(1);
+  apf::MeshIterator* vitr = m->begin(0);
   apf::MeshEntity* ent;
   int i=0;
   while ((ent = m->iterate(vitr))) {
     m->setIntTag(ent,coloring,&colors[0][i++]);
   }
-  apf::writeVtkFiles("meshColoring", m);
   m->end(vitr);
+  convert_my_tag(m, coloring);
+  apf::writeVtkFiles("meshColoring", m);
+
+
   destroyGraph(g);
   PCU_Barrier();
   if (!PCU_Comm_Self())
@@ -81,7 +99,5 @@ int main(int argc, char* argv[]) {
   Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();
-
   return 0;
-
 }
