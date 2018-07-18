@@ -5,7 +5,6 @@ source /etc/profile.d/modules.sh
 source /etc/profile
 
 source /lore/cwsmith/develop/EnGPar/envRhel7.sh 
-module load metis/5.1.0-int32-3tycybv
 cd /lore/diamog/cdash/repos/EnGPar
 
 #update this repo
