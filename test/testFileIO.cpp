@@ -43,14 +43,14 @@ int main(int argc, char* argv[]) {
     int second = primary-1;
     if (second<0)
       second=m->getDimension();
-    g = agi::createAPFGraph(m,primary,second);
+    g = agi::createAPFGraph(m,"edge",primary,second);
       }
   else {
     int* edges = new int[argc-5];
     for (int i=5;i<argc;i++) {
       edges[i-5] = atoi(argv[i]);
     }
-    g = agi::createAPFGraph(m,primary,edges,argc-5);
+    g = agi::createAPFGraph(m,"edges",primary,edges,argc-5);
     delete [] edges;
   }
   PCU_Barrier();

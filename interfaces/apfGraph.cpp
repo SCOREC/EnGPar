@@ -9,7 +9,8 @@
 namespace agi {
 
 //TODO: make work for primary_dimension!=mesh_dimension
-Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimension) {
+Ngraph* createAPFGraph(apf::Mesh* m, const char* name, int primary_dimension,
+                       int secondary_dimension) {
   if (EnGPar_Is_Log_Open()) {
     char message[50];
     sprintf(message,"createAPFGraph %d with edge %d\n",
@@ -18,9 +19,9 @@ Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,int secondary_dimensi
     EnGPar_End_Function();
   }
 
-  return new apfGraph(m,primary_dimension,secondary_dimension);
+  return new apfGraph(m, name, primary_dimension, secondary_dimension);
 }
-Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,
+Ngraph* createAPFGraph(apf::Mesh* m, const char* name, int primary_dimension,
                        int* secondary_dimensions,int num_dimensions) {
   if (EnGPar_Is_Log_Open()) {
     char message[50];
@@ -32,10 +33,10 @@ Ngraph* createAPFGraph(apf::Mesh* m, int primary_dimension,
     EnGPar_End_Function();
   }
 
-  return new apfGraph(m,primary_dimension,secondary_dimensions,num_dimensions);
+  return new apfGraph(m, name, primary_dimension, secondary_dimensions, num_dimensions);
 }
   
-apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
+apfGraph::apfGraph(apf::Mesh* mesh, const char* n, int primary_dimension,
                    int secondary_dimension) : Ngraph() {
   global_nums=NULL;
   for (int i=0;i<MAX_TYPES;i++)
@@ -43,6 +44,7 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   isHyperGraph=true;
   checkDims(mesh->getDimension(),primary_dimension,secondary_dimension);
 
+  name = n;
   m = mesh;
   setupPrimary(primary_dimension);
 
@@ -53,7 +55,7 @@ apfGraph::apfGraph(apf::Mesh* mesh,int primary_dimension,
   constructGhostVerts();
 }
 
-apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
+apfGraph::apfGraph(apf::Mesh* mesh, const char* name_, int primary_dimension,
                    int* secondary_dimensions, int n) : Ngraph(){
   global_nums=NULL;
   for (int i=0;i<MAX_TYPES;i++)
@@ -62,6 +64,7 @@ apfGraph::apfGraph(apf::Mesh* mesh, int primary_dimension,
   for (int i=0;i<n;i++) {
     checkDims(mesh->getDimension(),primary_dimension,secondary_dimensions[i]);
   }
+  name = name_;
   m=mesh;
   
   setupPrimary(primary_dimension);
@@ -127,7 +130,9 @@ void apfGraph::setupPrimary(int primary_dimension) {
   local_coords = new coord_t[num_local_verts];
 
   //Create a global numbering on the mesh over primary_dimension
-  apf::Numbering* numbers = apf::numberOwnedDimension(m,"primary_ids",
+  char buffer[200];
+  sprintf(buffer,"%s_primary_ids",name);
+  apf::Numbering* numbers = apf::numberOwnedDimension(m,buffer,
                                                       primary_dimension);
   global_nums = apf::makeGlobal(numbers);
   apf::synchronize(global_nums);
@@ -162,9 +167,9 @@ etype apfGraph::setupSecondary(int secondary_dimension) {
   makeEdgeArray(type,num_local_edges[type]);
 
   //Create a global numbering on the mesh over primary_dimension
-  char name[20];
-  sprintf(name,"secondary_ids%d",type);
-  apf::Numbering* numbers = apf::numberOwnedDimension(m,name,
+  char buffer[200];
+  sprintf(buffer, "%s_secondary_ids%d", name, type);
+  apf::Numbering* numbers = apf::numberOwnedDimension(m,buffer,
                                                       secondary_dimension);
   edge_nums[type] = apf::makeGlobal(numbers);
   apf::synchronize(edge_nums[type]);

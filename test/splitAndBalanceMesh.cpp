@@ -78,7 +78,7 @@ int main(int argc, char* argv[]) {
   apf::Migration* plan = NULL;
   if (m) {
     plan = new apf::Migration(m);
-    apf::GlobalNumbering* gids = m->findGlobalNumbering("primary_ids_global");
+    apf::GlobalNumbering* gids = m->findGlobalNumbering("mesh_primary_ids_global");
     apf::MeshIterator* mitr = m->begin(3);
     apf::MeshEntity* ent;
     while ((ent = m->iterate(mitr))) {
@@ -146,7 +146,7 @@ MPI_Comm splitGraph(agi::Ngraph*& g, apf::Mesh2*& m, char* model, char* mesh, in
     gmi_register_mesh();
     m = apf::loadMdsMesh(model,mesh);
     int dims[2] = {0,2};
-    g = agi::createAPFGraph(m,3,dims,2);
+    g = agi::createAPFGraph(m,"mesh",3,dims,2);
     if (!PCU_Comm_Self())
       printf("\nBefore Split\n");
     engpar::evaluatePartition(g);
@@ -234,7 +234,7 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\n");  
   //Switch to graph
-  g = agi::createAPFGraph(m,3,0);
+  g = agi::createAPFGraph(m,"mesh",3,0);
   if (!PCU_Comm_Self())
     printf("\nAfter Split\n");
   engpar::evaluatePartition(g);
