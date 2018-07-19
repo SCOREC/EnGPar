@@ -48,11 +48,11 @@ int main(int argc, char* argv[]) {
   if (isMultiEdge) {
     int edges[2] = {0,2};
     //balance vtx>edge>elm
-    g = agi::createAPFGraph(m,3,edges,2);
+    g = agi::createAPFGraph(m,"edge_02",3,edges,2);
   }
   else {
     //balance vtx>elm
-    g = agi::createAPFGraph(m,3,0);
+    g = agi::createAPFGraph(m,"edge_0",3,0);
   }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();

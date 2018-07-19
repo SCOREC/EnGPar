@@ -549,9 +549,10 @@ namespace agi {
       delete [] original_owners;
     original_owners = NULL;
     vtx_mapping.clear();
+    wp_map.clear();
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
-    }  
+    }
   }
 
   void destroyGraph(Ngraph* g) {

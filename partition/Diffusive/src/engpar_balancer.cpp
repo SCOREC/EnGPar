@@ -64,13 +64,22 @@ namespace engpar {
     totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
+    weightGraph = NULL;
   }
   Balancer::Balancer(Input* input_, int v, const char* n) :
     graph(input_->g),verbosity(v), name(n), input(input_) {
     totStepTime=0;
     distance_time=0;
     migrTime = new agi::MigrationTimers;
+    weightGraph = NULL;
   }
+  Balancer::~Balancer() {
+    delete input;
+    delete migrTime;
+    if (weightGraph)
+      agi::destroyGraph(weightGraph);
+  }
+
   bool Balancer::runStep(double tolerance) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     double stepTime = PCU_Time();
@@ -96,8 +105,15 @@ namespace engpar {
         completedWs[i] = makeWeights(inp,sides,completed_dimensions[i]);
       }
     }
-    Targets* targets = makeTargets(inp,sides,targetWeights,sideTol,
-                                   completedWs,completed_weights);
+    Targets* targets;
+    if (inp->runPartWeightBalancer) {
+      targets = makePartWeightTargets(inp, sides, weightGraph->getWeightPartition(), sideTol,
+                                      completedWs, completed_weights);
+    }
+    else {
+      targets = makeTargets(inp,sides,targetWeights,sideTol,
+                                     completedWs,completed_weights);
+    }
     delete sides;
     if (completedWs) {
       for (unsigned int i=0;i<completed_dimensions.size();i++)
@@ -138,8 +154,12 @@ namespace engpar {
     }
     delete pq;
     delete targets;
+
+    if (inp->runPartWeightBalancer) {
+      selector->updatePartWeight(plan,target_dimension, weightGraph->getWeightPartition());
+    }
     delete selector;
-    
+
     stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
@@ -225,6 +245,12 @@ namespace engpar {
     //Set side tolerance
     Sides* sides = makeSides(inp);
     sideTol = averageSides(sides);
+
+    if (inp->runPartWeightBalancer) {
+      if (!PCU_Comm_Self())
+        EnGPar_Status_Message("Starting part weight balancer on type %d\n",target_dimension);
+      partWeightBalancer(sides,tol);
+    }
     delete sides;
     
     if (verbosity >= 0) {
@@ -279,6 +305,13 @@ namespace engpar {
         //Set side tolerance
         Sides* sides = makeSides(inp);
         sideTol = averageSides(sides);
+
+        if (inp->runPartWeightBalancer) {
+          if (!PCU_Comm_Self())
+            EnGPar_Status_Message("Starting part weight balancer on type %d\n",target_dimension);
+          partWeightBalancer(sides,tol);
+        }
+
         delete sides;
 
         char buffer[100];
@@ -322,6 +355,58 @@ namespace engpar {
     }
     if (EnGPar_Is_Log_Open())
       EnGPar_End_Function();
+  }
+  void Balancer::partWeightBalancer(Sides* sides,double tol) {
+    DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
+
+    if (weightGraph)
+      agi::destroyGraph(weightGraph);
+    weightGraph = agi::createEmptyGraph();
+    agi::lid_t num_verts = 1;
+    agi::gid_t* verts = new agi::gid_t[num_verts];
+    agi::wgt_t* weights = new agi::wgt_t[num_verts];
+    verts[0] = PCU_Comm_Self();
+    weights[0] = getWeight(input->g,target_dimension,inp->countGhosts);
+    agi::lid_t num_edges = sides->size();
+    agi::lid_t* degrees = new agi::lid_t[num_edges];
+    agi::gid_t* edges = new agi::gid_t[num_edges];
+    agi::gid_t* pins = new agi::gid_t[num_edges*2];
+    agi::lid_t num_ghosts = num_edges;
+    agi::gid_t* ghosts = new agi::gid_t[num_edges];
+    agi::part_t* owners = new agi::part_t[num_edges];
+    Sides::iterator itr;
+    int i = 0;
+    for (itr = sides->begin(); itr != sides->end(); itr++, ++i) {
+      degrees[i] = 2;
+      edges[i] = i;
+      pins[2*i] = PCU_Comm_Self();
+      pins[2*i+1] = itr->first;
+      ghosts[i] = itr->first;
+      owners[i] = itr->first;
+    }
+    weightGraph->constructVerts(false,num_verts,verts,weights);
+    weightGraph->constructEdges(num_edges,edges,degrees,pins);
+    weightGraph->constructGhosts(num_ghosts,ghosts,owners);
+
+    //Set the tolerance of the part weight balancer slightly less to give some wiggle room
+    //TODO: experiment on this `.75` parameter
+    WeightInput* input = createWeightInput(weightGraph,tol*.75,inp->step_factor);
+
+    WeightBalancer* weightBalancer = new WeightBalancer(reinterpret_cast<Input*>(input),-1);
+    weightBalancer->balance();
+    delete weightBalancer;
+    double imb = EnGPar_Get_Imbalance(getWeight(weightGraph,-1,false));
+    if (!PCU_Comm_Self()) {
+      EnGPar_Status_Message("Part Weight Balancer finished with imbalance %.3f\n",imb);
+    }
+
+    delete [] verts;
+    delete [] weights;
+    delete [] edges;
+    delete [] degrees;
+    delete [] pins;
+    delete [] ghosts;
+    delete [] owners;
   }
 
   void balance(Input* in, int v_) {

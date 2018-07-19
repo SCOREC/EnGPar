@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
   else if (argc==3) {
     gmi_register_mesh();
     apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
-    g= agi::createAPFGraph(m,3,2);
+    g= agi::createAPFGraph(m,"render",3,2);
   }
   else if (cmpebin(argv[1]))
     g= agi::createBinGraph(argv[1]);

@@ -11,14 +11,14 @@
 #include <engpar_support.h>
 
 void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
-void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n);
+void testIds(apf::Mesh* m, agi::Ngraph* g,const char* name, int primary,int* seconds,int n);
 void testVertices(apf::Mesh* m,agi::Ngraph* g);
 void testEdges(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n);
 void testGhosts(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n);
 
-void testGraph(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
+void testGraph(apf::Mesh* m, agi::Ngraph* g, const char* name, int primary, int* seconds,int n) {
   testSizes(m,g,primary,seconds,n);
-  testIds(m,g,primary,seconds,n);
+  testIds(m, g, name, primary, seconds, n);
   testVertices(m,g);
   testEdges(m,g,primary,seconds,n);
   testGhosts(m,g,primary,seconds,n);
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
   //Check dimension too high
   //This doesn't get caught since primary is assumed to be 3 for now
   try {
-    agi::Ngraph* g = agi::createAPFGraph(m,5,0);
+    agi::Ngraph* g = agi::createAPFGraph(m,"fail_vtx",5,0);
     agi::destroyGraph(g);
     throw "FAIL\n";
   }
@@ -53,7 +53,7 @@ int main(int argc, char* argv[]) {
    
   //check dimension too low
   try {
-    agi::Ngraph* g = agi::createAPFGraph(m,3,-1);
+    agi::Ngraph* g = agi::createAPFGraph(m,"fail_edge",3,-1);
     agi::destroyGraph(g);
     throw "FAIL\n";
   }
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
   }
   //check primary==secondary
   try {
-    agi::Ngraph* g = agi::createAPFGraph(m,3,3);
+    agi::Ngraph* g = agi::createAPFGraph(m,"fail_same",3,3);
     agi::destroyGraph(g);
     throw "FAIL!\n";
   }
@@ -80,9 +80,9 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dim: %d\n",
            primary,second);
-  agi::Ngraph* g = agi::createAPFGraph(m,primary,second);
+  agi::Ngraph* g = agi::createAPFGraph(m,"test1",primary,second);
   int secondaries1[1] = {second};
-  testGraph(m,g,primary,secondaries1,1);
+  testGraph(m,g,"test1",primary,secondaries1,1);
 
   agi::checkValidity(g);
   agi::destroyGraph(g);
@@ -95,9 +95,9 @@ int main(int argc, char* argv[]) {
       printf("\nConstructing Graph with Vertex Dim: %d, and Edge Dims: %d,%d\n",
              primary,secondaries[0],secondaries[1]);
 
-    agi::Ngraph* g2 = agi::createAPFGraph(m,primary,secondaries,2);
+    agi::Ngraph* g2 = agi::createAPFGraph(m,"test2",primary,secondaries,2);
     MPI_Barrier(MPI_COMM_WORLD);
-    testGraph(m,g2,primary,secondaries,2);
+    testGraph(m,g2,"test2",primary,secondaries,2);
 
     agi::checkValidity(g2);
     agi::destroyGraph(g2);
@@ -175,7 +175,7 @@ void testSizes(apf::Mesh* m,agi::Ngraph* g,int primary, int* seconds,int n) {
   }
 }
 
-void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
+void testIds(apf::Mesh* m, agi::Ngraph* g, const char* name, int primary, int* seconds, int n) {
   //Test the ids of the graph vertices
   if (!PCU_Comm_Self())
     printf("Testing Ids\n");
@@ -184,7 +184,9 @@ void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   apf::MeshIterator* mitr = m->begin(primary);
   apf::MeshEntity* ent = NULL;
   apf::GlobalNumbering* id_nums=NULL;
-  id_nums = m->findGlobalNumbering("primary_ids_global");
+  char buffer[200];
+  sprintf(buffer,"%s_primary_ids_global",name);
+  id_nums = m->findGlobalNumbering(buffer);
   assert(id_nums);
   while ((vtx = g->iterate(gitr)) && (ent = m->iterate(mitr))) {
     assert(g->globalID(vtx)==(gid_t)apf::getNumber(id_nums,ent,0,0));
@@ -192,9 +194,8 @@ void testIds(apf::Mesh* m,agi::Ngraph* g,int primary,int* seconds,int n) {
   m->end(mitr);
   for (int i=0;i<n;i++) {
     agi::EdgeIterator* eitr = g->begin(i);
-    char name[100];
-    sprintf(name,"secondary_ids%d_global",i);
-    id_nums = m->findGlobalNumbering(name);
+    sprintf(buffer,"%s_secondary_ids%d_global",name,i);
+    id_nums = m->findGlobalNumbering(buffer);
     assert(id_nums);
     mitr = m->begin(seconds[i]);
     agi::GraphEdge* edge;

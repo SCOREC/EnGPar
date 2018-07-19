@@ -10,14 +10,6 @@
 namespace engpar {
 
 
-  class WeightBalancer : public Balancer {
-  public:
-    WeightBalancer(Input* input_, int v);
-    ~WeightBalancer() {}
-
-    bool runStep(double tol);
-    void balance();
-  };
   
   WeightBalancer::WeightBalancer(Input* input_, int v) :
     Balancer(input_,v,"weightBalancer") {

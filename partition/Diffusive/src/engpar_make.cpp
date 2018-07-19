@@ -25,4 +25,9 @@ namespace engpar {
                        Weights** cWs, std::vector<wgt_t>& cTs) {
     return new Targets(in->g->isHyper(),in->step_factor,s,tW,sT,cWs,cTs);
   }
+  Targets* makePartWeightTargets(DiffusiveInput* in, Sides* s, agi::WeightPartitionMap* wp_map,
+                                 int sT, Weights** cWs, std::vector<wgt_t>& cTs) {
+    return new Targets(in->g->isHyper(),in->step_factor,s,wp_map,sT,cWs,cTs);
+  }
+
 }

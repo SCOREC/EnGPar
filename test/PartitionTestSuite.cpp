@@ -20,13 +20,15 @@ int testWeightBalancer_1();
 int testWeightBalancer_4();
 int testWeightBalancer_100();
 
+int testPartWeightBalancer(agi::Ngraph*);
+
 int testGlobalSplit(agi::Ngraph*);
 int testLocalSplit(agi::Ngraph*);
 int testSplitAndBalance(agi::Ngraph*);
 
 void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
 
-#define SPLIT_TEST 4
+#define SPLIT_TEST 10
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
@@ -39,6 +41,7 @@ int main(int argc, char* argv[]) {
                              "    operation 1 = balance\n"
                              "    operation 2 = balanceMultiple\n"
                              "    operation 3 = balanceWeights\n"
+                             "    operation 4 = balance with part weights balancing\n"
                              "    operation %d = ParMETIS global split\n"
                              "    operation %d = ParMETIS local split\n"
                              "    operation %d = ParMETIS split and balance\n"
@@ -93,6 +96,8 @@ int main(int argc, char* argv[]) {
     suite.addGeneralTest("General Balancer",testBalancer);
   else if (operation==2)
     suite.addGeneralTest("Balance Twice",testMultipleBalances);
+  else if (operation==4)
+    suite.addGeneralTest("Part Weight Diffusive Balancer",testPartWeightBalancer);
   else if (operation == SPLIT_TEST)
     suite.addGeneralTest("Global ParMETIS split",testGlobalSplit);
   else if (operation == SPLIT_TEST+1)
@@ -210,6 +215,7 @@ int testVtxBalancer(agi::Ngraph* g) {
   return 0;
 
 }
+
 int testBalancer(agi::Ngraph* g) {
   double step_factor = 0.1;
   engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
@@ -234,8 +240,8 @@ int testBalancer(agi::Ngraph* g) {
     return 1;
   return 0;
 }
-int testMultipleBalances(agi::Ngraph* g) {
 
+int testMultipleBalances(agi::Ngraph* g) {
   double step_factor = 0.1;
   engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
   input->addPriority(-1,1.1);
@@ -274,6 +280,34 @@ int testMultipleBalances(agi::Ngraph* g) {
     return 2;
   return 0;
 }
+
+int testPartWeightBalancer(agi::Ngraph* g) {
+  double step_factor = 0.1;
+  engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
+  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+    input->addPriority(t,1.1);
+  input->addPriority(-1,1.1);
+
+  input->maxIterationsPerType=50;
+  input->maxIterations=75;
+
+  input->runPartWeightBalancer = true;
+
+  //Create the balancer
+  engpar::balance(input,1);
+
+  //Ensure the graph is still valid
+  agi::checkValidity(g);
+
+  //Ensure the graph was balanced to the target tolerance
+  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+    if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,t)) >= 1.11)
+      return t+2;
+  if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  return 0;
+}
+
 
 void switchToOriginals(int split_factor, bool& isOriginal, MPI_Comm& newComm) {
   int self = PCU_Comm_Self();

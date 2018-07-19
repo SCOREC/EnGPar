@@ -32,6 +32,7 @@ namespace engpar {
     Midd* trim(Targets* targets, agi::Migration* plan);
     void cancel(agi::Migration*& plan,Midd* capacity);
 
+    void updatePartWeight(agi::Migration* plan, int target_dimension, agi::WeightPartitionMap* wp_map);
   protected:
       
     typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
@@ -49,11 +50,13 @@ namespace engpar {
     void gatherCapacities(Midd* capacity);
 
 
-
     void tempInsertInteriorEdges(agi::GraphVertex*,agi::part_t,
                                            EdgeSet&,int,const EdgeSet&);
     double weight(const EdgeSet&);
     void combineSets(EdgeSet&,const EdgeSet&);
+
+    void calculatePlanWeight(agi::Migration* plan, int target_dimension,
+                             std::unordered_map<part_t,wgt_t>& weight);
 
     DiffusiveInput* in;
     agi::Ngraph* g;

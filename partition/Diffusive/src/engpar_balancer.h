@@ -17,9 +17,10 @@ namespace engpar {
     Balancer(agi::Ngraph*& graph_, double factor_, int verbosity_,
              const char* name_);
     Balancer(Input* input_,int verbosity_,const char* name_);
-    virtual ~Balancer() {delete input; delete migrTime;}
+    virtual ~Balancer();
     virtual bool runStep(double tolerance);
     void balance();
+    void partWeightBalancer(Sides* sides, double tolerance);
     
   protected:
     agi::Ngraph* graph;
@@ -34,8 +35,19 @@ namespace engpar {
     double totStepTime;
     double distance_time;
     int sideTol;
+    agi::Ngraph* weightGraph;
     agi::MigrationTimers* migrTime;
   };
+
+  class WeightBalancer : public Balancer {
+  public:
+    WeightBalancer(Input* input_, int v);
+    ~WeightBalancer() {}
+
+    bool runStep(double tol);
+    void balance();
+  };
+
 }
 
 #endif
