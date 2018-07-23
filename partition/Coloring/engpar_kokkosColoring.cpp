@@ -1,11 +1,11 @@
-#include <iostream>
 #include <PCU.h>
 #include <ngraph.h>
+#include "engpar_kokkosColoring.h"
+#include "engpar_coloring_input.h"
+// Needs to be included only if kokkos is defined
 #include <KokkosSparse_CrsMatrix.hpp>
 #include <KokkosGraph_graph_color.hpp>
 #include <KokkosKernels_Handle.hpp>
-#include "engpar_kokkosColoring.h"
-#include "engpar_coloring_input.h"
 namespace engpar {
 #ifdef KOKKOS_ENABLED
 
