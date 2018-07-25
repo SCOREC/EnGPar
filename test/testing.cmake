@@ -211,10 +211,10 @@ if (ENABLE_KOKKOS)
     "${MESHES}/torus/torus.dmg"
     "${MESHES}/torus/4imb/torus.smb")
 
-  mpi_test(eveParallel 1
+  mpi_test(eveParallel 4
     ./eveParallel
-    "${MESHES}/pipe/pipe.dmg"
-    "${MESHES}/pipe/pipe.smb")
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb")
 
 endif()
 

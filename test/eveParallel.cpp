@@ -9,6 +9,7 @@
 #include <apfMDS.h>
 #include <Kokkos_Core.hpp>
 typedef Kokkos::View<agi::lid_t*> kkLidView;
+typedef Kokkos::TeamPolicy<>::member_type member_type;
 
 
 void hostToDevice(kkLidView d, agi::lid_t* h) {
@@ -35,29 +36,40 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
   }
   // Load graph info to device
   const int N = pg->num_local_edges[t];
+  const int M = pg->num_local_verts;
   Kokkos::View<int**> A ("adjacency_matrix", N, N);
-  kkLidView degree_view ("degree_view", pg->num_local_verts+1);
+  kkLidView degree_view ("degree_view", M+1);
   hostToDevice(degree_view, pg->degree_list[t]);
   kkLidView edge_view ("edge_view", pg->num_local_pins[t]);
   hostToDevice(edge_view, pg->edge_list[t]);
-  // User parallel for to construct adjacency matrix 
-  Kokkos::parallel_for(pg->num_local_verts, KOKKOS_LAMBDA(const int v) {
-    for (agi::lid_t i=degree_view(v); i<degree_view(v+1); ++i) {
-      for (agi::lid_t j=degree_view(v); j<degree_view(v+1); ++j) {
-        if (i!=j)
-          A(edge_view(i),edge_view(j)) = 1;
-      }
-    }
-  });
+  // User hierarchical parallelism to construct adjacency matrix 
+  Kokkos::parallel_for (Kokkos::TeamPolicy<>(M, Kokkos::AUTO()),
+    KOKKOS_LAMBDA (const member_type& thread) {
+      const int v = thread.league_rank();
+      const int loop_count = degree_view(v+1) - degree_view(v);
+      Kokkos::parallel_for (Kokkos::TeamThreadRange(thread, loop_count), 
+        [&] (int i) {
+          i += degree_view(v);
+          Kokkos::parallel_for (Kokkos::ThreadVectorRange(thread, loop_count),
+            [=] (int j) {
+              j+= degree_view(v);
+              if (i!=j)
+                A(edge_view(i),edge_view(j)) = 1;
+            });
+        });
+    });
   // Compress 'A' into a CSR
   Kokkos::View<int*> eve_deg ("A_degree_list", N+1); 
-  Kokkos::parallel_for (N, KOKKOS_LAMBDA(const int& i) {
-    int degree = 0;
-    for (int j=0; j<N; ++j) {
-      degree += A(i,j);
-    }
-    eve_deg(i+1) = degree;
-  }); 
+  Kokkos::parallel_for (Kokkos::TeamPolicy<>(N, Kokkos::AUTO()),
+    KOKKOS_LAMBDA (const member_type& thread) {
+      const int i = thread.league_rank();
+      int degree = 0;
+      Kokkos::parallel_reduce (Kokkos::TeamThreadRange(thread, N),
+        [=] (const int j, int& ldegree) {
+          ldegree += A(i,j);
+        }, degree);
+      eve_deg(i+1) = degree;
+    });
   Kokkos::parallel_scan(N+1, KOKKOS_LAMBDA(const int& i, int& upd, const bool& final) {
     const int val = eve_deg(i); 
     upd += val;
@@ -69,14 +81,14 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
     upd += eve_deg(i);
   }, eve_edge_size);
   kkLidView eve_edges ("eve_edges", eve_edge_size);
-  Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int i) {
-      int idx = eve_deg(i);
-      while (idx != eve_deg(i+1)) {
-        for (int j=0; j<N; ++j) {
-          if (A(i,j)==1)
-            eve_edges(idx++) = j;
-        }
+  Kokkos::parallel_for (N, KOKKOS_LAMBDA(const int i) {
+    int index = eve_deg(i);
+    while (index != eve_deg(i+1)) {
+      for (int j=0; j<N; ++j) {
+        if (A(i,j) == 1)
+          eve_edges(index++) = j;
       }
+    }
   });
   pg->eve_offsets[t] = new int[N+1];
   pg->eve_lists[t] = new int[eve_edge_size];
@@ -100,11 +112,12 @@ int main(int argc, char* argv[]) {
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
   int edges[1] = {0};
-  // Create graphs
+  // Create graphs 
   agi::Ngraph* g_parallel = agi::createAPFGraph(m,"g_parallel",3,edges,1);
   agi::PNgraph* gp = g_parallel->publicize();
   agi::Ngraph* g_serial = agi::createAPFGraph(m,"g_serial",3,edges,1);
   agi::PNgraph* gs = g_serial->publicize();
+
   // Modify for multiple edge types 
   // Time the two constructions
   double t0 = PCU_Time();
@@ -116,8 +129,6 @@ int main(int argc, char* argv[]) {
   // Compare the two constructions 
   int conflicts = 0;
   for (int i=0; i<gp->num_local_edges[0]+1; ++i) {
-    //printf("%i, ",gp->eve_offsets[0][i]);
-    //printf("%i\n",gs->eve_offsets[0][i]);
     if (gp->eve_offsets[0][i] != gs->eve_offsets[0][i])
       ++conflicts;
   }
