@@ -2,10 +2,6 @@
 #include <ngraph.h>
 #include "engpar_kokkosColoring.h"
 #include "engpar_coloring_input.h"
-// Needs to be included only if kokkos is defined
-#include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosGraph_graph_color.hpp>
-#include <KokkosKernels_Handle.hpp>
 namespace engpar {
 #ifdef KOKKOS_ENABLED
 
@@ -21,10 +17,82 @@ namespace engpar {
    */
   void deviceToHost(kkLidView d, agi::lid_t* h) {
     kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
-    Kokkos::deep_copy(hv,d);
+    Kokkos::deep_copy(hv,d); 
     for(size_t i=0; i<hv.size(); ++i)
       h[i] = hv(i);
   }
+
+
+  void parallel_create_eve(agi::Ngraph* g, agi::etype t=0) {
+    agi::PNgraph* pg = g->publicize();
+    if (pg->eve_offsets[t]) {
+      delete [] pg->eve_offsets[t];
+      delete [] pg->eve_lists[t];
+    }
+    // Load graph info to device
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts; 
+    int edge_view_size = N;
+    if (pg->isHyperGraph)
+      edge_view_size = pg->num_local_pins[t];
+    Kokkos::View<int**> A ("adjacency_matrix", N, N);
+    kkLidView degree_view ("degree_view", M+1);
+    hostToDevice(degree_view, pg->degree_list[t]); 
+    kkLidView edge_view ("edge_view", edge_view_size);
+    hostToDevice(edge_view, pg->edge_list[t]);
+    // Uses hierarchical parallelism to construct adjacency matrix 
+    Kokkos::parallel_for (Kokkos::TeamPolicy<>(M, Kokkos::AUTO()),
+    KOKKOS_LAMBDA (const member_type& thread) {
+      const int v = thread.league_rank();
+      const int loop_count = degree_view(v+1) - degree_view(v); 
+      Kokkos::parallel_for (Kokkos::TeamThreadRange(thread, loop_count), 
+        [=] (const int i) {
+          int row = degree_view(v) + i;
+          Kokkos::parallel_for (Kokkos::ThreadVectorRange(thread, loop_count),
+            [=] (const int j) {
+            //for (int j=0; j<loop_count; ++j) {
+              int col = degree_view(v) + j;
+              if (edge_view(row)!=edge_view(col))
+                A(edge_view(row),edge_view(col)) = 1;
+            //}
+            });
+        });
+    });
+    // Compress 'A' into a CSR
+    Kokkos::View<int*> eve_deg ("A_deg", N+1); 
+    Kokkos::parallel_for (Kokkos::TeamPolicy<>(N, Kokkos::AUTO()),
+      KOKKOS_LAMBDA (const member_type& thread) {
+        const int i = thread.league_rank();
+        int degree = 0;
+        Kokkos::parallel_reduce (Kokkos::TeamThreadRange(thread, N),
+          [=] (const int j, int& ldegree) {
+            ldegree += A(i,j);
+          }, degree);
+        eve_deg(i+1) = degree;
+      });
+    Kokkos::parallel_scan(N, KOKKOS_LAMBDA(const int& i, int& upd, const bool& final) {
+      const int val = eve_deg(i+1); 
+      upd += val;
+      if (final)
+        eve_deg(i+1) = upd;
+    });
+    pg->eve_offsets[t] = new int[N+1];
+    deviceToHost(eve_deg, pg->eve_offsets[t]);
+    int eve_edge_size = pg->eve_offsets[t][N]; 
+    kkLidView eve_edges ("eve_edges", eve_edge_size);
+    Kokkos::parallel_for (N, KOKKOS_LAMBDA(const int i) {
+      int index = eve_deg(i);
+      while (index != eve_deg(i+1)) {
+        for (int j=0; j<N; ++j) {
+          if (A(i,j) == 1)
+            eve_edges(index++) = j;
+        }
+      }
+    }); 
+    pg->eve_lists[t] = new int[eve_edge_size];
+    deviceToHost(eve_edges, pg->eve_lists[t]);
+  }
+
 
   agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors) { 
     agi::PNgraph* pg = in->g->publicize();
@@ -44,9 +112,10 @@ namespace engpar {
     else {
       // Edge coloring
       double t0 = PCU_Time();
-      in->g->create_eve_adjacency(in->edgeType);
+      //in->g->create_eve_adjacency(in->edgeType);
+      parallel_create_eve(in->g, in->edgeType);
       printf ("eve partition time: %f\n", PCU_Time()-t0); 
-      numEnts = in->g->numLocalEdges(in->edgeType);
+      numEnts = pg->num_local_edges[in->edgeType];
       adj_offsets = pg->eve_offsets[in->edgeType];
       adj_lists = pg->eve_lists[in->edgeType];
     }

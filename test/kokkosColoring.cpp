@@ -78,7 +78,7 @@ void edgeColor(agi::Ngraph* g, agi::etype t=0) {
     std::set<int> l_colors;
     for (agi::lid_t i=0; i<g->degree(v, t); ++i) {
       e = g->iterate(eitr);
-      l_colors.insert(g->getIntTag(tag, e)); 
+      l_colors.insert(g->getIntTag(tag, e));
     }
     g->destroy(eitr);
     if (l_colors.size() < (size_t) g->degree(v, t))

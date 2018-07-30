@@ -76,7 +76,9 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
     if (final)
       eve_deg(i) = upd; 
   });
-  int eve_edge_size = 0;
+  pg->eve_offsets[t] = new int[N+1];
+  deviceToHost(eve_deg, pg->eve_offsets[t]);
+  int eve_edge_size = pg->eve_offsets[t][N]; 
   Kokkos::parallel_reduce(N, KOKKOS_LAMBDA(const int i, int& upd) {
     upd += eve_deg(i);
   }, eve_edge_size);
@@ -135,14 +137,14 @@ int main(int argc, char* argv[]) {
   printf("Offsets conflicts: %i\n", conflicts);
   conflicts = 0;
   for (int e=0; e<gs->num_local_edges[0]; ++e) {
-    std::set<int> p_l_edges;
-    std::set<int> s_l_edges;
-    for (int i=gp->eve_offsets[0][e]; i<gp->eve_offsets[0][e+1]; ++i) {
-      p_l_edges.insert(gp->eve_lists[0][i]);
-      s_l_edges.insert(gs->eve_lists[0][i]);
+    std::set<int> p_l_colors;
+    std::set<int> s_l_colors;
+    for (int i=gs->eve_offsets[0][e]; i<gs->eve_offsets[0][e+1]; ++i) {
+      p_l_colors.insert(gp->eve_lists[0][i]);
+      s_l_colors.insert(gs->eve_lists[0][i]);
     }
-    if (p_l_edges!=s_l_edges)
-      ++conflicts; 
+    if (p_l_colors != s_l_colors)
+      ++conflicts;
   }
   printf("Lists conflicts: %i\n", conflicts);
 

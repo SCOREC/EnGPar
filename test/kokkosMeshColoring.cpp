@@ -43,22 +43,17 @@ agi::lid_t* edgeColor(agi::Ngraph* g, agi::etype t=0) {
   agi::GraphVertex* v;
   agi::VertexIterator* vitr = g->begin();
   size_t conflicts = 0;
-  int color_dist[20] = {0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
   while ((v=g->iterate(vitr))) {
     agi::EdgeIterator* eitr = g->edges(v, t);
     std::set<int> l_colors;
     for (agi::lid_t i=0; i<g->degree(v, t); ++i) {
       e = g->iterate(eitr);
       l_colors.insert(g->getIntTag(tag, e));
-      ++color_dist[g->getIntTag(tag, e)-1];
     }
     g->destroy(eitr);
     if (l_colors.size() < (size_t) g->degree(v, t))
       ++conflicts;
   }
-  printf("Distribution of colors:\n");
-  for (i=0; i<20; ++i)
-    printf("%i\n",color_dist[i]);
   return *colors;
 }
 
@@ -78,6 +73,7 @@ int main(int argc, char* argv[]) {
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
   int edges[1] = {0};
+  // FIXME breaks with square mesh
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",3,edges,1);
   agi::lid_t** colors = new agi::lid_t*[g->numEdgeTypes()];
   for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t)
