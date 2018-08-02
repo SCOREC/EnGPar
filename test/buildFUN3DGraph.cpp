@@ -9,6 +9,7 @@
 #include <cstring>
 #include <engpar_support.h>
 #include <ngraph.h>
+#include <engpar.h>
 
 typedef std::vector<apf::MeshEntity*> BL_Verts;
 
@@ -83,6 +84,7 @@ int main(int argc, char* argv[]) {
   m->destroyNative();
   apf::destroyMesh(m);
 
+  engpar::evaluatePartition(g);
   g->saveToFile(argv[3]);
 
   PCU_Barrier();
@@ -95,10 +97,15 @@ int main(int argc, char* argv[]) {
 }
 
 void collapseBoundaryLayer(apf::Mesh* m, std::vector<BL_Verts>& bl_stacks) {
+  apf::MeshTag* visited = m->createIntTag("visit_BL",1);
+  int yes;
   apf::MeshEntity* v;
   apf::MeshIterator* vitr = m->begin(0);
   //Loop over all vertices
   while ((v = m->iterate(vitr))) {
+    if (m->hasTag(v,visited))
+      continue;
+
     apf::ModelEntity* gent = m->toModel(v);
     //Skip any vertex on model elements
     if (m->getModelType(gent)==3)
@@ -117,11 +124,14 @@ void collapseBoundaryLayer(apf::Mesh* m, std::vector<BL_Verts>& bl_stacks) {
     //Start a BL stack
     BL_Verts stack;
     stack.push_back(v);
+    m->setIntTag(v,visited,&yes);
     
     apf::Up edges;
     m->getUp(v,edges);
+    apf::MeshEntity* start = v;
     apf::MeshEntity* e = NULL;
     apf::MeshEntity* next;
+    apf::MeshEntity* next2 = NULL;
     //Proceed up the boundary layer until we can't go any further
     do {
       next = NULL;
@@ -142,24 +152,37 @@ void collapseBoundaryLayer(apf::Mesh* m, std::vector<BL_Verts>& bl_stacks) {
         }
         if (k != faces.n)
           continue;
+        if (next) {
+          next2 = edge;
+          break;
+        }
         next = edge;
         //Find the new vertex of the stack
         apf::Downward verts;
         m->getDownward(next,0,verts);
         v = (v == verts[0]) ? verts[1] : verts[0];
         stack.push_back(v);
+        m->setIntTag(v,visited,&yes);
         m->getUp(v,edges);
-        break;
+        if (start!=v)
+          break;
       }
       e = next;
+      if (e == NULL) {
+        e = next2;
+        v = start;
+        next2 = NULL;
+      }
     }
     while (e != NULL);
 
     //Add the stack
-    //??? Should we skip stacks of size 1? 2? What do these mean? Are they possible?
+    //??? Should we skip stacks of size 1? 2? What do these mean?
     bl_stacks.push_back(stack);
   }
   m->end(vitr);
+
+  m->destroyTag(visited);
 }
 
 
@@ -244,7 +267,6 @@ agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks
   HEMap hyperedges;
 
   agi::gid_t num_pins = 0;
-    
   apf::MeshEntity* bridge;
   apf::MeshIterator* itr = m->begin(dim);
   while ((bridge = m->iterate(itr))) {
@@ -256,8 +278,6 @@ agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks
       m->getIntTag(verts[i],vert_ids,&id);
       e.insert(id);
     }
-    if (e.size() == 1)
-      continue;
     std::pair<HEMap::iterator, bool> insert_pair  = hyperedges.insert(std::make_pair(e,1));
     if (!insert_pair.second)
       insert_pair.first->second++;
@@ -287,6 +307,5 @@ agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks
     }
     wgts[index++] = heItr->second;
   }
-
   return num_edges;
 }
