@@ -8,11 +8,14 @@
 #include <apfNumbering.h>
 #include <cstring>
 #include <engpar_support.h>
+#include <ngraph.h>
 
 typedef std::vector<apf::MeshEntity*> BL_Verts;
 
 void collapseBoundaryLayer(apf::Mesh*, std::vector<BL_Verts>&);
 int numberStacksAndVerts(apf::Mesh*, const std::vector<BL_Verts>&, apf::MeshTag*&);
+void gatherGraphVertices(apf::Mesh*, const std::vector<BL_Verts>&, apf::MeshTag*,
+                         agi::lid_t, agi::gid_t*&, agi::wgt_t*&);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
@@ -40,6 +43,15 @@ int main(int argc, char* argv[]) {
   //All members of a stack have the same number (index of the array)
   apf::MeshTag* vert_ids;
   int num_verts = numberStacksAndVerts(m, bl_stacks, vert_ids);
+
+  //Construct the vertices of the graph
+  agi::gid_t* verts;
+  agi::wgt_t* vert_weights;
+  gatherGraphVertices(m, bl_stacks, vert_ids, num_verts, verts, vert_weights);
+  agi::Ngraph* g = agi::createEmptyGraph();
+  g->constructVerts(true, num_verts, verts, vert_weights);
+  delete [] verts;
+  delete [] vert_weights;
   
   m->destroyNative();
   apf::destroyMesh(m);
@@ -146,4 +158,20 @@ int numberStacksAndVerts(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, a
 
   printf("There will be %d vertices in the graph\n",id);
   return id;
+}
+
+void gatherGraphVertices(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, apf::MeshTag* vert_ids, agi::lid_t nv, agi::gid_t*& verts, agi::wgt_t*& wgts) {
+
+  verts = new agi::gid_t[nv];
+  wgts = new agi::wgt_t[nv];
+
+  size_t i;
+  for (i =0; i < bl_stacks.size(); i++) {
+    verts[i] = i;
+    wgts[i] = bl_stacks[i].size();
+  }
+  for (; i < nv; i++) {
+    verts[i] = i;
+    wgts[i] = 1;
+  }
 }
