@@ -72,7 +72,12 @@ int main(int argc, char* argv[]) {
     delete [] edge_weights;
   }
   //TODO: construct ghosts (for now only worrying about serial)
+  agi::lid_t num_ghosts = 0;
+  agi::gid_t* gids = NULL;
+  agi::part_t* owners = NULL;
+  g->constructGhosts(num_ghosts,gids,owners);
 
+  agi::checkValidity(g);
   m->destroyNative();
   apf::destroyMesh(m);
 
