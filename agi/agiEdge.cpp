@@ -43,7 +43,7 @@ namespace agi {
     uintptr_t id = (uintptr_t)(edge)-1;
     etype type = id%num_types;
     id/=num_types;
-    if (isHyperGraph)
+    if (!isHyperGraph)
       return edge_weights[type][edge_list[type][id]];
     return edge_weights[type][id];
   }
