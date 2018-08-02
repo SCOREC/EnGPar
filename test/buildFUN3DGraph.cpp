@@ -61,15 +61,16 @@ int main(int argc, char* argv[]) {
   agi::lid_t* degs;
   agi::gid_t* pins;
   agi::wgt_t* edge_weights;
-  int dimension = 1;
-  agi::lid_t num_edges = gatherGraphEdges(m, bl_stacks, vert_ids, dimension, edge_ids, degs,
-                                          pins, edge_weights);
-  g->constructEdges(num_edges, edge_ids, degs, pins, edge_weights);
-  delete [] edge_ids;
-  delete [] degs;
-  delete [] pins;
-  delete [] edge_weights;
-  
+  for (int i = 5; i <argc; ++i) {
+    int dimension = atoi(argv[i]);
+    agi::lid_t num_edges = gatherGraphEdges(m, bl_stacks, vert_ids, dimension, edge_ids, degs,
+                                            pins, edge_weights);
+    g->constructEdges(num_edges, edge_ids, degs, pins, edge_weights);
+    delete [] edge_ids;
+    delete [] degs;
+    delete [] pins;
+    delete [] edge_weights;
+  }
   //TODO: construct ghosts (for now only worrying about serial)
 
   m->destroyNative();
