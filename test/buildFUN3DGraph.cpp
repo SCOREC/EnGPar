@@ -16,6 +16,9 @@ void collapseBoundaryLayer(apf::Mesh*, std::vector<BL_Verts>&);
 int numberStacksAndVerts(apf::Mesh*, const std::vector<BL_Verts>&, apf::MeshTag*&);
 void gatherGraphVertices(apf::Mesh*, const std::vector<BL_Verts>&, apf::MeshTag*,
                          agi::lid_t, agi::gid_t*&, agi::wgt_t*&);
+agi::lid_t gatherGraphEdges(apf::Mesh*, const std::vector<BL_Verts>&, apf::MeshTag*, int dim,
+                            agi::gid_t*& edge_ids, agi::lid_t*& degs, agi::gid_t*& pins,
+                            agi::wgt_t*&);
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc, &argv);
@@ -52,7 +55,23 @@ int main(int argc, char* argv[]) {
   g->constructVerts(true, num_verts, verts, vert_weights);
   delete [] verts;
   delete [] vert_weights;
+
+  //Construct the edges of the graph
+  agi::gid_t* edge_ids;
+  agi::lid_t* degs;
+  agi::gid_t* pins;
+  agi::wgt_t* edge_weights;
+  int dimension = 1;
+  agi::lid_t num_edges = gatherGraphEdges(m, bl_stacks, vert_ids, dimension, edge_ids, degs,
+                                          pins, edge_weights);
+  g->constructEdges(num_edges, edge_ids, degs, pins, edge_weights);
+  delete [] edge_ids;
+  delete [] degs;
+  delete [] pins;
+  delete [] edge_weights;
   
+  //TODO: construct ghosts (for now only worrying about serial)
+
   m->destroyNative();
   apf::destroyMesh(m);
 
@@ -174,4 +193,88 @@ void gatherGraphVertices(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, a
     verts[i] = i;
     wgts[i] = 1;
   }
+}
+
+
+typedef std::set<int> HyperEdge;
+//A hash functor for the a set of ints. Simply add the hashes of the entries.
+//Note: A better hash function may improve results if this approach has too many collisions
+class HEHash {
+public:
+  size_t operator()(const HyperEdge& e) const {
+    int h=0;
+    std::hash<int> hasher;
+    for(HyperEdge::iterator itr = e.begin(); itr != e.end(); itr++) {
+      h+=hasher(*itr);
+    }
+    return h;
+  }
+};
+
+//A simple operator equals for the sets for use in the unordered map
+inline bool operator==(const HyperEdge& e1, const HyperEdge& e2) {
+  if (e1.size()!=e2.size())
+    return false;
+  //HyperEdge are ordered sets so if they are equal the elements will be in the same order
+  HyperEdge::iterator itr1;
+  HyperEdge::iterator itr2;
+  for (itr1 = e1.begin(), itr2 = e2.begin(); itr1 != e1.end(); ++itr1, ++itr2) {
+    if (*itr1 != *itr2)
+      return false;
+  }
+  return true;
+}
+
+
+agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks,
+                            apf::MeshTag* vert_ids, int dim, agi::gid_t*& edge_ids,
+                            agi::lid_t*& degs, agi::gid_t*& pins, agi::wgt_t*& wgts) {
+  //An unordered map to store hyperedges (sets of vertex ids) temporarily to count duplicates
+  typedef std::unordered_map<HyperEdge, int, HEHash> HEMap;
+  HEMap hyperedges;
+
+  agi::gid_t num_pins = 0;
+    
+  apf::MeshEntity* bridge;
+  apf::MeshIterator* itr = m->begin(dim);
+  while ((bridge = m->iterate(itr))) {
+    apf::Downward verts;
+    int nd = m->getDownward(bridge,0,verts);
+    HyperEdge e;
+    for (int i = 0; i < nd; ++i) {
+      int id;
+      m->getIntTag(verts[i],vert_ids,&id);
+      e.insert(id);
+    }
+    std::pair<HEMap::iterator, bool> insert_pair  = hyperedges.insert(std::make_pair(e,1));
+    if (!insert_pair.second)
+      insert_pair.first->second++;
+    else {
+      num_pins+=e.size();
+    }
+  }
+  m->end(itr);
+
+  agi::lid_t num_edges = hyperedges.size();
+  printf("There will be %d edges and %ld pins in the graph\n", num_edges, num_pins);
+
+  edge_ids = new agi::gid_t[num_edges];
+  degs = new agi::lid_t[num_edges];
+  pins = new agi::gid_t[num_pins];
+  wgts = new agi::wgt_t[num_edges];
+
+  HEMap::iterator heItr;
+  int index = 0;
+  int pin_index = 0;
+  for (heItr = hyperedges.begin(); heItr != hyperedges.end(); ++heItr) {
+    edge_ids[index] = index;
+    degs[index] = heItr->first.size();
+    HyperEdge::iterator hItr;
+    for (hItr = heItr->first.begin(); hItr != heItr->first.end(); ++hItr) {
+      pins[pin_index++] = *hItr;
+    }
+    wgts[index++] = heItr->second;
+  }
+
+  return num_edges;
 }
