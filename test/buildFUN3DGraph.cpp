@@ -247,6 +247,8 @@ agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks
       m->getIntTag(verts[i],vert_ids,&id);
       e.insert(id);
     }
+    if (e.size() == 1)
+      continue;
     std::pair<HEMap::iterator, bool> insert_pair  = hyperedges.insert(std::make_pair(e,1));
     if (!insert_pair.second)
       insert_pair.first->second++;
