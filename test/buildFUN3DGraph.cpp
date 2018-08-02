@@ -77,9 +77,13 @@ int main(int argc, char* argv[]) {
   agi::part_t* owners = NULL;
   g->constructGhosts(num_ghosts,gids,owners);
 
+  m->destroyTag(vert_ids);
+
   agi::checkValidity(g);
   m->destroyNative();
   apf::destroyMesh(m);
+
+  g->saveToFile(argv[3]);
 
   PCU_Barrier();
   if (!PCU_Comm_Self())
