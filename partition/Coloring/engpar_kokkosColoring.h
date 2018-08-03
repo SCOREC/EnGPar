@@ -21,7 +21,7 @@ namespace engpar {
 
 namespace engpar {
   typedef Kokkos::DefaultExecutionSpace exe_space;
-  typedef Kokkos::View<agi::lid_t*, exe_space::device_type> kkLidView;
+  typedef Kokkos::View<int*, exe_space::device_type> kkLidView;
   typedef Kokkos::TeamPolicy<>::member_type member_type;
 
   /** \brief return a kokkos device view with the coloring
