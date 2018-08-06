@@ -30,29 +30,29 @@ namespace engpar {
       delete [] pg->eve_lists[t];
     }
     // Load graph info to device
-    const uint N = pg->num_local_edges[t];
-    const uint M = pg->num_local_verts;
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts;
     kkLidView degree_view ("degree_view", M+1);
     kkLidView edge_view ("edge_view", pg->num_local_pins[t]);
     hostToDevice(degree_view, pg->degree_list[t]); 
     hostToDevice(edge_view, pg->edge_list[t]); 
     // make hint for map size to avoid resize
-    uint numAdj = 0;
-    Kokkos::parallel_reduce (M, KOKKOS_LAMBDA(const int v, uint& upd) {
-      for (uint i=degree_view(v); i<degree_view(v+1); ++i) {
-        for (uint j=degree_view(v); j<degree_view(v+1); ++j) {
+    int numAdj = 0;
+    Kokkos::parallel_reduce (M, KOKKOS_LAMBDA(const int v, int& upd) {
+      for (int i=degree_view(v); i<degree_view(v+1); ++i) {
+        for (int j=degree_view(v); j<degree_view(v+1); ++j) {
           if (edge_view(i)!=edge_view(j))
             upd++;
         }
       } 
     }, numAdj);
     // fill map
-    Kokkos::UnorderedMap<Kokkos::pair<uint,uint>,void> m (numAdj);
+    Kokkos::UnorderedMap<Kokkos::pair<int,int>,void> m (numAdj);
     Kokkos::parallel_for (M, KOKKOS_LAMBDA(const int v) {
-      for (uint i=degree_view(v); i<degree_view(v+1); ++i) {
-        for (uint j=degree_view(v); j<degree_view(v+1); ++j) {
+      for (int i=degree_view(v); i<degree_view(v+1); ++i) {
+        for (int j=degree_view(v); j<degree_view(v+1); ++j) {
           if (edge_view(i)!=edge_view(j)) {
-            m.insert( Kokkos::pair<uint,uint>(edge_view(i),edge_view(j)) );
+            m.insert( Kokkos::pair<int,int>(edge_view(i),edge_view(j)) );
           }
         }
       }
@@ -61,12 +61,12 @@ namespace engpar {
     kkLidView deg ("deg", N+1);
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
-        Kokkos::pair<uint,uint> p = m.key_at(i);
+        Kokkos::pair<int,int> p = m.key_at(i);
         Kokkos::atomic_fetch_add( &deg(p.first+1), 1);
       }
     });
-    Kokkos::parallel_scan (N, KOKKOS_LAMBDA (const int i, uint& upd, const bool& final) {
-      const uint val = deg(i+1);
+    Kokkos::parallel_scan (N, KOKKOS_LAMBDA (const int i, int& upd, const bool& final) {
+      const int val = deg(i+1);
       upd += val;
       if (final)
         deg(i+1) = upd;
@@ -78,7 +78,7 @@ namespace engpar {
     kkLidView adjCount ("adjCount", N);
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
-        Kokkos::pair<uint,uint> p = m.key_at(i);
+        Kokkos::pair<int,int> p = m.key_at(i);
         int e = deg(p.first);
         int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
         edgeList(e+idx) = p.second;
