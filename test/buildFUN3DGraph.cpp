@@ -112,7 +112,7 @@ void collapseBoundaryLayer(apf::Mesh* m, std::vector<BL_Verts>& bl_stacks) {
       continue;
     apf::Adjacent elms;
     m->getAdjacent(v,3,elms);
-    int i;
+    size_t i;
     //Check if the vertex bounds a prism
     for (i = 0; i < elms.size(); ++i) {
       if (m->getType(elms[i]) == apf::Mesh::Type::PRISM)
@@ -190,9 +190,10 @@ int numberStacksAndVerts(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, a
   vert_ids = m->createIntTag("vertex_ids",1);
 
   //First mark all bl stack vertices
-  for (int i = 0; i < bl_stacks.size(); i++) {
+  for (size_t i = 0; i < bl_stacks.size(); i++) {
     for (size_t j = 0; j < bl_stacks[i].size(); j++) {
-      m->setIntTag(bl_stacks[i][j], vert_ids, &i);
+      int temp = i;
+      m->setIntTag(bl_stacks[i][j], vert_ids, &temp);
     }
   }
 
@@ -212,7 +213,7 @@ int numberStacksAndVerts(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, a
   return id;
 }
 
-void gatherGraphVertices(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, apf::MeshTag* vert_ids, agi::lid_t nv, agi::gid_t*& verts, agi::wgt_t*& wgts) {
+void gatherGraphVertices(apf::Mesh*, const std::vector<BL_Verts>& bl_stacks, apf::MeshTag*, agi::lid_t nv, agi::gid_t*& verts, agi::wgt_t*& wgts) {
 
   verts = new agi::gid_t[nv];
   wgts = new agi::wgt_t[nv];
@@ -222,7 +223,7 @@ void gatherGraphVertices(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks, a
     verts[i] = i;
     wgts[i] = bl_stacks[i].size();
   }
-  for (; i < nv; i++) {
+  for (; i < (unsigned)nv; i++) {
     verts[i] = i;
     wgts[i] = 1;
   }
@@ -259,7 +260,7 @@ inline bool operator==(const HyperEdge& e1, const HyperEdge& e2) {
 }
 
 
-agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>& bl_stacks,
+agi::lid_t gatherGraphEdges(apf::Mesh* m, const std::vector<BL_Verts>&,
                             apf::MeshTag* vert_ids, int dim, agi::gid_t*& edge_ids,
                             agi::lid_t*& degs, agi::gid_t*& pins, agi::wgt_t*& wgts) {
   //An unordered map to store hyperedges (sets of vertex ids) temporarily to count duplicates
