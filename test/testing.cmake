@@ -201,21 +201,57 @@ if (ENABLE_KOKKOS)
     ./kokkosColoring
     "${GRAPHS}/asic.ebin")
 
-  mpi_test(colorMeshPipe 1
-    ./kokkosMeshColoring
-    "${MESHES}/pipe/pipe.dmg"
-    "${MESHES}/pipe/pipe.smb")
+  #  mpi_test(colorMeshPipe 1
+  #    ./kokkosMeshColoring
+  #    "${MESHES}/pipe/pipe.dmg"
+  #    "${MESHES}/pipe/pipe.smb")
 
-  mpi_test(colorMeshTorus 4
-    ./kokkosMeshColoring
-    "${MESHES}/torus/torus.dmg"
-    "${MESHES}/torus/4imb/torus.smb")
+  #  mpi_test(colorMeshTorus 4
+  #    ./kokkosMeshColoring
+  #    "${MESHES}/torus/torus.dmg"
+  #    "${MESHES}/torus/4imb/torus.smb")
 
-  
-  mpi_test(colorMeshUpright 1
+  mpi_test(colorMesh67k 1
     ./kokkosMeshColoring
     "${MESHES}/upright/upright.dmg"
-    "${MESHES}/upright/190k.smb")
+    "${MESHES}/upright/67k.smb"
+    false)
+
+  mpi_test(colorMesh190k 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/190k.smb"
+    false)
+
+  mpi_test(colorMesh400k 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/400k.smb"
+    false)
+
+  mpi_test(colorMesh890k 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/890k.smb"
+    false)
+
+  mpi_test(colorMesh1.6M 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/1.6M.smb"
+    false)
+
+  mpi_test(colorMesh13M 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/13M.smb"
+    false)
+
+  mpi_test(colorMesh28M 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/28M.smb"
+    false)
 
   mpi_test(eveParallel 1
     ./eveParallel

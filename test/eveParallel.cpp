@@ -8,8 +8,12 @@
 #include <apfGraph.h>
 #include <apfMDS.h>
 #include <Kokkos_Core.hpp>
-typedef Kokkos::View<agi::lid_t*> kkLidView;
+#include <Kokkos_UnorderedMap.hpp>
+#include <utility>
+typedef unsigned int uint;
+typedef Kokkos::View<uint*> kkLidView;
 typedef Kokkos::TeamPolicy<>::member_type member_type;
+
 
 
 void hostToDevice(kkLidView d, agi::lid_t* h) {
@@ -36,30 +40,51 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
   }
   // Load graph info to device
   const int N = pg->num_local_edges[t];
-  const int M = pg->num_local_verts;
-  Kokkos::View<int**> A ("adjacency_matrix", N, N);
+  const int M = pg->num_local_verts; 
+
+  Kokkos::View<uint**> A ("adjacency_matrix", N, N);
   kkLidView degree_view ("degree_view", M+1);
-  hostToDevice(degree_view, pg->degree_list[t]);
+  hostToDevice(degree_view, pg->degree_list[t]); 
   kkLidView edge_view ("edge_view", pg->num_local_pins[t]);
-  hostToDevice(edge_view, pg->edge_list[t]);
-  // User hierarchical parallelism to construct adjacency matrix 
-  Kokkos::parallel_for (Kokkos::TeamPolicy<>(M, Kokkos::AUTO()),
-    KOKKOS_LAMBDA (const member_type& thread) {
-      const int v = thread.league_rank();
-      const int loop_count = degree_view(v+1) - degree_view(v);
-      Kokkos::parallel_for (Kokkos::TeamThreadRange(thread, loop_count), 
-        [&] (int i) {
-          i += degree_view(v);
-          Kokkos::parallel_for (Kokkos::ThreadVectorRange(thread, loop_count),
-            [=] (int j) {
-              j+= degree_view(v);
-              if (i!=j)
-                A(edge_view(i),edge_view(j)) = 1;
-            });
-        });
-    });
+  if (pg->isHyperGraph) {
+    hostToDevice(edge_view, pg->edge_list[t]);
+    // Uses hierarchical parallelism to construct adjacency matrix 
+    // HYPERGRAPH VERSION
+    Kokkos::parallel_for (Kokkos::TeamPolicy<>(M, Kokkos::AUTO()),
+      KOKKOS_LAMBDA (const member_type& thread) {
+        const int v = thread.league_rank();
+        const int loop_count = degree_view(v+1) - degree_view(v); 
+        Kokkos::parallel_for (Kokkos::TeamThreadRange(thread, loop_count), 
+          [=] (const int i) {
+            int row = degree_view(v) + i;
+            Kokkos::parallel_for (Kokkos::ThreadVectorRange(thread, loop_count),
+              [=] (const int j) { 
+                int col = degree_view(v) + j;
+                if (edge_view(row)!=edge_view(col))
+                  A(edge_view(row),edge_view(col)) = 1;
+              });
+          });
+      });
+  } else {
+    // GRAPH VERSION
+    Kokkos::parallel_for (Kokkos::TeamPolicy<>(M, Kokkos::AUTO()),
+      KOKKOS_LAMBDA (const member_type& thread) {
+        const int v = thread.league_rank();
+        const int loop_count = degree_view(v+1) - degree_view(v); 
+        Kokkos::parallel_for (Kokkos::TeamThreadRange(thread, loop_count), 
+          [=] (const int i) {
+            int row = degree_view(v) + i;
+            Kokkos::parallel_for (Kokkos::ThreadVectorRange(thread, loop_count),
+              [=] (const int j) {
+                int col = degree_view(v) + j;
+                if (row!=col)
+                  A(row,col) = 1;
+              });
+          });
+      });
+  }
   // Compress 'A' into a CSR
-  Kokkos::View<int*> eve_deg ("A_degree_list", N+1); 
+  kkLidView eve_deg ("A_deg", N+1); 
   Kokkos::parallel_for (Kokkos::TeamPolicy<>(N, Kokkos::AUTO()),
     KOKKOS_LAMBDA (const member_type& thread) {
       const int i = thread.league_rank();
@@ -70,18 +95,15 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
         }, degree);
       eve_deg(i+1) = degree;
     });
-  Kokkos::parallel_scan(N+1, KOKKOS_LAMBDA(const int& i, int& upd, const bool& final) {
-    const int val = eve_deg(i); 
+  Kokkos::parallel_scan(N, KOKKOS_LAMBDA(const int& i, int& upd, const bool& final) {
+    const int val = eve_deg(i+1); 
     upd += val;
     if (final)
-      eve_deg(i) = upd; 
+      eve_deg(i+1) = upd;
   });
   pg->eve_offsets[t] = new int[N+1];
   deviceToHost(eve_deg, pg->eve_offsets[t]);
   int eve_edge_size = pg->eve_offsets[t][N]; 
-  Kokkos::parallel_reduce(N, KOKKOS_LAMBDA(const int i, int& upd) {
-    upd += eve_deg(i);
-  }, eve_edge_size);
   kkLidView eve_edges ("eve_edges", eve_edge_size);
   Kokkos::parallel_for (N, KOKKOS_LAMBDA(const int i) {
     int index = eve_deg(i);
@@ -91,10 +113,8 @@ void parallel_eve(agi::Ngraph* g, agi::etype t=0) {
           eve_edges(index++) = j;
       }
     }
-  });
-  pg->eve_offsets[t] = new int[N+1];
+  }); 
   pg->eve_lists[t] = new int[eve_edge_size];
-  deviceToHost(eve_deg, pg->eve_offsets[t]);
   deviceToHost(eve_edges, pg->eve_lists[t]);
 }
 
