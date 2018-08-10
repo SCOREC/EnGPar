@@ -65,9 +65,21 @@ namespace engpar {
     DiffusiveInput* in = static_cast<DiffusiveInput*>(createDiffusiveInput(g,0));
     Sides* sides = makeSides(in);
     my_vals[1] = sides->size();
-    my_vals[2] = sides->total();
+
     delete in;
     delete sides;
+
+    my_vals[2] = 0;
+    agi::GraphEdge* e;
+    agi::EdgeIterator* eitr = g->begin(0);
+    while ((e = g->iterate(eitr))) {
+      agi::Peers res;
+      g->getResidence(e,res);
+      if (res.size() > 1) {
+        my_vals[2] += g->weight(e);
+      }
+    }
+    g->destroy(eitr);
     
     //Vertex Imbalance
     my_vals[3] = getWeight(g,-1);
