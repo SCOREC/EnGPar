@@ -110,8 +110,8 @@ namespace engpar {
                             prefix,max[0],total[0]);
       EnGPar_Status_Message("%s: Neighbors: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
                             prefix,max[1],min[1],avg[1],max[1]/avg[1]);
-      EnGPar_Status_Message("%s: Edge Cut: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
-                            prefix,max[2],min[2],avg[2],max[2]/avg[2]);
+      EnGPar_Status_Message("%s: Edge Cut: <max,tot> %.3f %.3f\n",
+                            prefix,max[2], total[2]);
       EnGPar_Status_Message("%s: Local Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
                             prefix,max[3],min[3],avg[3],max[3]/avg[3]);
       EnGPar_Status_Message("%s: Total Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
