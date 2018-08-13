@@ -20,11 +20,11 @@ namespace engpar {
         if (res.size()>1) {
           agi::Peers::iterator itr;
           for (itr=res.begin();itr!=res.end();itr++) {
-            if (*itr!=PCU_Comm_Self()) {
-              increment2(*itr);
+            if (*itr != PCU_Comm_Self()) {
+              (*this)[*itr]+=g->weight(edge);
             }
           }
-          my_total++;
+          my_total+= g->weight(edge);
         }
       }
       g->destroy(eitr);
