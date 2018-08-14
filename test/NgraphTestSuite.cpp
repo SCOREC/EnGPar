@@ -23,6 +23,7 @@ int testMigration(agi::Ngraph* g);
 int testRepartition(agi::Ngraph* g);
 int testVEVAdjacency(agi::Ngraph* g);
 int testEVEAdjacency(agi::Ngraph* g);
+int testGhostTag(agi::Ngraph* g);
 
 int main(int argc, char* argv[]) {
   int trial = -1;
@@ -52,13 +53,15 @@ int main(int argc, char* argv[]) {
   suite.addGeneralTest("Traverse Adjacency",testAdjacent);
   suite.addGeneralTest("Compare Traversals",compareTraversal);
   suite.addGeneralTest("Build Distance Queue", testDistanceQueue);
+  suite.addGeneralTest("VEV adjacency", testVEVAdjacency);
+  suite.addGeneralTest("EVE adjacency", testEVEAdjacency);
+  suite.addGeneralTest("Ghost Tag", testGhostTag);
+
   if (PCU_Comm_Peers()>1) {
     suite.addGeneralTest("Migration",testMigration);
     suite.addGeneralTest("Repartition", testRepartition);
   }
-  suite.addGeneralTest("VEV adjacency", testVEVAdjacency);
-  suite.addGeneralTest("EVE adjacency", testEVEAdjacency);
-  
+
   //Run the tests and get the number of failures
   int ierr = suite.runTests(trial);
 
@@ -487,7 +490,6 @@ int testEVEAdjacency(agi::Ngraph* g) {
     agi::EVEIterator* aitr = g->eve_begin(e);
     agi::GraphEdge* adj;
     unsigned int count = 0;
-    //    while ((adj = g->iterate(aitr))) {
     for (adj = g->iterate(aitr); aitr != g->eve_end(e); adj = g->iterate(aitr)) {
       count++;
       if (unique_adj.find(adj)==unique_adj.end())
@@ -501,5 +503,41 @@ int testEVEAdjacency(agi::Ngraph* g) {
   return 0;
 }
 
-
+int tagOne(agi::Ngraph*, agi::GraphVertex*) {
+  return 1;
+}
+long tagGID(agi::Ngraph* g, agi::GraphVertex* v) {
+  return g->globalID(v);
+}
+double tagInverseDegree(agi::Ngraph* g, agi::GraphVertex* v) {
+  if (g->degree(v) == 0)
+    return 1;
+  return 1.0 / g->degree(v);
+}
+int testGhostTag(agi::Ngraph* g) {
+  if (PCU_Comm_Peers() == 1)
+    return 0;
+  agi::GraphTag* tagG = g->createLongGhostTag(tagGID);
+  agi::GraphTag* tag1 = g->createIntGhostTag(tagOne);
+  agi::GraphTag* tagDeg = g->createDoubleGhostTag(tagInverseDegree);
+  agi::GhostIterator* gitr = g->beginGhosts();
+  agi::GraphVertex* v;
+  while ((v = g->iterate(gitr))) {
+    long val = g->getLongTag(tagG,v);
+    if (g->globalID(v) != val) {
+      printf("%ld %ld\n", g->globalID(v), val);
+      return 1;
+    }
+    double valD = g->getDoubleTag(tagDeg,v);
+    if (valD>1 || valD <= 0)
+      return 2;
+    int one = g->getIntTag(tag1,v);
+    if (one != 1)
+      return 3;
+  }
+  g->destroyTag(tagG);
+  g->destroyTag(tag1);
+  g->destroyTag(tagDeg);
+  return 0;
+}
 

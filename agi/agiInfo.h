@@ -16,9 +16,9 @@ namespace agi {
     int getInt(lid_t i) {return reinterpret_cast<int*>(data)[i];}
     void setInt(lid_t i, int val) {reinterpret_cast<int*>(data)[i] = val;}
     double getDouble(lid_t i) {return reinterpret_cast<double*>(data)[i];}
-    void setDouble(lid_t i, int val) {reinterpret_cast<double*>(data)[i] = val;}
+    void setDouble(lid_t i, double val) {reinterpret_cast<double*>(data)[i] = val;}
     long getLong(lid_t i) {return reinterpret_cast<long*>(data)[i];}
-    void setLong(lid_t i, int val) {reinterpret_cast<long*>(data)[i] = val;}
+    void setLong(lid_t i, long val) {reinterpret_cast<long*>(data)[i] = val;}
   protected:
     char* data;
   };

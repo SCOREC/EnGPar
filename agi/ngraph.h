@@ -330,6 +330,13 @@ public:
    * \return The tag to the data
    */
   GraphTag* createLongTag(etype t=VTX_TYPE);
+
+  typedef int (*IntGhostTag)(Ngraph*, GraphVertex*);
+  GraphTag* createIntGhostTag(IntGhostTag callback);
+  typedef double (*DoubleGhostTag)(Ngraph*, GraphVertex*);
+  GraphTag* createDoubleGhostTag(DoubleGhostTag callback);
+  typedef long (*LongGhostTag)(Ngraph*, GraphVertex*);
+  GraphTag* createLongGhostTag(LongGhostTag callback);
   /** \brief Destroys a tag created earlier
    * /param t The tag to be deleted
    */
@@ -406,6 +413,15 @@ public:
    * \param val The value to be assigned to the edge for the given tag
    */
   void setLongTag(GraphTag* tag,GraphEdge* e,long val);
+
+  /** \brief Shares tag values across part boundaries
+   * \param tag The tag.
+   * \param The edge type/ vertex type
+   *
+   * If t = VTX_TYPE then the tag must have been created with includeGhosts = true
+   * The behavior is undefined for edge types currently
+   */
+  void shareTag(GraphTag* tag, etype t=VTX_TYPE);
   ///@}
   
   /** \name Iterator Traversal*/
@@ -506,6 +522,9 @@ public:
   
   void printStats() const;
  protected:
+
+  GraphTag* ghost_weights;
+
   // \cond 
   Ngraph();
   Ngraph(const Ngraph&) {throw std::runtime_error("Copying Ngraph not supported");}

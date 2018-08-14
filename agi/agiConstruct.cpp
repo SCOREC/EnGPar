@@ -37,6 +37,8 @@ namespace agi {
     ghost_unmap=NULL;
     owners = NULL;
     original_owners = NULL;
+
+    ghost_weights = NULL;
   }
 
   void Ngraph::constructGraph(bool isHG,
@@ -364,6 +366,10 @@ namespace agi {
     return t;
   }
 
+  double weightTag(Ngraph* g, GraphVertex* v) {
+    return g->weight(v);
+  }
+
   void Ngraph::constructGhosts(std::unordered_map<gid_t,part_t>& owns) {
     if (EnGPar_Is_Log_Open()) {
       char message[45];
@@ -405,6 +411,10 @@ namespace agi {
         num_global_pins[t] = 2*num_global_edges[t];
       }
     }
+
+    //Create the ghost weights
+    if (PCU_Comm_Peers() > 1)
+      ghost_weights = createDoubleGhostTag(weightTag);
 
     if (EnGPar_Is_Log_Open()) {
       EnGPar_End_Function();
@@ -500,7 +510,9 @@ namespace agi {
       sprintf(message,"destroyData\n");
       EnGPar_Log_Function(message);
     }
-
+    if (ghost_weights)
+      destroyTag(ghost_weights);
+    ghost_weights = NULL;
     if (local_weights) 
       delete [] local_weights;
     local_weights = NULL;
@@ -529,12 +541,16 @@ namespace agi {
       edge_mapping[i].clear();
       if (vev_offsets[i])
         delete [] vev_offsets[i];
+      vev_offsets[i] = NULL;
       if (vev_lists[i])
         delete [] vev_lists[i];
+      vev_lists[i] = NULL;
       if (eve_offsets[i])
         delete [] eve_offsets[i];
+      eve_offsets[i] = NULL;
       if (eve_lists[i])
         delete [] eve_lists[i];
+      eve_lists[i] = NULL;
     }
     if (local_unmap)
       delete [] local_unmap;
