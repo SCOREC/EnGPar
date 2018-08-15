@@ -268,6 +268,10 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
   return 0;
 }
 
+  double weightTagBin(Ngraph* g, GraphVertex* v) {
+    return g->weight(v);
+  }
+
 
   int binGraph::create_dist_csr(int32_t* ranks,etype t,bool createGhost)
 {
@@ -337,6 +341,10 @@ int binGraph::exchange_edges(int64_t m_read, int64_t* read_edges,
       }
     }
   }
+
+  //Create the ghost weights
+  if (PCU_Comm_Peers() > 1)
+    ghost_weights = createDoubleGhostTag(weightTagBin);
 
   return 0;
 }

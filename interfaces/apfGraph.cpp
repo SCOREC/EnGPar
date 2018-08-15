@@ -364,6 +364,10 @@ void apfGraph::connectToPins(int primary_dimension,
 }
 
 
+  double weightTagAPF(Ngraph* g, GraphVertex* v) {
+    return g->weight(v);
+  }
+
 void apfGraph::constructGhostVerts() {
   //construct the ghost containers
   if (num_ghost_verts>0) {
@@ -372,6 +376,11 @@ void apfGraph::constructGhostVerts() {
     owners = new part_t[num_ghost_verts];
     std::copy(owns.begin(),owns.end(),owners);
   }
+
+  //Create the ghost weights
+  if (PCU_Comm_Peers() > 1)
+    ghost_weights = createDoubleGhostTag(weightTagAPF);
+
 }
   
 
