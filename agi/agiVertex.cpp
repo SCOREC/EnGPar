@@ -15,15 +15,14 @@ namespace agi {
     return reinterpret_cast<GraphVertex*>( toPtr(lid+1) );
   }
 
-const wgt_t& Ngraph::weight(GraphVertex* vtx) const {
+wgt_t Ngraph::weight(GraphVertex* vtx) const {
   lid_t index = fromPtr(vtx);
   if (index>=numTotalVtxs()){
     EnGPar_Error_Message("invalid vertex given to weight(vtx)\n");
     throw 1;
   }    
   else if (index>=num_local_verts) {
-    EnGPar_Error_Message("weights unknown for ghost vertices\n");
-    throw 2;
+    return getDoubleTag(ghost_weights, vtx);
   }
   return local_weights[index];
 }

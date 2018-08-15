@@ -159,7 +159,7 @@ public:
    * \param vtx the graph vertex
    * \return the weight
    */
-  const wgt_t& weight(GraphVertex* vtx) const;
+  wgt_t weight(GraphVertex* vtx) const;
   /** \brief Returns true if coordinates are attached to the vertices.
    * \return whether coordinates are provided or not.
    */
@@ -346,37 +346,37 @@ public:
    * \param v The vertex.
    * \return The value of the vertex for this tag 
    */
-  int getIntTag(GraphTag* tag,GraphVertex* v);
+  int getIntTag(GraphTag* tag,GraphVertex* v) const;
   /** \brief Retrieves an integer value of a tag for a edge.
    * \param tag The tag.
    * \param e The edge.
    * \return The value of the edge for this tag 
    */
-  int getIntTag(GraphTag* tag,GraphEdge* e);
+  int getIntTag(GraphTag* tag,GraphEdge* e) const;
   /** \brief Retrieves a double value of a tag for a vertex.
    * \param tag The tag.
    * \param v The vertex.
    * \return The value of the vertex for this tag 
    */
-  double getDoubleTag(GraphTag* tag,GraphVertex* v);
+  double getDoubleTag(GraphTag* tag,GraphVertex* v) const;
   /** \brief Retrieves a double value of a tag for a edge.
    * \param tag The tag.
    * \param e The edge.
    * \return The value of the edge for this tag 
    */
-  double getDoubleTag(GraphTag* tag,GraphEdge* e);
+  double getDoubleTag(GraphTag* tag,GraphEdge* e) const;
   /** \brief Retrieves a long value of a tag for a vertex.
    * \param tag The tag.
    * \param v The vertex.
    * \return The value of the vertex for this tag 
    */
-  long getLongTag(GraphTag* tag,GraphVertex* v);
+  long getLongTag(GraphTag* tag,GraphVertex* v) const;
   /** \brief Retrieves a long value of a tag for a edge.
    * \param tag The tag.
    * \param e The edge.
    * \return The value of the edge for this tag 
    */
-  long getLongTag(GraphTag* tag,GraphEdge* e);
+  long getLongTag(GraphTag* tag,GraphEdge* e) const;
   /** \brief Sets an integer value of a tag for a vertex.
    * \param tag The tag.
    * \param v The vertex.

@@ -37,35 +37,35 @@ namespace agi {
   void Ngraph::destroyTag(GraphTag* t) {
     delete reinterpret_cast<Info*>(t);
   }
-  int Ngraph::getIntTag(GraphTag* t,GraphVertex* vtx) {
+  int Ngraph::getIntTag(GraphTag* t,GraphVertex* vtx) const {
     uintptr_t index = (uintptr_t)(vtx)-1;
     if (index>=(unsigned)num_local_verts)
       index-=num_local_verts;
     return reinterpret_cast<Info*>(t)->getInt(index);
   }
-  int Ngraph::getIntTag(GraphTag* t,GraphEdge* edge) {
+  int Ngraph::getIntTag(GraphTag* t,GraphEdge* edge) const {
     uintptr_t id = (uintptr_t)(edge)-1;
     id/=num_types;
     return reinterpret_cast<Info*>(t)->getInt(id);
   }
-  double Ngraph::getDoubleTag(GraphTag* t,GraphVertex* vtx) {
+  double Ngraph::getDoubleTag(GraphTag* t,GraphVertex* vtx) const {
     uintptr_t index = (uintptr_t)(vtx)-1;
     if (index>=(unsigned)num_local_verts)
       index-=num_local_verts;
     return reinterpret_cast<Info*>(t)->getDouble(index);
   }
-  double Ngraph::getDoubleTag(GraphTag* t,GraphEdge* edge) {
+  double Ngraph::getDoubleTag(GraphTag* t,GraphEdge* edge) const {
     uintptr_t id = (uintptr_t)(edge)-1;
     id/=num_types;
     return reinterpret_cast<Info*>(t)->getDouble(id);
   }
-  long Ngraph::getLongTag(GraphTag* t,GraphVertex* vtx) {
+  long Ngraph::getLongTag(GraphTag* t,GraphVertex* vtx) const {
     uintptr_t index = (uintptr_t)(vtx)-1;
     if (index >= (unsigned)num_local_verts)
       index -= num_local_verts;
     return reinterpret_cast<Info*>(t)->getLong(index);
   }
-  long Ngraph::getLongTag(GraphTag* t,GraphEdge* edge) {
+  long Ngraph::getLongTag(GraphTag* t,GraphEdge* edge) const {
     uintptr_t id = (uintptr_t)(edge)-1;
     id/=num_types;
     return reinterpret_cast<Info*>(t)->getLong(id);
