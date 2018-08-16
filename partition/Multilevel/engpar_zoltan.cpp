@@ -33,7 +33,7 @@ namespace engpar {
     //TODO: make some of these parameters changable in the input
     Zoltan_Set_Param(zz,"LB_METHOD", "HYPERGRAPH");
     Zoltan_Set_Param(zz,"HYPERGRAPH_PACKAGE", "PHG");
-    Zoltan_Set_Param(zz,"LB_APPROACH", "REPARTITION");
+    Zoltan_Set_Param(zz,"LB_APPROACH", "PARTITION");
 
     setParameters(input, zz, target_parts);
     setCallbacks(input, zz);
@@ -75,7 +75,7 @@ namespace engpar {
 
   void setParameters(SplitInput* input, struct Zoltan_Struct* zz, int target_parts) {
     Zoltan_Set_Param(zz,"OBJ_WEIGHT_DIM","1");
-    //Zoltan_Set_Param(zz,"EDGE_WEIGHT_DIM","1");
+    Zoltan_Set_Param(zz,"EDGE_WEIGHT_DIM","1");
     char param[100];
     sprintf(param,"%d",target_parts);
     Zoltan_Set_Param(zz, "NUM_GLOBAL_PARTS",param);
@@ -83,6 +83,8 @@ namespace engpar {
     Zoltan_Set_Param(zz,"RETURN_LISTS","EXPORT");
     sprintf(param,"%f",input->tolerance);
     Zoltan_Set_Param(zz,"IMBALANCE_TOL",param);
+    if (!EnGPar_Check_Verbosity(2))
+      Zoltan_Set_Param(zz,"DEBUG_LEVEL","0");
   }
 
   /******  Callback functions  ******/
@@ -155,7 +157,7 @@ namespace engpar {
                            ZOLTAN_ID_PTR gids, ZOLTAN_ID_PTR lids, float* wgts, int* ierr) {
     agi::Ngraph* g = static_cast<agi::Ngraph*>(data);
     agi::GraphEdge* e;
-    agi::EdgeIterator* eitr = g->begin(1);
+    agi::EdgeIterator* eitr = g->begin(0);
     while ((e = g->iterate(eitr))) {
       agi::lid_t lid = g->localID(e);
       lids[nlids*lid] = lid;
@@ -177,12 +179,10 @@ namespace engpar {
                   (void (*)())numHyperedges,(void*) input->g);
     Zoltan_Set_Fn(zz, ZOLTAN_HG_CS_FN_TYPE,
                   (void (*)())getHyperedges,(void*) input->g);
-    /*
     Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_EDGE_WTS_FN_TYPE,
                   (void (*)())numHyperedgeWeights,(void*) input->g);
     Zoltan_Set_Fn(zz, ZOLTAN_HG_EDGE_WTS_FN_TYPE,
                   (void (*)())getHyperedgeWeights,(void*) input->g);
-    */
   }
 #else
   agi::Migration* EnGPar_Zoltan(SplitInput*, int, bool) {
