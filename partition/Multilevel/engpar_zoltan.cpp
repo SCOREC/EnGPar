@@ -28,6 +28,7 @@ namespace engpar {
       comm = MPI_COMM_SELF;
     else
       comm = PCU_Get_Comm();
+
     struct Zoltan_Struct* zz = Zoltan_Create(comm);
     //TODO: make some of these parameters changable in the input
     Zoltan_Set_Param(zz,"LB_METHOD", "HYPERGRAPH");
@@ -62,7 +63,7 @@ namespace engpar {
     agi::PNgraph* pg = input->g->publicize();
     for (int i = 0; i < num_export; ++i) {
       agi::GraphVertex* v = pg->getVertex(export_lids[i]);
-      plan->insert(std::make_pair(v,export_parts[i]));
+      plan->insert(std::make_pair(v,export_procs[i]));
     }
 
     Zoltan_LB_Free_Part(&import_gids, &import_lids, &import_procs, &import_parts);
@@ -78,7 +79,7 @@ namespace engpar {
     char param[100];
     sprintf(param,"%d",target_parts);
     Zoltan_Set_Param(zz, "NUM_GLOBAL_PARTS",param);
-    Zoltan_Set_Param(zz, "NUM_LOCAL_PARTS",param);
+    Zoltan_Set_Param(zz, "NUM_LOCAL_PARTS","1");
     Zoltan_Set_Param(zz,"RETURN_LISTS","EXPORT");
     sprintf(param,"%f",input->tolerance);
     Zoltan_Set_Param(zz,"IMBALANCE_TOL",param);

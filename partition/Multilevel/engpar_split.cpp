@@ -28,12 +28,14 @@ namespace engpar {
     }
     agi::Migration* plan = NULL;
     inp->self = PCU_Comm_Self();
+    if (method == ZOLTAN_PHG) {
+      PCU_Switch_Comm(inp->largeComm);
+      plan = EnGPar_Zoltan(inp,inp->total_parts,false);
+      PCU_Switch_Comm(inp->smallComm);
+    }
     if (inp->isOriginal) {
       if (method ==GLOBAL_PARMETIS) {
         plan = EnGPar_ParMETIS(inp,inp->total_parts,false);
-      }
-      else if (method == ZOLTAN_PHG) {
-        plan = EnGPar_Zoltan(inp,inp->total_parts,false);
       }
       else if (method == LOCAL_PARMETIS) {
         assert(inp->split_factor!=-1);
@@ -50,6 +52,8 @@ namespace engpar {
       expandParts(inp->g,inp->largeComm);
     }
     else {
+      if (plan)
+        delete plan;
       plan = new agi::Migration(inp->g);
     }
     PCU_Switch_Comm(inp->largeComm);
