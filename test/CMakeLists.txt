@@ -24,7 +24,6 @@ else()
 endif()
 
 set(ALL_LIBS ${ALL_LIBS}
-  ${ZOLTAN_LIBRARIES}
   ${KOKKOS_LIBRARIES}
   )
 

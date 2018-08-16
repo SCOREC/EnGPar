@@ -11,7 +11,6 @@
 
 namespace engpar {
 #ifdef HAS_ZOLTAN
-
   void setParameters(SplitInput* input, struct Zoltan_Struct* zz, int target_parts);
   void setCallbacks(SplitInput* input, struct Zoltan_Struct* zz);
   
@@ -185,7 +184,7 @@ namespace engpar {
     */
   }
 #else
-  agi::Migration* EnGPar_ZOLTAN(SplitInput*, int) {
+  agi::Migration* EnGPar_Zoltan(SplitInput*, int, bool) {
     throw std::runtime_error("ZOLTAN not found\n");
   }
 #endif
