@@ -24,6 +24,7 @@ int testPartWeightBalancer(agi::Ngraph*);
 
 int testGlobalSplit(agi::Ngraph*);
 int testLocalSplit(agi::Ngraph*);
+int testPHGSplit(agi::Ngraph*);
 int testSplitAndBalance(agi::Ngraph*);
 
 void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
@@ -44,8 +45,10 @@ int main(int argc, char* argv[]) {
                              "    operation 4 = balance with part weights balancing\n"
                              "    operation %d = ParMETIS global split\n"
                              "    operation %d = ParMETIS local split\n"
+                             "    operation %d = Zoltan global split\n"
                              "    operation %d = ParMETIS split and balance\n"
-                             ,argv[0],SPLIT_TEST,SPLIT_TEST+1,SPLIT_TEST+2);
+                             ,argv[0],SPLIT_TEST,SPLIT_TEST+1,SPLIT_TEST+2,
+                             SPLIT_TEST+3);
 
     EnGPar_Finalize();
     MPI_Finalize();
@@ -103,6 +106,8 @@ int main(int argc, char* argv[]) {
   else if (operation == SPLIT_TEST+1)
     suite.addGeneralTest("Local ParMETIS split",testLocalSplit);
   else if (operation == SPLIT_TEST+2)
+    suite.addGeneralTest("Global PHG split", testPHGSplit);
+  else if (operation == SPLIT_TEST+3)
     suite.addGeneralTest("Global Split and MC Balance",testSplitAndBalance);
   
   //Run the tests and get the number of failures
@@ -394,6 +399,37 @@ int testLocalSplit(agi::Ngraph* g) {
   
   return 0;
 }
+
+int testPHGSplit(agi::Ngraph* g) {
+  //Application code:
+  bool isOriginal = g->numLocalVtxs()>0;
+  MPI_Comm newComm;
+  int split_factor = 2;
+  switchToOriginals(split_factor, isOriginal, newComm);
+
+  //Switch the internal communicator (this changes PCU so use PCU_Comm_... with caution)
+  EnGPar_Switch_Comm(newComm);
+
+  //Create the input
+  double tolerance = 1.05;
+  agi::etype t = 0;
+  engpar::Input* input = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
+                                                        tolerance,t);
+
+  engpar::split(input,engpar::ZOLTAN_PHG);
+
+  if (PCU_Get_Comm() != MPI_COMM_WORLD)
+    return 2;
+
+  if (g->numGlobalVtxs() / PCU_Comm_Peers() >= 20 && engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
+    return 1;
+  
+  //Application continues:
+  MPI_Comm_free(&newComm);
+  return 0;
+
+}
+
 int testSplitAndBalance(agi::Ngraph* g) {
   int ierr = testGlobalSplit(g);
   if (ierr>0)

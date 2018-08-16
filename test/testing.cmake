@@ -141,11 +141,11 @@ if (ENABLE_PARMETIS)
   mpi_test(LocalSplit_4 4
     ./PartitionTestSuite 11)
   mpi_test(SplitAndBalance_2 2
-    ./PartitionTestSuite 12)
+    ./PartitionTestSuite 13)
   mpi_test(SplitAndBalance_4 4
-    ./PartitionTestSuite 12)
+    ./PartitionTestSuite 13)
   mpi_test(SplitAndBalance_8 8
-    ./PartitionTestSuite 12)
+    ./PartitionTestSuite 13)
 
   IF(ENABLE_PUMI)
     mpi_test(splitAndBalanceMeshPUMI 8
@@ -166,7 +166,12 @@ if (ENABLE_PARMETIS)
 endif()
 
 if (ENABLE_ZOLTAN)
-
+  mpi_test(SplitPHG_2 2
+    ./PartitionTestSuite 12)
+  mpi_test(SplitPHG_4 4
+    ./PartitionTestSuite 12)
+  mpi_test(SplitPHG_8 8
+    ./PartitionTestSuite 12)
 endif()
 
 if (ENABLE_KOKKOS)
