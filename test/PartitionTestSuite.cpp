@@ -354,7 +354,7 @@ int testGlobalSplit(agi::Ngraph* g) {
 
   if (g->numGlobalVtxs() / PCU_Comm_Peers() >= 20 && engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
     return 1;
-  
+
   //Application continues:
   MPI_Comm_free(&newComm);
   return 0;
@@ -393,7 +393,7 @@ int testLocalSplit(agi::Ngraph* g) {
 
   if (g->numGlobalVtxs() / PCU_Comm_Peers() >= 20 && engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)
     return 1;
-  
+
   //Application continues:
   MPI_Comm_free(&newComm);
   
