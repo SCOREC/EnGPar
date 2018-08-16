@@ -12,9 +12,10 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
-  if (argc != 4) {
+  if (argc != 5) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <graph_file> <original_num_parts> <out_file>\n", argv[0]);
+      printf("Usage: %s <graph_file> <original_num_parts> <out_file> <PARMETIS/PHG (0,1)>\n",
+             argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
@@ -45,7 +46,11 @@ int main(int argc, char* argv[]) {
 
   if (isOriginal)
     engpar::evaluatePartition(g);
-  engpar::split(input,engpar::GLOBAL_PARMETIS);
+  int method = atoi(argv[4]);
+  if (method==0)
+    engpar::split(input,engpar::GLOBAL_PARMETIS);
+  else if (method==1)
+    engpar::split(input,engpar::ZOLTAN_PHG);
   engpar::evaluatePartition(g);
 
   //Application continues:

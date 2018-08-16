@@ -14,7 +14,6 @@ endif()
 set(ALL_LIBS
   ${ALL_LIBS}
   interfaces
-  agi_zoltan
   engpar
 )
 
@@ -63,11 +62,12 @@ if (ENABLE_PUMI)
   make_utility(splitAndBalanceMesh splitAndBalanceMesh.cpp)
 endif()
 
-if (ZOLTAN_FOUND)
-  make_utility(cutVertex cutVertex.cpp)
-  make_utility(pagerank pagerank.cpp)
+if (FALSE)
+  if (ZOLTAN_FOUND)
+    make_utility(cutVertex cutVertex.cpp)
+    make_utility(pagerank pagerank.cpp)
+  endif()
 endif()
-
 
 if (ENABLE_KOKKOS)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)

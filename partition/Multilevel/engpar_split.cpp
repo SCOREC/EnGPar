@@ -1,4 +1,5 @@
 #include <engpar_parmetis.h>
+#include <engpar_zoltan.h>
 #include <PCU.h>
 #include <engpar_metrics.h>
 #include <engpar_support.h>
@@ -30,6 +31,9 @@ namespace engpar {
     if (inp->isOriginal) {
       if (method ==GLOBAL_PARMETIS) {
         plan = EnGPar_ParMETIS(inp,inp->total_parts,false);
+      }
+      else if (method == ZOLTAN_PHG) {
+        plan = EnGPar_Zoltan(inp,inp->total_parts,false);
       }
       else if (method == LOCAL_PARMETIS) {
         assert(inp->split_factor!=-1);

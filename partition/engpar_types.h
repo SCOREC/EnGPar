@@ -6,7 +6,8 @@ namespace engpar {
 
   enum SPLIT_METHOD {
     GLOBAL_PARMETIS,
-    LOCAL_PARMETIS
+    LOCAL_PARMETIS,
+    ZOLTAN_PHG
   };
 
 }

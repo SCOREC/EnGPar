@@ -52,12 +52,6 @@ else()
   find_package(SCOREC 2.1.0 REQUIRED COMPONENTS pcu CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
 endif()
 
-option(ENABLE_ZOLTAN "Enable Zoltan iterface [ON|OFF]" OFF)
-message(STATUS "ENABLE_ZOLTAN: " ${ENABLE_ZOLTAN})
-if (ENABLE_ZOLTAN)
-  find_package(Zoltan MODULE REQUIRED)
-endif()
-
 
 option(ENGPAR_FORTRAN_INTERFACE "enable fortran interface" OFF)
 message(STATUS "ENGPAR_FORTRAN_INTERFACE: ${ENGPAR_FORTRAN_INTERFACE}")
@@ -83,7 +77,7 @@ add_subdirectory(support)
 
 add_subdirectory(agi)
 
-add_subdirectory(zoltan)
+#add_subdirectory(zoltan)
 
 add_subdirectory(partition)
 
