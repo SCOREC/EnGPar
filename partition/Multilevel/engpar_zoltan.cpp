@@ -12,7 +12,7 @@
 namespace engpar {
 #ifdef HAS_ZOLTAN
   void setParameters(SplitInput* input, struct Zoltan_Struct* zz, int target_parts);
-  void setCallbacks(SplitInput* input, struct Zoltan_Struct* zz);
+  void setCallbacks(SplitInput* input, struct Zoltan_Struct* zz, bool isHyper);
   
   agi::Migration* EnGPar_Zoltan(SplitInput* input, int target_parts, bool isLocal) {
     float version;
@@ -30,13 +30,19 @@ namespace engpar {
       comm = PCU_Get_Comm();
 
     struct Zoltan_Struct* zz = Zoltan_Create(comm);
+
     //TODO: make some of these parameters changable in the input
-    Zoltan_Set_Param(zz,"LB_METHOD", "HYPERGRAPH");
+    int isHyper = input->g->isHyper();
+    isHyper = PCU_Max_Int(isHyper);
+    if (isHyper)
+      Zoltan_Set_Param(zz, "LB_METHOD", "HYPERGRAPH");
+    else
+      Zoltan_Set_Param(zz, "LB_METHOD", "GRAPH");
     Zoltan_Set_Param(zz,"HYPERGRAPH_PACKAGE", "PHG");
     Zoltan_Set_Param(zz,"LB_APPROACH", "PARTITION");
 
     setParameters(input, zz, target_parts);
-    setCallbacks(input, zz);
+    setCallbacks(input, zz, isHyper);
 
     int changes = 0;
     int ngids = 1, nlids = 1;
@@ -170,19 +176,58 @@ namespace engpar {
   
   //TODO: add graph callbacks for when using a traditional graph
 
-  void setCallbacks(SplitInput* input, struct Zoltan_Struct* zz) {
+  //ZOLTAN_NUM_EDGES_FN
+  int numEdges(void* data, int, int, ZOLTAN_ID_PTR, ZOLTAN_ID_PTR lid, int *ierr) {
+    agi::Ngraph* g = static_cast<agi::Ngraph*>(data);
+    *ierr = ZOLTAN_OK;
+    agi::PNgraph* pg = g->publicize();
+    agi::GraphVertex* v = pg->getVertex(*lid);
+    return g->degree(v);
+  }
+
+  //ZOLTAN_EDGE_LIST_FN
+  void getEdges(void* data, int, int, ZOLTAN_ID_PTR, ZOLTAN_ID_PTR lid,
+                ZOLTAN_ID_PTR nbrs, int* owners, int, float* wgts, int* ierr) {
+    agi::Ngraph* g = static_cast<agi::Ngraph*>(data);
+    agi::PNgraph* pg = g->publicize();
+    agi::GraphVertex* u = pg->getVertex(*lid);
+
+    agi::EdgeIterator* eitr = g->edges(u);
+    agi::GraphEdge* e;
+    int index = 0;
+    while ((e = g->iterate(eitr))) {
+      agi::GraphVertex* v = g->v(e);
+      nbrs[index] = g->globalID(v);
+      owners[index] = g->owner(v);
+      wgts[index++] = g->weight(e);
+    }
+    g->destroy(eitr);
+
+    *ierr = ZOLTAN_OK;
+  }
+
+
+  void setCallbacks(SplitInput* input, struct Zoltan_Struct* zz, bool isHyper) {
     Zoltan_Set_Fn(zz, ZOLTAN_NUM_OBJ_FN_TYPE,
                   (void (*)())numVertices,(void*) input->g);
     Zoltan_Set_Fn(zz, ZOLTAN_OBJ_LIST_FN_TYPE,
                   (void (*)())getVertices,(void*) input->g);
-    Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_CS_FN_TYPE,
-                  (void (*)())numHyperedges,(void*) input->g);
-    Zoltan_Set_Fn(zz, ZOLTAN_HG_CS_FN_TYPE,
-                  (void (*)())getHyperedges,(void*) input->g);
-    Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_EDGE_WTS_FN_TYPE,
-                  (void (*)())numHyperedgeWeights,(void*) input->g);
-    Zoltan_Set_Fn(zz, ZOLTAN_HG_EDGE_WTS_FN_TYPE,
-                  (void (*)())getHyperedgeWeights,(void*) input->g);
+    if (isHyper) {
+      Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_CS_FN_TYPE,
+                    (void (*)())numHyperedges,(void*) input->g);
+      Zoltan_Set_Fn(zz, ZOLTAN_HG_CS_FN_TYPE,
+                    (void (*)())getHyperedges,(void*) input->g);
+      Zoltan_Set_Fn(zz, ZOLTAN_HG_SIZE_EDGE_WTS_FN_TYPE,
+                    (void (*)())numHyperedgeWeights,(void*) input->g);
+      Zoltan_Set_Fn(zz, ZOLTAN_HG_EDGE_WTS_FN_TYPE,
+                    (void (*)())getHyperedgeWeights,(void*) input->g);
+    }
+    else {
+      Zoltan_Set_Fn(zz, ZOLTAN_NUM_EDGES_FN_TYPE,
+                    (void (*)())numEdges, (void*) input->g);
+      Zoltan_Set_Fn(zz, ZOLTAN_EDGE_LIST_FN_TYPE,
+                    (void (*)())getEdges, (void*) input->g);
+    }
   }
 #else
   agi::Migration* EnGPar_Zoltan(SplitInput*, int, bool) {
