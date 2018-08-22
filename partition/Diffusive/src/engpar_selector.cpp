@@ -1,5 +1,6 @@
 #include "engpar_selector.h"
 #include <engpar_metrics.h>
+#include "engpar_version.h"
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
@@ -62,6 +63,12 @@ namespace engpar {
     std::stringstream ss;
     ss << "cavities_" << PCU_Comm_Self() << ".txt";
     static std::ofstream outCav(ss.str());
+    static int calls = 0;
+
+    if (!calls) {
+      outCav << "#engpar hash: " << engpar_version() << "\n";
+      calls++;
+    }
 
     outCav << "#num vertices\n";
     outCav << "1 " << cav.size() << "\n";
