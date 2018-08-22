@@ -71,8 +71,6 @@ namespace engpar {
       calls++;
     }
 
-    outCav << "#num vertices\n";
-    outCav << "1 " << cav.size() << "\n";
     // create adj matrix using the edges of the cavity
     // set<edges> edgesOfCavity
     // for vertex v in cavity 
@@ -88,6 +86,10 @@ namespace engpar {
     }
     // A = new int(size(edgesOfCavity)*size(edgesOfCavity))
     int numCavEdges = edgesOfCavity.size();
+
+    outCav << "#num vertices\n";
+    outCav << "1 " << numCavEdges << "\n";
+
     int* A = new int[numCavEdges*numCavEdges];
     std::fill_n(A,numCavEdges*numCavEdges,0);
     // create a map from edge id to cavity idx
