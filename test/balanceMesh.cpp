@@ -45,14 +45,17 @@ int main(int argc, char* argv[]) {
   double times[10];
   times[0] = PCU_Time();
   times[4] = PCU_Time();
+  std::string name;
   if (isMultiEdge) {
+    name = "edge_02";
     int edges[2] = {0,2};
     //balance vtx>edge>elm
-    g = agi::createAPFGraph(m,"edge_02",3,edges,2);
+    g = agi::createAPFGraph(m,name.c_str(),3,edges,2);
   }
   else {
+    name = "edge_0";
     //balance vtx>elm
-    g = agi::createAPFGraph(m,"edge_0",3,0);
+    g = agi::createAPFGraph(m,name.c_str(),3,0);
   }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
@@ -82,7 +85,8 @@ int main(int argc, char* argv[]) {
 
   //map can be used to migrate the original structure
   apf::Migration* plan = new apf::Migration(m);
-  apf::GlobalNumbering* gids = m->findGlobalNumbering("primary_ids_global");
+  std::string numberingName = name + "_primary_ids_global";
+  apf::GlobalNumbering* gids = m->findGlobalNumbering(numberingName.c_str());
   apf::MeshIterator* mitr = m->begin(3);
   apf::MeshEntity* ent;
   while ((ent = m->iterate(mitr))) {
