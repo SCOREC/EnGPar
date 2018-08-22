@@ -3,6 +3,11 @@
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
+
+#include <iostream>
+#include <fstream>
+#include <sstream>
+
 namespace engpar {
 
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
@@ -51,6 +56,93 @@ namespace engpar {
           itr->second.clear();
         }
     }
+  }
+
+  void writeCavity(agi::Ngraph* g, Cavity& cav, part_t dest) {
+    std::stringstream ss;
+    ss << "cavities_" << PCU_Comm_Self() << ".txt";
+    static std::ofstream outCav(ss.str());
+
+    outCav << "#num vertices\n";
+    outCav << "1 " << cav.size() << "\n";
+    // create adj matrix using the edges of the cavity
+    // set<edges> edgesOfCavity
+    // for vertex v in cavity 
+    //   for each edge i in g->edges(v)
+    //     edgesOfCavity.insert(i) 
+    std::set<agi::GraphEdge*> edgesOfCavity;
+    Cavity::iterator itr;
+    for (itr = cav.begin();itr!=cav.end();itr++) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->edges(*itr);
+      while ((e=g->iterate(eitr)))
+        edgesOfCavity.insert(e);
+    }
+    // A = new int(size(edgesOfCavity)*size(edgesOfCavity))
+    int numCavEdges = edgesOfCavity.size();
+    int* A = new int[numCavEdges*numCavEdges];
+    std::fill_n(A,numCavEdges*numCavEdges,0);
+    // create a map from edge id to cavity idx
+    std::map<agi::GraphEdge*,int> edgeToIdx;
+    std::set<agi::GraphEdge*>::iterator sitr;
+    int i = 0;
+    for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
+      edgeToIdx[*sitr] = i++;
+    }
+    // for each cavity vertex v
+    //   for each edge i in g->edges(v)
+    //     for each edge j in g->edges(v)
+    //       if i != j:
+    //         A(i,j) = A(j,i) = 1
+    for (itr = cav.begin();itr!=cav.end();itr++) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->edges(*itr);
+      while ((e=g->iterate(eitr))) {
+        agi::GraphEdge* eB;
+        agi::EdgeIterator* eitrB = g->edges(*itr);
+        while ((eB=g->iterate(eitrB))) {
+          if( eB != e ) {
+            A[edgeToIdx[e]*numCavEdges+edgeToIdx[eB]]=1;
+            A[edgeToIdx[eB]*numCavEdges+edgeToIdx[e]]=1;
+          }
+        }
+        g->destroy(eitrB);
+      }
+    }
+    outCav << "#adj matrix\n";
+    ss.str(""); //empty the stream
+    for(int i = 0; i<numCavEdges; i++) {
+      ss << numCavEdges;
+      for(int j = 0; j<numCavEdges; j++) {
+        ss << " " << A[i*numCavEdges+j];
+      }
+      ss << "\n";
+    }
+    outCav << ss.str();
+    delete [] A;
+    
+    // for each edge in the cavity find the parts that 
+    //  have a copy of it 
+    // for edge i in edgesOfCavity
+    //   Peers peers;
+    //   getResidence(i,peers)
+    //   write(i,peers)
+    ss.str(""); //empty the stream
+    for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
+      agi::Peers p;
+      agi::GraphEdge* e = *sitr;
+      g->getResidence(e,p);
+      ss << edgeToIdx[*sitr];
+      agi::Peers::iterator pitr;
+      for (pitr = p.begin();pitr!=p.end();pitr++)
+        ss << " " << *pitr;
+      ss << "\n";
+    }
+    outCav << "#process ids\n";
+    outCav << ss.str();
+
+    outCav << "#destination process id\n";
+    outCav << "1 " << dest << "\n";
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
@@ -141,6 +233,7 @@ namespace engpar {
         if (targets->has(peer) &&
             sending[*pitr]<targets->get(peer) &&
             cav.size()< cavSize) {
+          writeCavity(g,cav,peer);
           //  addCavity to plan
           wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
           planW+=w;
