@@ -4,5 +4,5 @@
 build*/
 *config*.sh
 doc/
-engpar_version.h
+engpar_version.cpp
 install
