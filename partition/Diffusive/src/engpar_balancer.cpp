@@ -25,18 +25,18 @@ namespace {
     int count = migrTime->getCount("comm");
     if (!PCU_Comm_Self() && count) {
       EnGPar_Status_Message("max migration time (s) "
-          "<total, setup, comm, build> = <%f, %f, %f, %f>\n",
-          maxTot, maxSetup, maxComm, maxBuild);
+                            "<total, setup, comm, build> = <%f, %f, %f, %f>\n",
+                            maxTot, maxSetup, maxComm, maxBuild);
       EnGPar_Status_Message("max migration ratios "
-          "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
-          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+                            "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
+                            globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
     for(int i=0; i<4; i++) globalRatios[i] = ratios[i];
     PCU_Min_Doubles(globalRatios,4);
     if (!PCU_Comm_Self() && count) {
       EnGPar_Status_Message("min migration ratios "
-          "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
-          globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
+                            "<setup/total, comm/total, build/total, (setup+comm+build)/total> = <%f, %f, %f, %f>\n",
+                            globalRatios[0], globalRatios[1], globalRatios[2], globalRatios[3]);
     }
   }
 }
@@ -97,7 +97,7 @@ namespace engpar {
     Weights* targetWeights = makeWeights(inp, sides,target_dimension);
     if (verbosity>=3)
       EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(),
-             targetWeights->print("Weights").c_str());
+                            targetWeights->print("Weights").c_str());
     Weights** completedWs = NULL;
     if (completed_dimensions.size()>0) {
       completedWs= new Weights*[completed_dimensions.size()];
@@ -112,7 +112,7 @@ namespace engpar {
     }
     else {
       targets = makeTargets(inp,sides,targetWeights,sideTol,
-                                     completedWs,completed_weights);
+                            completedWs,completed_weights);
     }
     delete sides;
     if (completedWs) {
@@ -132,6 +132,7 @@ namespace engpar {
     else 
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
+
     Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
     agi::Migration* plan = new agi::Migration(input->g);
@@ -286,7 +287,7 @@ namespace engpar {
         targetTime = PCU_Max_Double(targetTime);
         if (verbosity >= 0 && !PCU_Comm_Self()) {
           EnGPar_Status_Message("Completed criteria type %d in %d steps and took %f seconds\n",
-                 target_dimension, inner_steps, targetTime);
+                                target_dimension, inner_steps, targetTime);
         }
         targetTime=PCU_Time();
         
@@ -335,10 +336,10 @@ namespace engpar {
       if (!PCU_Comm_Self()) {
         if(step==inp->maxIterations)
           EnGPar_Status_Message("EnGPar ran to completion in %d iterations in %f seconds\n",
-                 inp->maxIterations, time);
+                                inp->maxIterations, time);
         else
           EnGPar_Status_Message("EnGPar converged in %lu iterations in %f seconds\n",
-                 step-inp->priorities.size(),time);
+                                step-inp->priorities.size(),time);
       }
     }
     if (verbosity >= 2) {
@@ -350,12 +351,13 @@ namespace engpar {
         EnGPar_Status_Message("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
         EnGPar_Status_Message("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
         EnGPar_Status_Message("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
-            distance_time, distance_time/time*100);
+                              distance_time, distance_time/time*100);
       }
     }
     if (EnGPar_Is_Log_Open())
       EnGPar_End_Function();
   }
+
   void Balancer::partWeightBalancer(Sides* sides,double tol) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
 

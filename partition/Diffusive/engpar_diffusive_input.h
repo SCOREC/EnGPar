@@ -86,6 +86,11 @@ namespace engpar {
      */
     agi::etype connectivityType;
 
+    /** \brief The max ratio of allowed cut growth for a given cavity (degrees of on part cavity / degrees of off part cavity)
+     *
+     * defaults to 0 (values less than or equal to 0 ignore this operation)
+     */
+    double limitEdgeCutGrowth;
   };
 }
 

@@ -21,13 +21,9 @@ namespace engpar {
   class Selector {
   public:
     Selector(DiffusiveInput* in_, Queue* queue,
-             std::vector<int>* cd, std::vector<double>* cw) :
-      in(in_), g(in_->g),
-      q(queue),
-      completed_dimensions(cd), completed_weights(cw) {}
-
+             std::vector<int>* cd, std::vector<double>* cw);
     wgt_t select(Targets* targets,agi::Migration* plan,
-                         wgt_t planW, unsigned int cavSize,int);
+                 wgt_t planW, unsigned int cavSize,int);
     void selectDisconnected(agi::Migration* plan, int target_dimension);
     Midd* trim(Targets* targets, agi::Migration* plan);
     void cancel(agi::Migration*& plan,Midd* capacity);
@@ -64,6 +60,7 @@ namespace engpar {
     Queue* q;
     std::vector<int>* completed_dimensions;
     std::vector<double>* completed_weights;
+    agi::GraphTag* ghost_degrees;
   };
 
   Selector* makeSelector(DiffusiveInput* in,Queue* q,
