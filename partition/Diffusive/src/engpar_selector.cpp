@@ -63,6 +63,7 @@ namespace engpar {
     std::stringstream ss;
     ss << "cavities_" << PCU_Comm_Self() << ".txt";
     static std::ofstream outCav(ss.str());
+    ss.str(""); //empty the stream
     static int calls = 0;
 
     if (!calls) {
@@ -117,7 +118,6 @@ namespace engpar {
       }
     }
     outCav << "#adj matrix\n";
-    ss.str(""); //empty the stream
     for(int i = 0; i<numCavEdges; i++) {
       ss << numCavEdges;
       for(int j = 0; j<numCavEdges; j++) {
@@ -127,6 +127,7 @@ namespace engpar {
     }
     outCav << ss.str();
     delete [] A;
+    ss.str(""); //empty the stream
     
     // for each edge in the cavity find the parts that 
     //  have a copy of it 
@@ -134,19 +135,23 @@ namespace engpar {
     //   Peers peers;
     //   getResidence(i,peers)
     //   write(i,peers)
+    std::map<int, std::string> vtxPeers;
     ss.str(""); //empty the stream
     for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
       agi::Peers p;
       agi::GraphEdge* e = *sitr;
       g->getResidence(e,p);
-      ss << edgeToIdx[*sitr];
+      ss << p.size();
       agi::Peers::iterator pitr;
       for (pitr = p.begin();pitr!=p.end();pitr++)
         ss << " " << *pitr;
       ss << "\n";
+      vtxPeers[ edgeToIdx[*sitr] ] = ss.str();
+      ss.str(""); //empty the stream
     }
     outCav << "#process ids\n";
-    outCav << ss.str();
+    for(int i = 0; i < numCavEdges; i++)
+      outCav << vtxPeers[i];
 
     outCav << "#destination process id\n";
     outCav << "1 " << dest << "\n";
