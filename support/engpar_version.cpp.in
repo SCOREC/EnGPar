@@ -1,0 +1,4 @@
+#include <engpar_version.h>
+const char* engpar_version() {
+  return "${ENGPAR_GIT_SHA1}";
+}

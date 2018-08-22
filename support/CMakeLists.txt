@@ -6,16 +6,18 @@ set(CMAKE_MODULE_PATH
 
 include(GetGitRevisionDescription)
 get_git_head_revision(ENGPAR_GIT_REFSPEC ENGPAR_GIT_SHA1)
-configure_file(engpar_version.h.in ${CMAKE_CURRENT_SOURCE_DIR}/engpar_version.h)
+configure_file(engpar_version.cpp.in ${CMAKE_CURRENT_SOURCE_DIR}/engpar_version.cpp)
 
 set(SOURCES
   engpar_support.cpp
   engpar_log.cpp
   engpar_message.cpp
+  engpar_version.cpp
   )
 
 set(SUPPORT_HEADERS
   engpar_support.h
+  engpar_version.h
   )
 
 add_library(engpar_support ${SOURCES})

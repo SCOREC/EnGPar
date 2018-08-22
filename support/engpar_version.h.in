@@ -1,6 +1,0 @@
-#ifndef ENGPAR_VERSION_H
-#define ENGPAR_VERSION_H
-const char* engpar_version() {
-  return "${ENGPAR_GIT_SHA1}";   
-}
-#endif
