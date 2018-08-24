@@ -123,22 +123,21 @@ namespace engpar {
     return true;
   }
 
-  double edgeCutGrowth(agi::Ngraph* g, agi::GraphEdge* e, part_t peer,
-                       agi::GraphTag* ghost_degrees) {
-    int my_degs = 0;
-    int peer_degs = 0;
-    agi::GraphVertex* v;
-    agi::PinIterator* pitr = g->pins(e);
-    while ((v = g->iterate(pitr))) {
-      if (g->owner(v) == peer) {
-        peer_degs += g->getIntTag(ghost_degrees,v);
+  double edgeCutGrowth(agi::Ngraph* g, Cavity cav, part_t peer) {
+    int cut_pins = 0;
+    int uncut_pins = 0;
+    for (size_t i = 0; i < cav.size(); ++i) {
+      agi::EdgeIterator* eitr = g->edges(cav[i]);
+      agi::GraphEdge* e;
+      while ((e = g->iterate(eitr))) {
+        if (g->isResidentOn(e,peer))
+          ++cut_pins;
+        else
+          ++uncut_pins;
       }
-      else if (g->owner(v) == PCU_Comm_Self()) {
-        my_degs += g->degree(v);
-      }
+      g->destroy(eitr);
     }
-    g->destroy(pitr);
-    return 1.0*my_degs/peer_degs;
+    return uncut_pins * 1.0 / cut_pins;
   }
 
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
@@ -158,8 +157,8 @@ namespace engpar {
           part_t peer = *pitr;
           if (targets->has(peer) && // Targeting this neighbor
               sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
-              (ghost_degrees==NULL ||
-               edgeCutGrowth(g, q->get(itr), peer, ghost_degrees) < in->limitEdgeCutGrowth)) {
+              (in->limitEdgeCutGrowth <= 0 ||
+               edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
                 planW+=w;
@@ -483,10 +482,6 @@ namespace engpar {
     in(in_), g(in_->g),
     q(queue),
     completed_dimensions(cd), completed_weights(cw) {
-
-    ghost_degrees = NULL;
-    if (in->limitEdgeCutGrowth > 0)
-      ghost_degrees = in->g->createIntGhostTag(degreeFunc);
   }
 
   Selector* makeSelector(DiffusiveInput* in,Queue* q,

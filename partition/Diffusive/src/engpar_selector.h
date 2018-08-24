@@ -60,7 +60,6 @@ namespace engpar {
     Queue* q;
     std::vector<int>* completed_dimensions;
     std::vector<double>* completed_weights;
-    agi::GraphTag* ghost_degrees;
   };
 
   Selector* makeSelector(DiffusiveInput* in,Queue* q,
