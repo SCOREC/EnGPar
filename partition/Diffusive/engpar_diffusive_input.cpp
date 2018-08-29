@@ -24,4 +24,7 @@ namespace engpar {
     tolerances.push_back(tolerance);
                                  
   }
+  void DiffusiveInput::balanceGhosts(bool enable) {
+    countGhosts = enable;
+  }
 }
