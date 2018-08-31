@@ -15,7 +15,7 @@ program main
   integer(ENGPAR_PART_T), dimension(:), allocatable :: parts
   integer(ENGPAR_EDGE_T) :: etype
   type(c_ptr) :: graph, diffusiveInput
-  logical(C_BOOL) :: isHg = .false.
+  logical(C_BOOL) :: isHg = .false., balanceGhosts = .true.
   real(C_DOUBLE) :: tol, stepfactor
   integer :: verbosity
   integer :: i
@@ -80,7 +80,7 @@ program main
   diffusiveInput = cengpar_createDiffusiveInput(graph,stepfactor)
   call cengpar_addPriority(diffusiveInput,-1,tol)
   call cengpar_addPriority(diffusiveInput,etype,tol)
-  call cengpar_balanceGhosts(diffusiveInput,.true.)
+  call cengpar_balanceGhosts(diffusiveInput,balanceGhosts)
   call cengpar_balance(diffusiveInput,verbosity);
   call cengpar_checkValidity(graph)
 

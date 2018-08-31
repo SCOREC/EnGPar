@@ -71,7 +71,7 @@ program main
   integer :: ierr, self
   integer(ENGPAR_EDGE_T) :: edgeType
   type(c_ptr) :: graph, splitInput, diffusiveInput
-  logical(C_BOOL) :: inSmall
+  logical(C_BOOL) :: inSmall, balanceGhosts
   real(C_DOUBLE) :: tol, stepfactor
   integer :: splitFactor, verbosity, newComm
   integer(ENGPAR_PART_T), dimension(1) :: ranks ! only used LOCAL_PARMETIS
@@ -115,11 +115,12 @@ program main
   tol = 1.05
   stepFactor = 0.1
   verbosity = 0
+  balanceGhosts = .true.
   ! Create the input for diffusive load balancing of the graph vertices and edges
   diffusiveInput = cengpar_createDiffusiveInput(graph,stepFactor)
   call cengpar_addPriority(diffusiveInput,-1,tol)
   call cengpar_addPriority(diffusiveInput,0,tol)
-  call cengpar_balanceGhosts(diffusiveInput,.true.)
+  call cengpar_balanceGhosts(diffusiveInput,balanceGhosts)
   call cengpar_balance(diffusiveInput,verbosity);
   call cengpar_checkValidity(graph);
 
