@@ -80,17 +80,17 @@ namespace engpar {
       agi::destroyGraph(weightGraph);
   }
 
-  bool Balancer::runStep(double tolerance) {
+  int Balancer::runStep(double tolerance) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     double stepTime = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension,inp->countGhosts));
     //Check for completition of criteria
     if (imb < tolerance)
-      return false;
+      return 1;
     //Check stagnation detection
     sd->push(imb);
     if (sd->isFull()&&sd->slope()>0)
-      return false;
+      return 2;
     Sides* sides = makeSides(inp);
     if (verbosity>=3)
       EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
@@ -188,9 +188,9 @@ namespace engpar {
     }
 
     if (numMigrate == 0)
-      return false;
+      return 3;
 
-    return true; //not done balancing
+    return 0; //not done balancing
   }
   void Balancer::balance() {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
@@ -233,113 +233,101 @@ namespace engpar {
     //Setup the original owners arrays before balancing
     input->g->setOriginalOwners();
     unsigned int index=0;
-    target_dimension = inp->priorities[index];
     
-    //Construct Stagnation detection
-    sd = new SDSlope;
-    
-    //Set imbalance tolerance
-    double tol=1.1;
-    if (inp->tolerances.size()>index)
-      tol = inp->tolerances[index];
-    
-    //Set side tolerance
-    Sides* sides = makeSides(inp);
-    sideTol = averageSides(sides);
-
-    if (inp->runPartWeightBalancer) {
-      if (!PCU_Comm_Self())
-        EnGPar_Status_Message("Starting part weight balancer on type %d\n",target_dimension);
-      partWeightBalancer(sides,tol);
-    }
-    delete sides;
-    
-    if (verbosity >= 0) {
-      char buffer[100];
-      getImbalances(input->g, buffer);
-      if (!PCU_Comm_Self())
-        EnGPar_Status_Message("Starting criteria type %d with imbalances: %s\n",
-                              target_dimension,buffer);
-    }
-    if (!PCU_Comm_Self() && verbosity >= 1)
-      EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
     int step = 0;
     int inner_steps=0;
     double time = PCU_Time();
     double targetTime=PCU_Time();
-    while (step++<inp->maxIterations) {
-      //runStep(tol) balances the current dimension.
-      //Advance to the next dimension if the current dimesion is balanced
-      //or the maximum per dimension iterations is reached.
-      if (!runStep(tol) || inner_steps++ >= inp->maxIterationsPerType) {
-        // Set the imbalance limit for the higher priority dimension
-        // while balancing lower priority dimensions to be the larger of
-        // the specified imbalance (tgtMaxW) or, if it wasn't reached, the
-        // current weight (maxW).
-        completed_dimensions.push_back(target_dimension);
-        double maxW = getMaxWeight(input->g,target_dimension, inp->countGhosts);
-        double tgtMaxW = getAvgWeight(input->g,target_dimension,inp->countGhosts)*tol;
-        maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
-        completed_weights.push_back(maxW);
-        
-        targetTime = PCU_Time()-targetTime;
-        targetTime = PCU_Max_Double(targetTime);
-        if (verbosity >= 0 && !PCU_Comm_Self()) {
-          EnGPar_Status_Message("Completed criteria type %d in %d steps and took %f seconds\n",
-                                target_dimension, inner_steps, targetTime);
-        }
-        targetTime=PCU_Time();
-        
-        index++;
-        if (index==inp->priorities.size())
-          break;
-        inner_steps=0;
-        //Set new target criteria
-        target_dimension=inp->priorities[index];
-        //Recreate stagnation detection
-        delete sd;
-        sd = new SDSlope;
-        //Set new tolerance
-        if (inp->tolerances.size()>index)
-          tol = inp->tolerances[index];        
-        //Set side tolerance
-        Sides* sides = makeSides(inp);
-        sideTol = averageSides(sides);
+    do {
+      inner_steps=0;
 
-        if (inp->runPartWeightBalancer) {
-          if (!PCU_Comm_Self())
-            EnGPar_Status_Message("Starting part weight balancer on type %d\n",target_dimension);
-          partWeightBalancer(sides,tol);
-        }
+      target_dimension = inp->priorities[index];
 
-        delete sides;
+      sd = new SDSlope;
+      //Set new tolerance
+      double tol = 1.1;
+      if (inp->tolerances.size()>index)
+        tol = inp->tolerances[index];
+      //Set side tolerance
+      Sides* sides = makeSides(inp);
+      sideTol = averageSides(sides);
 
+      if (inp->runPartWeightBalancer) {
+        if (!PCU_Comm_Self())
+          EnGPar_Status_Message("Starting part weight balancer on type %d\n",target_dimension);
+        partWeightBalancer(sides,tol);
+      }
+      delete sides;
+
+      if (verbosity >= 0) {
         char buffer[100];
-        getImbalances(input->g,buffer);
-        if (!PCU_Comm_Self() && verbosity >= 0)
-          EnGPar_Status_Message("Starting criteria type %d with imbalances: %s\n",
-                                target_dimension,buffer);
+        getImbalances(input->g, buffer, inp->countGhosts);
+        if (!PCU_Comm_Self()) {
+          if (target_dimension == -1)
+            EnGPar_Status_Message("Starting diffusion on vertices with imbalances: %s\n",
+                                  buffer);
+          else
+            EnGPar_Status_Message("Starting diffusion on edge type %d with imbalances: %s\n",
+                                  target_dimension,buffer);
+        }
+      }
+      if (!PCU_Comm_Self() && verbosity >= 2)
+        EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
 
-        if (!PCU_Comm_Self() && verbosity >= 1)
-          EnGPar_Status_Message("Side Tolerance is: %d\n", sideTol);
+      //Run diffusion
+      int rc;
+      while ((rc = runStep(tol)) == 0 && inner_steps++ < inp->maxIterationsPerType &&
+             step++ < inp->maxIterations);
 
+      //Keep track of completed dimension for trim/cancel
+      completed_dimensions.push_back(target_dimension);
+      double maxW = getMaxWeight(input->g,target_dimension, inp->countGhosts);
+      double tgtMaxW = getAvgWeight(input->g,target_dimension,inp->countGhosts)*tol;
+      maxW = ( maxW < tgtMaxW ) ? tgtMaxW : maxW;
+      completed_weights.push_back(maxW);
 
-      }      
+      targetTime = PCU_Time()-targetTime;
+      targetTime = PCU_Max_Double(targetTime);
+
+      //Cleanup after diffusion
+      delete sd;
+
+      if (verbosity >= 0 && !PCU_Comm_Self()) {
+        char buffer[200];
+        char* temp = buffer;
+        temp += sprintf(temp,"Completed diffusion for ");
+
+        if (target_dimension==-1)
+          temp += sprintf(temp, "vertices ");
+        else
+          temp += sprintf(temp, "edge type %d ", target_dimension);
+        temp += sprintf(temp,"in %d steps and %f seconds",inner_steps,targetTime);
+        if (verbosity >= 2) {
+          temp += sprintf(temp, " due to ");
+          if (rc == 1)
+            temp += sprintf(temp, "target tolerance reached");
+          else if (rc == 2)
+            temp += sprintf(temp, "stagnation");
+          else if (rc == 3)
+            temp += sprintf(temp, "nothing was migrated");
+          else if (rc == 0)
+            temp += sprintf(temp, "max iterations");
+        }
+        sprintf(temp,".\n");
+        EnGPar_Status_Message(buffer);
+      }
+      targetTime=PCU_Time();
+      index++;
     }
-    delete sd;
+    while (index < inp->priorities.size() && step<inp->maxIterations);
     time = PCU_Time()-time;
-
 
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);
       if (!PCU_Comm_Self()) {
-        if(step==inp->maxIterations)
-          EnGPar_Status_Message("EnGPar ran to completion in %d iterations in %f seconds\n",
-                                inp->maxIterations, time);
-        else
-          EnGPar_Status_Message("EnGPar converged in %lu iterations in %f seconds\n",
-                                step-inp->priorities.size(),time);
+        EnGPar_Status_Message("Diffusion completed in %d iterations in %f seconds\n",
+                              step, time);
       }
     }
     if (verbosity >= 2) {
@@ -348,9 +336,12 @@ namespace engpar {
       double maxPlan = PCU_Max_Double(totStepTime);
       distance_time = PCU_Max_Double(distance_time);
       if (!PCU_Comm_Self()) {
-        EnGPar_Status_Message("Migration took %f s, %f%% of the total time\n", maxMigr, maxMigr/time*100);
-        EnGPar_Status_Message("Planning took %f s, %f%% of the total time\n", maxPlan, maxPlan/time*100);
-        EnGPar_Status_Message("Distance Computation (part of Planning) took %f seconds, %f%% of the total time\n",
+        EnGPar_Status_Message("Migration took %f s, %f%% of the total time\n",
+                              maxMigr, maxMigr/time*100);
+        EnGPar_Status_Message("Planning took %f s, %f%% of the total time\n",
+                              maxPlan, maxPlan/time*100);
+        EnGPar_Status_Message("Distance Computation (part of Planning) took %f seconds, "
+                              "%f%% of the total time\n",
                               distance_time, distance_time/time*100);
       }
     }

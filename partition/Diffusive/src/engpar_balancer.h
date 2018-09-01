@@ -18,7 +18,7 @@ namespace engpar {
              const char* name_);
     Balancer(Input* input_,int verbosity_,const char* name_);
     virtual ~Balancer();
-    virtual bool runStep(double tolerance);
+    virtual int runStep(double tolerance);
     void balance();
     void partWeightBalancer(Sides* sides, double tolerance);
     
@@ -44,7 +44,7 @@ namespace engpar {
     WeightBalancer(Input* input_, int v);
     ~WeightBalancer() {}
 
-    bool runStep(double tol);
+    int runStep(double tol);
     void balance();
   };
 

@@ -15,17 +15,17 @@ namespace engpar {
     Balancer(input_,v,"weightBalancer") {
   }
   
-  bool WeightBalancer::runStep(double tolerance) {
+  int WeightBalancer::runStep(double tolerance) {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);
     double stepTime = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,-1,false));
     //Check for completition of criteria
     if (imb < tolerance)
-      return false;
+      return 1;
     //Check stagnation detection
     sd->push(imb);
     if (sd->isFull()&&sd->slope()>0)
-      return false;
+      return 2;
     Sides* sides = makeSides(inp->g,inp->primary_edge_type);
     if (verbosity>=3)
       EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), sides->print("Sides").c_str());
@@ -98,9 +98,9 @@ namespace engpar {
     }
 
     if (numMigrate == 0)
-      return false;
+      return 3;
 
-    return true; //not done balancing
+    return 0; //not done balancing
   }
   void WeightBalancer::balance() {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);
@@ -165,7 +165,7 @@ namespace engpar {
     int step = 0;
     double time = PCU_Time();
     //double targetTime=PCU_Time();
-    while (step++<inp->maxIterations&&runStep(inp->tol));
+    while (step++<inp->maxIterations && !runStep(inp->tol));
     delete sd;
     time = PCU_Time()-time;
 
