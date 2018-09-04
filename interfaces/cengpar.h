@@ -31,6 +31,8 @@ engparInput cengpar_createDiffusiveInput(ngraph g, double stepfactor);
 
 void cengpar_addPriority(engparInput in, int t, double tol);
 
+void cengpar_balanceGhosts(engparInput in, bool enable);
+
 void cengpar_balance(engparInput in, int verbosity);
 
 void cengpar_loadFromFile(ngraph g, const char fileName[]);

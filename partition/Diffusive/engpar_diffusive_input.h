@@ -11,6 +11,8 @@ namespace engpar {
 
     void addPriority(int type, double tolerance);
 
+    void balanceGhosts(bool enable);
+
     /** \brief The order of graph entities to be balanced 
      *
      *  -1 represents graph vertices, 0-MAX_TYPES represent edge_types

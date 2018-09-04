@@ -124,6 +124,18 @@ module engpar
     real(c_double), value :: tol
   end subroutine
   !---------------------------------------------------------------------------
+  !>  @brief enable balancing that accounts for off process copies (ghosts)
+  !>  @param input (in/out) diffusive input created with 'cengpar_createDiffusiveInput'
+  !>  @param enable(in) set to true if ghosts (off process copies)
+  !>                    should be included when measuring imbalance
+  !---------------------------------------------------------------------------
+  subroutine cengpar_balanceGhosts(input,enable) &
+             bind(C, NAME='cengpar_balanceGhosts')
+    use :: iso_c_binding
+    type(c_ptr), value :: input
+    logical(c_bool), intent(in), value :: enable
+  end subroutine
+  !---------------------------------------------------------------------------
   !>  @brief balance the graph based on the specified input
   !>  @remark the engparInput object is destroyed
   !>  @param input (in) the object containing diffusive balancer inputs

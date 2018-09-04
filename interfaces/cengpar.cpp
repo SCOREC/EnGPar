@@ -129,6 +129,11 @@ void cengpar_addPriority(engparInput in, agi::etype t, double tol) {
   input->addPriority(t,tol);
 }
 
+void cengpar_balanceGhosts(engparInput in, bool enable) {
+  engpar::Input* input = (engpar::Input*)in;
+  input->balanceGhosts(enable);
+}
+
 void cengpar_balance(engparInput in, int verbosity) {
   engpar::Input* input = (engpar::Input*)in;
   engpar::balance(input,verbosity);
