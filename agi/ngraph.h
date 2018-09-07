@@ -187,6 +187,7 @@ public:
   void setOriginalOwners();
   void setOriginalOwners(std::vector<part_t>&);
   void resetOwnership();
+  void resetPartition();
   // \endcond
   /** \brief Determines the parts that the given edge resides on
    * \param e the edge 
