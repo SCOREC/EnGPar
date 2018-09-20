@@ -17,8 +17,8 @@ void append(std::stringstream* ss) {
 }
 
 void writeToFile() {
-  int numGroups = 2;
-  int procsPerGroup = PCU_Comm_Peers()/numGroups;
+  int procsPerGroup = 2<<10;
+  int numGroups = PCU_Comm_Peers()/procsPerGroup;
   assert( procsPerGroup * numGroups == PCU_Comm_Peers() );
   int groupRank = PCU_Comm_Self() % procsPerGroup;
   int groupLeader = PCU_Comm_Self() - groupRank;
