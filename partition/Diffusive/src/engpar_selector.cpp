@@ -220,6 +220,23 @@ namespace engpar {
     return true;
   }
 
+  double edgeCutGrowth(agi::Ngraph* g, Cavity cav, part_t peer) {
+    int cut_pins = 0;
+    int uncut_pins = 0;
+    for (size_t i = 0; i < cav.size(); ++i) {
+      agi::EdgeIterator* eitr = g->edges(cav[i]);
+      agi::GraphEdge* e;
+      while ((e = g->iterate(eitr))) {
+        if (g->isResidentOn(e,peer))
+          ++cut_pins;
+        else
+          ++uncut_pins;
+      }
+      g->destroy(eitr);
+    }
+    return uncut_pins * 1.0 / cut_pins;
+  }
+
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
     q->startIteration();
@@ -230,21 +247,22 @@ namespace engpar {
       Cavity cav;
       Peers peers;
       getCavity(g,q->get(itr),plan,cav,peers);
-      //For each peer of cavity
-      Peers::iterator pitr;
       bool sent = false;
-      for (pitr = peers.begin();pitr!=peers.end();pitr++) {
-        part_t peer = *pitr;
-        if (targets->has(peer) &&
-            sending[*pitr]<targets->get(peer) &&
-            cav.size()< cavSize) {
-          writeCavity(g,cav,peer);
-          //  addCavity to plan
-          wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
-          planW+=w;
-          sending[peer]+=w;
-          sent=true;
-          break;
+      if (cav.size() < cavSize) { //If the cavity is small enough
+        Peers::iterator pitr;
+        for (pitr = peers.begin(); pitr != peers.end(); ++pitr) {
+          part_t peer = *pitr;
+          if (targets->has(peer) && // Targeting this neighbor
+              sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
+              (in->limitEdgeCutGrowth <= 0 ||
+               edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
+                //add cavity to plan
+                wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+                planW+=w;
+                sending[peer]+=w;
+                sent=true;
+                break;
+          }
         }
       }
       if (!sent) {
@@ -552,6 +570,16 @@ namespace engpar {
     }
   }
 
+  int degreeFunc(agi::Ngraph* g, agi::GraphVertex* v) {
+    return g->degree(v);
+  }
+
+  Selector::Selector(DiffusiveInput* in_, Queue* queue,
+           std::vector<int>* cd, std::vector<double>* cw) :
+    in(in_), g(in_->g),
+    q(queue),
+    completed_dimensions(cd), completed_weights(cw) {
+  }
 
   Selector* makeSelector(DiffusiveInput* in,Queue* q,
                          std::vector<int>* cd,

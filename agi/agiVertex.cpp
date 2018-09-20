@@ -117,6 +117,12 @@ void Ngraph::resetOwnership() {
   }
 }
 
+void Ngraph::resetPartition() {
+  resetOwnership();
+  wp_map.clear();
+}
+
+
 lid_t Ngraph::localID(GraphVertex* vtx) const {
   return  (uintptr_t)(vtx)-1;
 

@@ -11,6 +11,8 @@ namespace engpar {
 
     void addPriority(int type, double tolerance);
 
+    void balanceGhosts(bool enable);
+
     /** \brief The order of graph entities to be balanced 
      *
      *  -1 represents graph vertices, 0-MAX_TYPES represent edge_types
@@ -86,6 +88,11 @@ namespace engpar {
      */
     agi::etype connectivityType;
 
+    /** \brief The max ratio of allowed cut growth for a given cavity (degrees of on part cavity / degrees of off part cavity)
+     *
+     * defaults to 0 (values less than or equal to 0 ignore this operation)
+     */
+    double limitEdgeCutGrowth;
   };
 }
 

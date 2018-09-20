@@ -16,11 +16,15 @@ namespace engpar {
     minConnectivity=1;
     connectivityType=0;
     runPartWeightBalancer = false;
+    limitEdgeCutGrowth = 0;
   }
 
   void DiffusiveInput::addPriority(int type, double tolerance) {
     priorities.push_back(type);
     tolerances.push_back(tolerance);
                                  
+  }
+  void DiffusiveInput::balanceGhosts(bool enable) {
+    countGhosts = enable;
   }
 }

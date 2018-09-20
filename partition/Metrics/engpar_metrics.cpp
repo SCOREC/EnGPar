@@ -38,9 +38,9 @@ namespace engpar {
     return max*1.0/avg;
   }
 
-  void getImbalances(agi::Ngraph* g,char* imbalances) {
+  void getImbalances(agi::Ngraph* g,char* imbalances, bool countGhosts) {
     for (agi::etype type = -1;type<g->numEdgeTypes();type++) {
-      agi::wgt_t w = getWeight(g,type);
+      agi::wgt_t w = getWeight(g,type, countGhosts);
       double imb = EnGPar_Get_Imbalance(w);
       if (!PCU_Comm_Self())
         imbalances+=sprintf(imbalances, "%2.4f ", imb);

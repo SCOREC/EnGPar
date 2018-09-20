@@ -16,73 +16,50 @@ int main(int argc, char* argv[]) {
   EnGPar_Initialize();
   EnGPar_Open_Log();
   
-  if ( argc!=1 &&argc!= 2 && argc!=3) {
-    if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <graph>\n", argv[0]);
-      printf("Usage: %s <bgd_prefix> [second edge type]\n", argv[0]);
-      printf("Usage: %s\n",argv[0]);
+  if (argc < 3 || argc > 5) {
+    if (!PCU_Comm_Self()) {
+      printf("Usage: %s <graph.ebin> <tolerance> [verbosity] [save_prefix]\n", argv[0]);
+      printf("Usage: %s <bgd_prefix> <tolerance> [verbosity] [save_prefix]\n", argv[0]);
     }
     EnGPar_Finalize();
+    MPI_Finalize();
     assert(false);
   }
   agi::Ngraph* g=NULL;
-  if (argc==1) {
-    g= buildEmptyGraph();
-  }
-  else if (cmpebin(argv[1]))
+  if (cmpebin(argv[1]))
     g= agi::createBinGraph(argv[1]);
   else {
     g = agi::createEmptyGraph();
     g->loadFromFile(argv[1]);
   }
 
-  if (g->hasCoords()) {
-    std::string filename = "before";
-    agi::writeVTK(g,filename.c_str());
-  }
+  double tol = atof(argv[2]);
+  
+  //Evaluate the new partition
   engpar::evaluatePartition(g);
 
   double step_factor = 0.1;
   engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
-  input->addPriority(0,1.1);
-  if (argc==3) {
-    input->addPriority(1,1.1);
-  }
-  input->addPriority(-1,1.1);
+  for (agi::etype t = 0; t < g->numEdgeTypes(); ++t)
+    input->addPriority(t,tol);
+  input->addPriority(-1,tol);
 
-  input->maxIterationsPerType=50;
-  input->maxIterations=75;
+  int verbosity = 1;
+  if (argc > 3)
+    verbosity = atoi(argv[3]);
   //Create the balancer
-  engpar::balance(input,2);
+  engpar::balance(input,verbosity);
 
+  if (argc > 4) {
+    g->saveToFile(argv[4]);
+  }
   //Evaluate the new partition
   engpar::evaluatePartition(g);
-
-  //Ensure the graph is still valid
-  agi::checkValidity(g);
-
-  //Ensure the graph was balanced to the target tolerance
-  assert(engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1))<1.2);
-  assert(engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,0))<1.2);
-  
-  if (g->hasCoords()) {
-    std::string filename = "after";
-    agi::writeVTK(g,filename.c_str());
-  }
-
-  //Migration of original data structure
-  if (argc>2) {
-    agi::PartitionMap* map = g->getPartition();
-    delete map;
-  }
   
   //Destroy graph
   agi::destroyGraph(g);
 
-  PCU_Barrier();
-  if (!PCU_Comm_Self())
-    printf("\nAll tests passed\n");
-
   EnGPar_Finalize();
   MPI_Finalize();
+  return 0;
 }

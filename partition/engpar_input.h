@@ -12,6 +12,7 @@ namespace engpar {
     virtual ~Input() {};
 
     virtual void addPriority(int, double) {}
+    virtual void balanceGhosts(bool) {}
     /** \brief The graph being balanced */
     agi::Ngraph* g;
   };

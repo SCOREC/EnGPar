@@ -12,12 +12,13 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
 
-  if (argc != 5) {
+  if (argc < 4 || argc > 5) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <graph_file> <original_num_parts> <out_file> <PARMETIS/PHG (0,1)>\n",
+      printf("Usage: %s <graph_file> <original_num_parts> <tolerance> [save_prefix]\n",
              argv[0]);
     }
     EnGPar_Finalize();
+    MPI_Finalize();
     assert(false);
   }
 
@@ -39,24 +40,23 @@ int main(int argc, char* argv[]) {
   }
 
   //Create the input
-  double tolerance = 1.05;
+  double tolerance = atof(argv[3]);
   agi::etype t = 0;
   engpar::Input* input = engpar::createGlobalSplitInput(g,newComm,MPI_COMM_WORLD, isOriginal,
                                                         tolerance,t);
 
   if (isOriginal)
     engpar::evaluatePartition(g);
-  int method = atoi(argv[4]);
-  if (method==0)
-    engpar::split(input,engpar::GLOBAL_PARMETIS);
-  else if (method==1)
-    engpar::split(input,engpar::ZOLTAN_PHG);
+
+  engpar::split(input,engpar::GLOBAL_PARMETIS);
+
   engpar::evaluatePartition(g);
 
   //Application continues:
   MPI_Comm_free(&newComm);
 
-  g->saveToFile(argv[3]);
+  if (argc > 4)
+    g->saveToFile(argv[4]);
 
   agi::destroyGraph(g);
   EnGPar_Finalize();

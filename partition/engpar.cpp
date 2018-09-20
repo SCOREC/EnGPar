@@ -52,51 +52,48 @@ namespace engpar {
   }
 
   void evaluatePartition(agi::Ngraph* g,const char* name) {
-    agi::wgt_t* my_vals = new agi::wgt_t[2+g->numEdgeTypes()+3];
-    agi::wgt_t* min = new agi::wgt_t[2+g->numEdgeTypes()+3];
-    agi::wgt_t* max = new agi::wgt_t[2+g->numEdgeTypes()+3];
-    agi::wgt_t* total = new agi::wgt_t[2+g->numEdgeTypes()+3];
-    agi::wgt_t* avg = new agi::wgt_t[2+g->numEdgeTypes()+3];
+    int num_vals = 4 + g->numEdgeTypes() * 2;
+    agi::wgt_t* my_vals = new agi::wgt_t[num_vals];
+    agi::wgt_t* min = new agi::wgt_t[num_vals];
+    agi::wgt_t* max = new agi::wgt_t[num_vals];
+    agi::wgt_t* total = new agi::wgt_t[num_vals];
+    agi::wgt_t* avg = new agi::wgt_t[num_vals];
 
     //Disconnected comp
     my_vals[0] = countDisconnected(g);
 
-    //Neighbors & Part Boundary
+    //Neighbors
     DiffusiveInput* in = static_cast<DiffusiveInput*>(createDiffusiveInput(g,0));
     Sides* sides = makeSides(in);
     my_vals[1] = sides->size();
-
     delete in;
     delete sides;
-
-    my_vals[2] = 0;
-    agi::GraphEdge* e;
-    agi::EdgeIterator* eitr = g->begin(0);
-    while ((e = g->iterate(eitr))) {
-      agi::Peers res;
-      g->getResidence(e,res);
-      if (res.size() > 1) {
-        my_vals[2] += g->weight(e);
-      }
-    }
-    g->destroy(eitr);
     
     //Vertex Imbalance
-    my_vals[3] = getWeight(g,-1);
-    my_vals[4] = getWeight(g,-1,true);
+    my_vals[2] = getWeight(g,-1);
+    my_vals[3] = getWeight(g,-1,true);
 
-    //Edge type imbalance
     for (agi::etype t = 0;t<g->numEdgeTypes();t++) {
-      my_vals[t+5] = getWeight(g,t);
+      //Edge Imbalance
+      my_vals[2*t+4] = getWeight(g,t);
+
+      //Edge Cut
+      DiffusiveInput* in = static_cast<DiffusiveInput*>(createDiffusiveInput(g,0));
+      in->sides_edge_type = t;
+      Sides* sides = makeSides(in);
+      my_vals[2*t+5] = sides->total();
+      delete in;
+      delete sides;
+
     }
 
 
     //Empty parts
     int empty = my_vals[3]==0;
 
-    MPI_Reduce(my_vals,max,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_MAX,0,PCU_Get_Comm());
-    MPI_Reduce(my_vals,min,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_MIN,0,PCU_Get_Comm());
-    MPI_Reduce(my_vals,total,5+g->numEdgeTypes(),MPI_DOUBLE,MPI_SUM,0,PCU_Get_Comm());
+    MPI_Reduce(my_vals,max,num_vals,MPI_DOUBLE,MPI_MAX,0,PCU_Get_Comm());
+    MPI_Reduce(my_vals,min,num_vals,MPI_DOUBLE,MPI_MIN,0,PCU_Get_Comm());
+    MPI_Reduce(my_vals,total,num_vals,MPI_DOUBLE,MPI_SUM,0,PCU_Get_Comm());
     empty = PCU_Add_Int(empty);
     delete [] my_vals;
     if (!PCU_Comm_Self()) {
@@ -110,17 +107,18 @@ namespace engpar {
                             prefix,max[0],total[0]);
       EnGPar_Status_Message("%s: Neighbors: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
                             prefix,max[1],min[1],avg[1],max[1]/avg[1]);
-      EnGPar_Status_Message("%s: Edge Cut: <max,tot> %.3f %.3f\n",
-                            prefix,max[2], total[2]);
-      EnGPar_Status_Message("%s: Local Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+      EnGPar_Status_Message("%s: Local Vertex: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
+                            prefix,max[2],min[2],avg[2],max[2]/avg[2]);
+      EnGPar_Status_Message("%s: Total Vertex: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
                             prefix,max[3],min[3],avg[3],max[3]/avg[3]);
-      EnGPar_Status_Message("%s: Total Vertex Imbalance: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",
-                            prefix,max[4],min[4],avg[4],max[4]/avg[4]);
       for (int i=0;i<g->numEdgeTypes();i++) {
         char edge_name[30];
         sprintf(edge_name,"%s: Edges type %d",prefix,i);
         EnGPar_Status_Message("%s: <max,min,avg,imb> %.3f %.3f %.3f %.3f\n",edge_name,
-                              max[5+i],min[5+i],avg[5+i],max[5+i]/avg[5+i]);
+                              max[4+i*2],min[4+i*2],avg[4+i*2],max[4+i*2]/avg[4+i*2]);
+        EnGPar_Status_Message("%s Cut: <max,tot> %.3f %.3f\n", edge_name,
+                              max[5+i*2], total[5+i*2]);
+
       }
     }
     
