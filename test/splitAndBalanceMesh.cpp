@@ -9,6 +9,7 @@
 #include <apfMesh2.h>
 #include <apfGraph.h>
 #include <gmi_mesh.h>
+#include <gmi_null.h>
 #include <parma.h>
 #include <apfZoltan.h>
 #include <apfPartition.h>
@@ -95,6 +96,7 @@ int main(int argc, char* argv[]) {
     delete map;
   if (use_engpar_parmetis) {
     gmi_register_mesh();
+    gmi_register_null();
     gmi_model* model;
     if (m) 
       model = m->getModel();
