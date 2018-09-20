@@ -4,6 +4,7 @@
 #include <engpar_metrics.h>
 #include <engpar_support.h>
 #include <agiMigration.h>
+#include "writeCavity.h"
 namespace {
   void printMigrationStats(agi::MigrationTimers* migrTime) {
     double maxSetup = migrTime->processMax("setup");
@@ -329,6 +330,7 @@ namespace engpar {
     delete sd;
     time = PCU_Time()-time;
 
+    cavityWriter::writeToFile();
 
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);

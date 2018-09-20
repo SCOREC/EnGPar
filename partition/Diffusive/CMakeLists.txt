@@ -8,6 +8,7 @@ set(ENGPAR_SOURCES
   src/engpar_weightSelector.cpp
   src/engpar_make.cpp
   src/engpar_sd.cpp
+  src/writeCavity.cpp
   )
 
 set(ENGPAR_HEADERS

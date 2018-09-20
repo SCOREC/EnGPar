@@ -5,9 +5,7 @@
 #include <PCU.h>
 #include <agiMigration.h>
 
-#include <iostream>
-#include <fstream>
-#include <sstream>
+#include "writeCavity.h"
 
 namespace engpar {
 
@@ -60,16 +58,8 @@ namespace engpar {
   }
 
   void writeCavity(agi::Ngraph* g, Cavity& cav, part_t dest) {
+    std::stringstream outCav;
     std::stringstream ss;
-    ss << "cavities_" << PCU_Comm_Self() << ".txt";
-    static std::ofstream outCav(ss.str());
-    ss.str(""); //empty the stream
-    static int calls = 0;
-
-    if (!calls) {
-      outCav << "#engpar hash: " << engpar_version() << "\n";
-      calls++;
-    }
 
     // create adj matrix using the edges of the cavity
     // set<edges> edgesOfCavity
@@ -157,6 +147,7 @@ namespace engpar {
 
     outCav << "#destination process id\n";
     outCav << "1 " << dest << "\n";
+    cavityWriter::append(&outCav);
   }
 
   wgt_t addCavity(agi::Ngraph* g, Cavity& cav,
