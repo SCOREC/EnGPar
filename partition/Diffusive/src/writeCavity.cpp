@@ -18,8 +18,11 @@ void append(std::stringstream* ss) {
 
 void writeToFile() {
   int procsPerGroup = 2<<10;
-  int numGroups = PCU_Comm_Peers()/procsPerGroup;
-  assert( procsPerGroup * numGroups == PCU_Comm_Peers() );
+  int numGroups = 1;
+  if ( PCU_Comm_Peers() > procsPerGroup ) {
+    numGroups = PCU_Comm_Peers()/procsPerGroup;
+    assert( procsPerGroup * numGroups == PCU_Comm_Peers() );
+  }
   int groupRank = PCU_Comm_Self() % procsPerGroup;
   int groupLeader = PCU_Comm_Self() - groupRank;
   std::string str = foo.str();
