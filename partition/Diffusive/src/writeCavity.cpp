@@ -5,15 +5,15 @@
 #include <cassert>
 
 namespace cavityWriter {
-std::stringstream foo;
+std::stringstream foo("");
+int appendCalls = 0;
 
 void append(std::stringstream* ss) {
-  static int calls = 0;
-  if (!calls) {
+  if (!appendCalls) {
     foo << "#engpar hash: " << engpar_version() << "\n";
-    calls++;
   }
   foo << ss->str();
+  appendCalls++;
 }
 
 void writeToFile() {
@@ -33,9 +33,11 @@ void writeToFile() {
     PCU_Comm_Pack(groupLeader, str.c_str(), strSz);
   }
   PCU_Comm_Send();
+  int strLen = 0;
   while( PCU_Comm_Listen() ) {
     int len;
     PCU_COMM_UNPACK(len);
+    strLen += len;
     char *cstr = new char[len+1];
     PCU_Comm_Unpack(cstr,len);
     cstr[len]='\0';
@@ -44,12 +46,11 @@ void writeToFile() {
   }
 
   if(!groupRank) {
-    str = foo.str();
-    strSz = str.size();
     std::stringstream ss;
     ss << "cavities_" << PCU_Comm_Self() << ".txt";
     std::ofstream out(ss.str());
     out << foo.str();
+    out.close();
   }
 }
 

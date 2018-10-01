@@ -256,6 +256,7 @@ namespace engpar {
               sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
               (in->limitEdgeCutGrowth <= 0 ||
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
+                writeCavity(g,cav,peer);
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
                 planW+=w;
