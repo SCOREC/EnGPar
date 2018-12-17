@@ -29,6 +29,8 @@ engparInput cengpar_createGlobalSplitInput(ngraph g,
 
 engparInput cengpar_createDiffusiveInput(ngraph g, double stepfactor);
 
+void cengpar_setCutGrowthFactor(engparInput in, double factor);
+
 void cengpar_addPriority(engparInput in, int t, double tol);
 
 void cengpar_balanceGhosts(engparInput in, bool enable);

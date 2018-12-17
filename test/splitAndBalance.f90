@@ -120,6 +120,7 @@ program main
   diffusiveInput = cengpar_createDiffusiveInput(graph,stepFactor)
   call cengpar_addPriority(diffusiveInput,-1,tol)
   call cengpar_addPriority(diffusiveInput,0,tol)
+  call cengpar_setCutGrowthFactor(diffusiveInput,0.5)
   call cengpar_balanceGhosts(diffusiveInput,balanceGhosts)
   call cengpar_balance(diffusiveInput,verbosity);
   call cengpar_checkValidity(graph);

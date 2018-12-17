@@ -108,6 +108,21 @@ module engpar
     real(c_double), value :: stepfactor
   end function
   !---------------------------------------------------------------------------
+  !>  @brief limit the growth in edge cut
+  !>  @remark limit the growth in edge cut while balancing lower priority entity types
+  !>  @param input (in/out) diffusive input created with 'cengpar_createDiffusiveInput'
+  !>  @param factor (in) as factor increases from 0 the balancer will allow
+  !>                     smaller increases in the edge cut.  Testing has shown a value
+  !>                     of 0.5 to provide some imbalance improvement with
+  !>                     a minimal edge cut increase.
+  !---------------------------------------------------------------------------
+  subroutine cengpar_setCutGrowthFactor(input,factor) &
+             bind(C, NAME='cengpar_setCutGrowthFactor')
+    use :: iso_c_binding
+    type(c_ptr), value :: input
+    real(c_double), value :: factor
+  end subroutine
+  !---------------------------------------------------------------------------
   !>  @brief add entity type to balance
   !>  @remark add edge type t with tolerance tol to the priority list, 
   !>  if edge type t appears edge type t' then t has a higher priority than t'

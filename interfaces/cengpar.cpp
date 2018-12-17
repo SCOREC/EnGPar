@@ -129,6 +129,11 @@ void cengpar_addPriority(engparInput in, agi::etype t, double tol) {
   input->addPriority(t,tol);
 }
 
+void cengpar_setCutGrowthFactor(engparInput in, double factor) {
+  engpar::DiffusiveInput* input = (engpar::DiffusiveInput*)in;
+  input->limitEdgeCutGrowth = factor;
+}
+
 void cengpar_balanceGhosts(engparInput in, bool enable) {
   engpar::Input* input = (engpar::Input*)in;
   input->balanceGhosts(enable);
