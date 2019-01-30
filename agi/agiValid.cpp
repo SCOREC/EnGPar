@@ -24,10 +24,9 @@ namespace agi {
     vitr = g->begin();
     while ((vtx = g->iterate(vitr))) {
       for (etype t = 0;t<g->numEdgeTypes();t++) {
-        GraphEdge* edge;
         EdgeIterator* eitr = g->edges(vtx,t);
         lid_t j=0;
-        while ((edge = g->iterate(eitr))) {
+        while ((g->iterate(eitr))) {
           j++;
         }
         g->destroy(eitr);
@@ -111,10 +110,9 @@ namespace agi {
       }
       eitr = g->begin(t);
       while ((edge = g->iterate(eitr))) {
-        GraphVertex* other;
         PinIterator* pitr = g->pins(edge);
         j=0;
-        while ((other = g->iterate(pitr))) {
+        while ((g->iterate(pitr))) {
           j++;
         }
         g->destroy(pitr);

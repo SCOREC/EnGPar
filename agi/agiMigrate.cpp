@@ -80,8 +80,7 @@ namespace agi {
         GraphIterator* gitr =g->adjacent(*itr);
         GraphEdge* e;
         GraphEdge* old=NULL;
-        GraphVertex* v;
-        while ((v = g->iterate(gitr))) {
+        while ((g->iterate(gitr))) {
           e=g->edge(gitr);
           if (old==NULL||e!=old) 
             edges[t].insert(e);

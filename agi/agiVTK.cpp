@@ -36,8 +36,8 @@ namespace agi {
       agi::GraphVertex* my_v = g->findGID(requests[i].first);
       double vals[3];
       const coord_t& c = g->coord(my_v);
-      for (int i=0;i<3;i++) {
-        vals[i] = c[i];
+      for (int j=0;j<3;j++) {
+        vals[j] = c[j];
       }
       PCU_COMM_PACK(requests[i].second,requests[i].first);
       PCU_Comm_Pack(requests[i].second,vals,sizeof(double)*3);
@@ -158,15 +158,13 @@ namespace agi {
   void writePointData(Ngraph* g, FILE* f, GraphTag* tag,etype t) {
     fprintf(f,"<PointData>\n");
     fprintf(f,"<DataArray type=\"Int32\" Name=\"Part\" NumberOfComponents=\"1\" format=\"ascii\">\n");
-    agi::GraphVertex* v;
     agi::VertexIterator* vitr = g->begin();
-    while ((v=g->iterate(vitr))) {
+    while ((g->iterate(vitr))) {
       fprintf(f,"%d\n",PCU_Comm_Self());
     }
     if (g->isHyper()) {
-      agi::GraphEdge* e;
       agi::EdgeIterator* eitr = g->begin(0);
-      while ((e=g->iterate(eitr))) {
+      while ((g->iterate(eitr))) {
         fprintf(f,"%d\n",PCU_Comm_Self());
       }
       g->destroy(eitr);
@@ -177,12 +175,11 @@ namespace agi {
       fprintf(f,"<DataArray type=\"Int32\" Name=\"VorE\" NumberOfComponents=\"1\" format=\"ascii\">\n");
       
       vitr = g->begin();
-      while ((v=g->iterate(vitr))) {
+      while ((g->iterate(vitr))) {
         fprintf(f,"0\n");
       }
       agi::EdgeIterator* eitr = g->begin(0);
-      agi::GraphEdge* e;
-      while ((e=g->iterate(eitr))) {
+      while ((g->iterate(eitr))) {
         fprintf(f,"1\n");
     }
       g->destroy(eitr);

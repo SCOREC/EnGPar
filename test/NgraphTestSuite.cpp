@@ -82,16 +82,16 @@ int switchComm() {
   
   if (old_self<new_size) {
     agi::Ngraph* g = buildGraph();
+    //sanity check that the iterator works
     agi::VertexIterator* itr = g->begin();
-    agi::GraphVertex* vert;
-    while ((vert = g->iterate(itr)));
+    while ((g->iterate(itr)));
     agi::destroyGraph(g);
   }
   else {
     agi::Ngraph* g = buildHyperGraph();
+    //sanity check that the iterator works
     agi::EdgeIterator* itr = g->begin(0);
-    agi::GraphEdge* edge;
-    while ((edge = g->iterate(itr)));
+    while ((g->iterate(itr)));
     g->destroy(itr);  
     agi::destroyGraph(g);
   }
