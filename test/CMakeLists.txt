@@ -18,6 +18,11 @@ include_directories(
   ${PARMETIS_INCLUDE_DIRS}
   )
 
+if (KOKKOS_ENABLED)
+  include_directories(${KokkosCore_INCLUDE_DIRS} ${KokkosKernels_INCLUDE_DIRS})
+endif()
+
+
 if(ENGPAR_FORTRAN_INTERFACE)
   set(ALL_LIBS engpar_ftn)
 endif()
@@ -40,7 +45,12 @@ endif()
 set(ALL_LIBS ${ALL_LIBS}
   ${ZOLTAN_LIBRARIES}
   ${PARMETIS_LIBRARIES}
+  ${KOKKOS_LIBRARIES}
 )
+
+if (KOKKOS_ENABLED)
+  set(ALL_LIBS ${ALL_LIBS} ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES})
+endif()
 
 function(make_exe exename srcname)
   add_executable(${exename} ${srcname} buildGraphs.cpp)
