@@ -295,7 +295,9 @@ public:
    * \param compress whether or not to combine duplicate adjacencies into 1 entry
    */
   void create_eve_adjacency(etype t, bool compress = true);
-
+#ifdef KOKKOS_ENABLED
+  void parallel_create_eve(agi::etype t);
+#endif
   /** \brief Creates an iterator over the vertex-edge-vertex adjacencies.
    * \param vtx the graph vertex
    * \param t the edge type

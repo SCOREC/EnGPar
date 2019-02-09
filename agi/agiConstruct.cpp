@@ -2,6 +2,10 @@
 #include <engpar_support.h>
 #include <cstring>
 #include <stdexcept>
+#ifdef KOKKOS_ENABLED 
+#include <Kokkos_Core.hpp>
+#include <Kokkos_UnorderedMap.hpp>
+#endif
 namespace agi {
 
   Ngraph* createEmptyGraph() {
@@ -735,4 +739,97 @@ namespace agi {
     }
     destroy(eitr);
   }
+
+#ifdef KOKKOS_ENABLED // {
+  //FIXME these typedefs are a copy-paste from
+  // partition/Coloring/engpar_kokkosColoring.h
+  typedef Kokkos::DefaultExecutionSpace exe_space;
+  typedef Kokkos::View<int*, exe_space::device_type> kkLidView;
+  typedef Kokkos::TeamPolicy<>::member_type member_type;
+
+  //FIXME these copy functions are a copy-paste from 
+  // partition/Coloring/engpar_kokkosColoring.cpp
+  /** \brief helper function to transfer a host array to a device view
+   */
+  void hostToDevice(kkLidView d, agi::lid_t* h) {
+    kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
+    for (size_t i=0; i<hv.size(); ++i)
+      hv(i) = h[i];
+    Kokkos::deep_copy(d,hv);
+  }
+  /** \brief helper function to transfer a device view to a host array
+   */
+  void deviceToHost(kkLidView d, agi::lid_t* h) {
+    kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
+    Kokkos::deep_copy(hv,d); 
+    for(size_t i=0; i<hv.size(); ++i)
+      h[i] = hv(i);
+  }
+
+  void Ngraph::parallel_create_eve(agi::etype t) {
+    assert(isHyper());
+    agi::PNgraph* pg = publicize();
+    if (pg->eve_offsets[t]) {
+      delete [] pg->eve_offsets[t];
+      delete [] pg->eve_lists[t];
+    }
+    // Load graph info to device
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts;
+    kkLidView degree_view ("degree_view", M+1);
+    kkLidView edge_view ("edge_view", pg->num_local_pins[t]);
+    hostToDevice(degree_view, pg->degree_list[t]); 
+    hostToDevice(edge_view, pg->edge_list[t]); 
+    // make hint for map size to avoid resize
+    int numAdj = 0;
+    Kokkos::parallel_reduce (M, KOKKOS_LAMBDA(const int v, int& upd) {
+      for (int i=degree_view(v); i<degree_view(v+1); ++i) {
+        for (int j=degree_view(v); j<degree_view(v+1); ++j) {
+          if (edge_view(i)!=edge_view(j))
+            upd++;
+        }
+      } 
+    }, numAdj);
+    // fill map
+    Kokkos::UnorderedMap<Kokkos::pair<int,int>,void> m (numAdj);
+    Kokkos::parallel_for (M, KOKKOS_LAMBDA(const int v) {
+      for (int i=degree_view(v); i<degree_view(v+1); ++i) {
+        for (int j=degree_view(v); j<degree_view(v+1); ++j) {
+          if (edge_view(i)!=edge_view(j)) {
+            m.insert( Kokkos::pair<int,int>(edge_view(i),edge_view(j)) );
+          }
+        }
+      }
+    });
+    // create offset array
+    kkLidView deg ("deg", N+1);
+    Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
+      if ( m.valid_at(i) ) {
+        Kokkos::pair<int,int> p = m.key_at(i);
+        Kokkos::atomic_fetch_add( &deg(p.first+1), 1);
+      }
+    });
+    Kokkos::parallel_scan (N, KOKKOS_LAMBDA (const int i, int& upd, const bool& final) {
+      const int val = deg(i+1);
+      upd += val;
+      if (final)
+        deg(i+1) = upd;
+    });
+    pg->eve_offsets[t] = new int[N+1];
+    deviceToHost(deg, pg->eve_offsets[t]);
+    // make edge list array
+    kkLidView edgeList ("edgeList", pg->eve_offsets[t][N]);
+    kkLidView adjCount ("adjCount", N);
+    Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
+      if ( m.valid_at(i) ) {
+        Kokkos::pair<int,int> p = m.key_at(i);
+        int e = deg(p.first);
+        int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
+        edgeList(e+idx) = p.second;
+      }
+    });
+    pg->eve_lists[t] = new int[pg->eve_offsets[t][N]];
+    deviceToHost(edgeList, pg->eve_lists[t]);
+  }
+#endif // } KOKKOS_ENABLED
 }

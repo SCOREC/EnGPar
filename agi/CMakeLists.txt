@@ -62,6 +62,11 @@ target_include_directories(agi PUBLIC
   $<INSTALL_INTERFACE:include>
   )
 
+if (KOKKOS_ENABLED)
+  target_include_directories(agi PUBLIC ${KokkosCore_INCLUDE_DIRS})
+  target_link_libraries(agi PUBLIC ${KokkosCore_LIBRARIES})
+endif()
+
 target_link_libraries(agi PUBLIC engpar_support)
 target_compile_definitions(agi INTERFACE ${AGI_DEFINITIONS})
 engpar_export_lib(agi "${AGI_HEADERS}")
