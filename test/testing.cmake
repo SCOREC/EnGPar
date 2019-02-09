@@ -225,11 +225,6 @@ if (ENABLE_KOKKOS)
     "${MESHES}/upright/67k.smb"
     1)
 
-  mpi_test(eveParallel 1
-    ./eveParallel
-    "${MESHES}/pipe/pipe.dmg"
-    "${MESHES}/pipe/pipe.smb")
-
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
