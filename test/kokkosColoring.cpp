@@ -31,15 +31,15 @@ bool checkDirected(agi::Ngraph* g, agi::etype t=0) {
 void vertColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on vertices
   engpar::ColoringInput* in = engpar::createColoringInput(g, t, true);
-  agi::lid_t** colors = new agi::lid_t*[1];
-  engpar::EnGPar_KokkosColoring(in, colors); 
+  agi::lid_t* colors;
+  engpar::EnGPar_KokkosColoring(in, &colors); 
   // Assign colors to graph vertices
   agi::GraphTag* tag = g->createIntTag(-1);
   agi::GraphVertex* v;
   agi::VertexIterator* vitr = g->begin();
   int i=0;
   while ((v=g->iterate(vitr)))
-    g->setIntTag(tag, v, (*colors)[i++]);
+    g->setIntTag(tag, v, colors[i++]);
 
   // Check that the coloring is valid
   agi::GraphEdge* e;
@@ -59,15 +59,15 @@ void vertColor(agi::Ngraph* g, agi::etype t=0) {
 void edgeColor(agi::Ngraph* g, agi::etype t=0) {
   // Call EnGPar graph coloring on edges
   engpar::ColoringInput* in = engpar::createColoringInput(g, t, false);
-  agi::lid_t** colors = new agi::lid_t*[1];
-  engpar::EnGPar_KokkosColoring(in, colors);
+  agi::lid_t* colors;
+  engpar::EnGPar_KokkosColoring(in, &colors);
   // assign colors to edges
   agi::GraphTag* tag = g->createIntTag(t);
   agi::GraphEdge* e;
   agi::EdgeIterator* eitr = g->begin(t);
   int i=0;
   while ((e=g->iterate(eitr)))
-    g->setIntTag(tag, e, (*colors)[i++]);
+    g->setIntTag(tag, e, colors[i++]);
   g->destroy(eitr);
   // Check that the coloring is valid
   agi::GraphVertex* v;
@@ -93,6 +93,7 @@ int main(int argc, char* argv[]) {
 
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
+  Kokkos::initialize(argc,argv);
   if ( argc != 2 ) {
     if ( !PCU_Comm_Self() )
       printf("Usage: %s <binary_graph_file>",argv[0]);
@@ -101,10 +102,9 @@ int main(int argc, char* argv[]) {
     assert(false);
   }
 
-  Kokkos::initialize(argc,argv);
   
   agi::Ngraph* g = agi::createBinGraph(argv[1]);
-  //assert(checkDirected(g));
+  assert(checkDirected(g));
   vertColor(g);
   for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t) {
     vertColor(g, t);
