@@ -4,9 +4,3 @@
 [submodule "EnGPar-graphs"]
 	path = EnGPar-graphs
 	url = https://github.com/SCOREC/EnGPar-graphs.git
-[submodule "kokkos"]
-	path = kokkos
-	url = git@github.com:kokkos/kokkos.git
-[submodule "kokkos-kernels"]
-	path = kokkos-kernels
-	url = git@github.com:kokkos/kokkos-kernels.git
