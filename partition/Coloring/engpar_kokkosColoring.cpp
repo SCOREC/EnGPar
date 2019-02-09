@@ -24,6 +24,7 @@ namespace engpar {
 
 
   void parallel_create_eve(agi::Ngraph* g, agi::etype t=0) {
+    assert(g->isHyper());
     agi::PNgraph* pg = g->publicize();
     if (pg->eve_offsets[t]) {
       delete [] pg->eve_offsets[t];
@@ -105,6 +106,7 @@ namespace engpar {
       adj_lists = pg->vev_lists[in->edgeType];
     }
     else {
+      assert(in->g->isHyper());
       // Edge coloring
       double t0 = PCU_Time();
       //in->g->create_eve_adjacency(in->edgeType);

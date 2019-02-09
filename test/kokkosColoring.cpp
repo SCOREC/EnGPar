@@ -108,7 +108,8 @@ int main(int argc, char* argv[]) {
   vertColor(g);
   for (agi::lid_t t=0; t<g->numEdgeTypes(); ++t) {
     vertColor(g, t);
-    edgeColor(g, t);
+    if( g->isHyper() ) 
+      edgeColor(g, t);
   }
   destroyGraph(g);
   PCU_Barrier();
