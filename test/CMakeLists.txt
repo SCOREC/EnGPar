@@ -74,6 +74,7 @@ if (KOKKOS_ENABLED)
   make_utility(kokkosColoring kokkosColoring.cpp)
   make_utility(kokkosMeshColoring kokkosMeshColoring.cpp)
   make_utility(eveParallel eveParallel.cpp)
+  make_utility(kokkosMeshBfs kokkosMeshBfs.cpp)
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)

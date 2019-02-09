@@ -217,7 +217,6 @@ if (ENABLE_KOKKOS)
     "${MESHES}/torus/torus.dmg"
     "${MESHES}/torus/4imb/torus.smb"
     1)
-
   
   mpi_test(colorMeshUpright 1
     ./kokkosMeshColoring
@@ -229,6 +228,11 @@ if (ENABLE_KOKKOS)
     ./eveParallel
     "${MESHES}/pipe/pipe.dmg"
     "${MESHES}/pipe/pipe.smb")
+
+  mpi_test(bfsMeshUpright 1
+    ./kokkosMeshBfs
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/67k.smb")
 
 endif()
 
