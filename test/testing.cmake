@@ -178,14 +178,6 @@ if (ENABLE_KOKKOS)
   mpi_test(kokkosHelloWorld 1
     ./kokkosHelloWorld)
 
-  mpi_test(kokkosForRing 1
-    ./kokkosFor
-    "${GRAPHS}/ring.ebin")
-
-  mpi_test(kokkosForTree 1
-    ./kokkosFor
-    "${GRAPHS}/tree.ebin")
-
   mpi_test(bfsSearchRing 1
     ./bfsSearch
     "${GRAPHS}/ring.ebin")
@@ -193,6 +185,50 @@ if (ENABLE_KOKKOS)
   mpi_test(bfsSearchTree 1
     ./bfsSearch
     "${GRAPHS}/tree.ebin")
+
+  mpi_test(colorRing 1
+    ./kokkosColoring
+    "${GRAPHS}/ring.ebin")
+
+  mpi_test(colorTree 1
+    ./kokkosColoring
+    "${GRAPHS}/tree.ebin")
+
+  mpi_test(colorEnron 1
+    ./kokkosColoring
+    "${GRAPHS}/enron.ebin")
+
+  mpi_test(colorNutella 1
+    ./kokkosColoring
+    "${GRAPHS}/gnutella.ebin")
+
+  mpi_test(colorAsic 1
+    ./kokkosColoring
+    "${GRAPHS}/asic.ebin")
+
+  mpi_test(colorMeshPipe 1
+    ./kokkosMeshColoring
+    "${MESHES}/pipe/pipe.dmg"
+    "${MESHES}/pipe/pipe.smb"
+    1)
+
+  mpi_test(colorMeshTorus 4
+    ./kokkosMeshColoring
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb"
+    1)
+
+  
+  mpi_test(colorMeshUpright 1
+    ./kokkosMeshColoring
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/67k.smb"
+    1)
+
+  mpi_test(eveParallel 1
+    ./eveParallel
+    "${MESHES}/pipe/pipe.dmg"
+    "${MESHES}/pipe/pipe.smb")
 
 endif()
 

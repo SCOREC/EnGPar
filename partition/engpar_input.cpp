@@ -2,6 +2,7 @@
 #include <engpar_split_input.h>
 #include <engpar_diffusive_input.h>
 #include <engpar_weight_input.h>
+#include <engpar_coloring_input.h>
 #include <PCU.h>
 namespace engpar {
   
@@ -48,5 +49,9 @@ namespace engpar {
 
   WeightInput* createWeightInput(agi::Ngraph* g, double t, double sf, agi::etype et) {
     return new WeightInput(g,t,sf,et);
+  }
+
+  ColoringInput* createColoringInput(agi::Ngraph* g, agi::lid_t primaryType, bool vtxColoring) {
+    return new ColoringInput(g,primaryType,vtxColoring);
   }
 }
