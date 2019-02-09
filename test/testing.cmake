@@ -204,18 +204,21 @@ if (ENABLE_KOKKOS)
   mpi_test(colorMeshPipe 1
     ./kokkosMeshColoring
     "${MESHES}/pipe/pipe.dmg"
-    "${MESHES}/pipe/pipe.smb")
+    "${MESHES}/pipe/pipe.smb"
+    1)
 
   mpi_test(colorMeshTorus 4
     ./kokkosMeshColoring
     "${MESHES}/torus/torus.dmg"
-    "${MESHES}/torus/4imb/torus.smb")
+    "${MESHES}/torus/4imb/torus.smb"
+    1)
 
   
   mpi_test(colorMeshUpright 1
     ./kokkosMeshColoring
     "${MESHES}/upright/upright.dmg"
-    "${MESHES}/upright/190k.smb")
+    "${MESHES}/upright/67k.smb"
+    1)
 
   mpi_test(eveParallel 1
     ./eveParallel
