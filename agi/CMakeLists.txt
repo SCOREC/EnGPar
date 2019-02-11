@@ -39,7 +39,7 @@ if (KOKKOS_ENABLED)
 endif()
 
 target_link_libraries(agi PUBLIC engpar_support)
-target_compile_definitions(agi INTERFACE ${AGI_DEFINITIONS})
+target_compile_definitions(agi INTERFACE ${ENGPAR_DEFINITIONS})
 engpar_export_lib(agi "${AGI_HEADERS}")
 
 bob_end_subdir()

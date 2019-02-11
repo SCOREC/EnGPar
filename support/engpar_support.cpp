@@ -40,13 +40,13 @@ bool EnGPar_Check_Verbosity( int v) {
 
 #ifdef KOKKOS_ENABLED
 namespace engpar {
-  void hostToDevice(LIDs d, AGI_LID_T* h) {
+  void hostToDevice(LIDs d, ENGPAR_LID_T* h) {
     LIDs::HostMirror hv = Kokkos::create_mirror_view(d);
     for (size_t i=0; i<hv.size(); ++i)
       hv(i) = h[i];
     Kokkos::deep_copy(d,hv);
   }
-  void deviceToHost(LIDs d, AGI_LID_T* h) {
+  void deviceToHost(LIDs d, ENGPAR_LID_T* h) {
     LIDs::HostMirror hv = Kokkos::create_mirror_view(d);
     Kokkos::deep_copy(hv,d);
     for(size_t i=0; i<hv.size(); ++i)

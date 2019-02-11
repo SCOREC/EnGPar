@@ -6,11 +6,11 @@ module engpar
   use :: iso_c_binding
 #include "engpar_types.h"
   public
-  integer, parameter :: ENGPAR_GID_T  = AGI_GID_FT
-  integer, parameter :: ENGPAR_LID_T  = AGI_LID_FT
-  integer, parameter :: ENGPAR_WGT_T  = AGI_WGT_FT
-  integer, parameter :: ENGPAR_PART_T = AGI_PART_FT
-  integer, parameter :: ENGPAR_EDGE_T = AGI_EDGE_FT
+  integer, parameter :: ENGPAR_GID_T  = ENGPAR_GID_FT
+  integer, parameter :: ENGPAR_LID_T  = ENGPAR_LID_FT
+  integer, parameter :: ENGPAR_WGT_T  = ENGPAR_WGT_FT
+  integer, parameter :: ENGPAR_PART_T = ENGPAR_PART_FT
+  integer, parameter :: ENGPAR_EDGE_T = ENGPAR_EDGE_FT
   interface
   !---------------------------------------------------------------------------
   !> @brief initialize engar, call this before any other engpar api
@@ -66,8 +66,8 @@ module engpar
     logical(c_bool), intent(in), value :: isOrig
     integer(c_int), value :: splitFactor
     real(c_double), value :: tol
-    integer(AGI_PART_FT), intent(in), dimension(splitFactor) :: ranks
-    integer(AGI_EDGE_FT), value :: edgeType
+    integer(ENGPAR_PART_FT), intent(in), dimension(splitFactor) :: ranks
+    integer(ENGPAR_EDGE_FT), value :: edgeType
   end function
   !---------------------------------------------------------------------------
   !> @brief create input for splitting
@@ -90,7 +90,7 @@ module engpar
     integer(c_int), value :: largeComm
     logical(c_bool), intent(in), value :: isOrig
     real(c_double), value :: tol
-    integer(AGI_EDGE_FT), value :: edgeType
+    integer(ENGPAR_EDGE_FT), value :: edgeType
   end function
 
   !---------------------------------------------------------------------------
@@ -135,7 +135,7 @@ module engpar
              bind(C, NAME='cengpar_addPriority')
     use :: iso_c_binding
     type(c_ptr), value :: input
-    integer(AGI_EDGE_FT), value :: etype
+    integer(ENGPAR_EDGE_FT), value :: etype
     real(c_double), value :: tol
   end subroutine
   !---------------------------------------------------------------------------
@@ -219,8 +219,8 @@ module engpar
     use :: iso_c_binding
     type(c_ptr), value :: graph
     logical(c_bool), intent(in), value :: isHg
-    integer(AGI_GID_FT), intent(in), dimension(nverts) :: verts
-    real(AGI_WGT_FT), intent(in), dimension(nverts) :: weights
+    integer(ENGPAR_GID_FT), intent(in), dimension(nverts) :: verts
+    real(ENGPAR_WGT_FT), intent(in), dimension(nverts) :: weights
     integer(C_INT), intent(in), value :: nverts
   end subroutine
   !---------------------------------------------------------------------------
@@ -237,12 +237,12 @@ module engpar
   function cengpar_constructEdges(graph,edges,degs,weights,pins,nedges,npins) &
              bind(C, NAME='cengpar_constructEdges')
     use :: iso_c_binding
-    integer(AGI_EDGE_FT) :: cengpar_constructEdges
+    integer(ENGPAR_EDGE_FT) :: cengpar_constructEdges
     type(c_ptr), value :: graph
-    integer(AGI_GID_FT), intent(in), dimension(nedges) :: edges
-    integer(AGI_LID_FT), intent(in), dimension(nedges) :: degs
-    real(AGI_WGT_FT), intent(in), dimension(nedges) :: weights
-    integer(AGI_GID_FT), intent(in), dimension(npins) :: pins
+    integer(ENGPAR_GID_FT), intent(in), dimension(nedges) :: edges
+    integer(ENGPAR_LID_FT), intent(in), dimension(nedges) :: degs
+    real(ENGPAR_WGT_FT), intent(in), dimension(nedges) :: weights
+    integer(ENGPAR_GID_FT), intent(in), dimension(npins) :: pins
     integer(C_INT), intent(in), value :: nedges
     integer(C_INT), intent(in), value :: npins
   end function
@@ -259,8 +259,8 @@ module engpar
              bind(C, NAME='cengpar_constructGhosts')
     use :: iso_c_binding
     type(c_ptr), value :: graph
-    integer(AGI_GID_FT), intent(in), dimension(nghosts) :: verts
-    integer(AGI_PART_FT), intent(in), dimension(nghosts) :: owners
+    integer(ENGPAR_GID_FT), intent(in), dimension(nghosts) :: verts
+    integer(ENGPAR_PART_FT), intent(in), dimension(nghosts) :: owners
     integer(C_INT), intent(in), value :: nghosts
   end subroutine
   !---------------------------------------------------------------------------
@@ -292,8 +292,8 @@ module engpar
              bind(C, NAME='cengpar_getPartition')
     use :: iso_c_binding
     type(c_ptr), value :: graph
-    integer(AGI_GID_FT), intent(in), dimension(nverts) :: verts
-    integer(AGI_PART_FT), intent(in), dimension(nverts) :: parts
+    integer(ENGPAR_GID_FT), intent(in), dimension(nverts) :: verts
+    integer(ENGPAR_PART_FT), intent(in), dimension(nverts) :: parts
     integer(C_INT), intent(in), value :: nverts
   end subroutine
   end interface

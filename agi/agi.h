@@ -12,10 +12,10 @@
 
 namespace agi {
   
-  typedef AGI_GID_T gid_t;
-  typedef AGI_LID_T lid_t;
-  typedef AGI_WGT_T wgt_t;
-  typedef AGI_PART_T part_t;
+  typedef ENGPAR_GID_T gid_t;
+  typedef ENGPAR_LID_T lid_t;
+  typedef ENGPAR_WGT_T wgt_t;
+  typedef ENGPAR_PART_T part_t;
   typedef double coord_t[3];
 
   typedef std::set<part_t> Peers;

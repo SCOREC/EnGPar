@@ -34,11 +34,11 @@ void EnGPar_Error_Message(const char*, ...);
 #ifdef KOKKOS_ENABLED
 namespace engpar {
 typedef Kokkos::DefaultExecutionSpace exeSpace;
-typedef Kokkos::View<AGI_LID_T*, exeSpace::device_type> LIDs;
+typedef Kokkos::View<ENGPAR_LID_T*, exeSpace::device_type> LIDs;
 /** \brief helper function to transfer a host array to a device view */
-void hostToDevice(LIDs d, AGI_LID_T* h);
+void hostToDevice(LIDs d, ENGPAR_LID_T* h);
 /** \brief helper function to transfer a device view to a host array */
-void deviceToHost(LIDs d, AGI_LID_T* h);
+void deviceToHost(LIDs d, ENGPAR_LID_T* h);
 }
 #endif
 
