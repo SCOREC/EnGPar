@@ -17,7 +17,7 @@ using engpar::LIDs;
 apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t) {
   apf::MeshEntity* vtx;
   apf::MeshIterator* it = m->begin(0);
-  apf::Field* f = apf::createLagrangeField(m, "my_field", apf::SCALAR, 1);
+  apf::Field* f = apf::createLagrangeField(m, "vtx_distance", apf::SCALAR, 1);
   int val;
   while ((vtx = m->iterate(it))) {
     m->getIntTag(vtx, t, &val);
@@ -35,17 +35,43 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t) {
   //transfer the eve to the device
   LIDs offsets_d("offsets_d", numEnts+1);
   hostToDevice(offsets_d, pg->eve_offsets[t]);
-  LIDs lists_d("lists_d", pg->eve_lists[t][numEnts]);
+  printf("numEnts %d size of lists %d\n", numEnts, pg->eve_offsets[t][numEnts]);
+  LIDs lists_d("lists_d", pg->eve_offsets[t][numEnts]);
   hostToDevice(lists_d, pg->eve_lists[t]);
-  //create a device array for the distance
-  LIDs dist_view("dist_view", numEnts);
-  //write something into the distance - replace this with pull bfs
+  //create a device array for the visited flag and initialize it
+  LIDs visited_d("visited_d", numEnts);
+  LIDs visited_next_d("visited_next_d", numEnts);
   Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
-      dist_view(e) = e;
+    visited_d(e) = 0;
+    if(e==0)
+      visited_next_d(e) = 1; //the starting vertex
+    else
+      visited_next_d(e) = 0;
   });
+  //create a device array for the distance and initialize it
+  LIDs dist_d("dist_d", numEnts);
+  Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+    dist_d(e) = 0;
+  });
+  //create a flag to indicate if any distances have changed
+  agi::lid_t found = 0;
+  LIDs found_d("found_d", 1);
+  //count iterations
+  int iter = 0;
+  int max_iter = 1000;
+  LIDs iter_d("iter_d", 1);
+  //run bfs
+  do {
+    fprintf(stderr, "iter %d\n", iter);
+    iter++;
+    hostToDevice(iter_d, &iter);
+    //
+    // insert bfs code here
+    //
+  } while (found && iter < max_iter);
   //transfer the distance to the host
-  agi::lid_t* dist = new agi::lid_t[numEnts];
-  deviceToHost(dist_view, dist);
+  agi::lid_t* dist = new int[numEnts];
+  deviceToHost(dist_d, dist);
   return dist;
 }
 
@@ -73,8 +99,11 @@ int main(int argc, char* argv[]) {
   apf::MeshIterator* vitr = m->begin(0);
   apf::MeshEntity* ent;
   int i=0;
-  while ((ent = m->iterate(vitr)))
-    m->setIntTag(ent,dist,&distance[i++]);
+  while ((ent = m->iterate(vitr))) {
+    int d = distance[i];
+    m->setIntTag(ent,dist,&d);
+    i++;
+  }
   m->end(vitr);
   convert_my_tag(m, dist);
   apf::writeVtkFiles("meshDistance", m);
