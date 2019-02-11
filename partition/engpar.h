@@ -5,7 +5,7 @@
 #include <engpar_diffusive_input.h>
 #include <engpar_weight_input.h>
 #include <engpar_split_input.h>
-#include "engpar_types.h"
+#include "engpar_ptn_types.h"
 namespace engpar {
 
   /** \name Partition Routines */

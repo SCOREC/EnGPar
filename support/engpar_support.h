@@ -1,7 +1,11 @@
 #ifndef ENGPAR_SUPPORT
 #define ENGPAR_SUPPORT
+#include "engpar_types.h"
 #include <PCU.h>
 #include <iostream>
+#ifdef KOKKOS_ENABLED
+#include <Kokkos_Core.hpp>
+#endif
 void EnGPar_Initialize(int verbosity=0);
 void EnGPar_Finalize();
 
@@ -26,4 +30,16 @@ void EnGPar_Status_Message(const char*, ...);
 void EnGPar_Status_Message(int verbosity, const char*, ...);
 void EnGPar_Warning_Message(const char*, ...);
 void EnGPar_Error_Message(const char*, ...);
+
+#ifdef KOKKOS_ENABLED
+namespace engpar {
+typedef Kokkos::DefaultExecutionSpace exeSpace;
+typedef Kokkos::View<AGI_LID_T*, exeSpace::device_type> LIDs;
+/** \brief helper function to transfer a host array to a device view */
+void hostToDevice(LIDs d, AGI_LID_T* h);
+/** \brief helper function to transfer a device view to a host array */
+void deviceToHost(LIDs d, AGI_LID_T* h);
+}
+#endif
+
 #endif

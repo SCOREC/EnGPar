@@ -741,32 +741,11 @@ namespace agi {
   }
 
 #ifdef KOKKOS_ENABLED // {
-  //FIXME these typedefs are a copy-paste from
-  // partition/Coloring/engpar_kokkosColoring.h
-  typedef Kokkos::DefaultExecutionSpace exe_space;
-  typedef Kokkos::View<int*, exe_space::device_type> kkLidView;
-  typedef Kokkos::TeamPolicy<>::member_type member_type;
-
-  //FIXME these copy functions are a copy-paste from 
-  // partition/Coloring/engpar_kokkosColoring.cpp
-  /** \brief helper function to transfer a host array to a device view
-   */
-  void hostToDevice(kkLidView d, agi::lid_t* h) {
-    kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
-    for (size_t i=0; i<hv.size(); ++i)
-      hv(i) = h[i];
-    Kokkos::deep_copy(d,hv);
-  }
-  /** \brief helper function to transfer a device view to a host array
-   */
-  void deviceToHost(kkLidView d, agi::lid_t* h) {
-    kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
-    Kokkos::deep_copy(hv,d); 
-    for(size_t i=0; i<hv.size(); ++i)
-      h[i] = hv(i);
-  }
-
   void Ngraph::parallel_create_eve(agi::etype t) {
+    using engpar::LIDs;
+    using engpar::hostToDevice;
+    using engpar::deviceToHost;
+
     assert(isHyper());
     agi::PNgraph* pg = publicize();
     if (pg->eve_offsets[t]) {
@@ -776,8 +755,8 @@ namespace agi {
     // Load graph info to device
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
-    kkLidView degree_view ("degree_view", M+1);
-    kkLidView edge_view ("edge_view", pg->num_local_pins[t]);
+    LIDs degree_view ("degree_view", M+1);
+    LIDs edge_view ("edge_view", pg->num_local_pins[t]);
     hostToDevice(degree_view, pg->degree_list[t]); 
     hostToDevice(edge_view, pg->edge_list[t]); 
     // make hint for map size to avoid resize
@@ -802,7 +781,7 @@ namespace agi {
       }
     });
     // create offset array
-    kkLidView deg ("deg", N+1);
+    LIDs deg ("deg", N+1);
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
         Kokkos::pair<int,int> p = m.key_at(i);
@@ -818,8 +797,8 @@ namespace agi {
     pg->eve_offsets[t] = new int[N+1];
     deviceToHost(deg, pg->eve_offsets[t]);
     // make edge list array
-    kkLidView edgeList ("edgeList", pg->eve_offsets[t][N]);
-    kkLidView adjCount ("adjCount", N);
+    LIDs edgeList ("edgeList", pg->eve_offsets[t][N]);
+    LIDs adjCount ("adjCount", N);
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
         Kokkos::pair<int,int> p = m.key_at(i);

@@ -4,7 +4,7 @@
 !---------------------------------------------------------------------------
 module engpar
   use :: iso_c_binding
-#include "agi_types.h"
+#include "engpar_types.h"
   public
   integer, parameter :: ENGPAR_GID_T  = AGI_GID_FT
   integer, parameter :: ENGPAR_LID_T  = AGI_LID_FT

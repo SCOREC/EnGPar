@@ -5,7 +5,7 @@
 #include <engpar_support.h>
 #include <agiMigration.h>
 #include "engpar_split_input.h"
-#include "../engpar_types.h"
+#include "../engpar_ptn_types.h"
 namespace engpar {
 
   void expandParts(agi::Ngraph* g, MPI_Comm newComm) {

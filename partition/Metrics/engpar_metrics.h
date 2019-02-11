@@ -2,7 +2,7 @@
 #define ENGPAR_METRICS_H__
 
 #include <ngraph.h>
-#include "../engpar_types.h"
+#include "../engpar_ptn_types.h"
 namespace engpar {
   
   /** \name Metrics */

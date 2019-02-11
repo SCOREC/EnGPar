@@ -4,25 +4,6 @@
 #include "engpar_coloring_input.h"
 
 #ifdef KOKKOS_ENABLED
-namespace {
-  /** \brief helper function to transfer a host array to a device view
-   */
-  void hostToDevice(engpar::kkLidView d, agi::lid_t* h) {
-    engpar::kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
-    for (size_t i=0; i<hv.size(); ++i)
-      hv(i) = h[i];
-    Kokkos::deep_copy(d,hv);
-  }
-  /** \brief helper function to transfer a device view to a host array
-   */
-  void deviceToHost(engpar::kkLidView d, agi::lid_t* h) {
-    engpar::kkLidView::HostMirror hv = Kokkos::create_mirror_view(d);
-    Kokkos::deep_copy(hv,d); 
-    for(size_t i=0; i<hv.size(); ++i)
-      h[i] = hv(i);
-  }
-}
-
 namespace engpar {
   agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors) { 
     agi::PNgraph* pg = in->g->publicize();
@@ -50,21 +31,21 @@ namespace engpar {
       adj_offsets = pg->eve_offsets[in->edgeType];
       adj_lists = pg->eve_lists[in->edgeType];
     }
-    kkLidView colors_d("colors_device", numEnts);
+    LIDs colors_d("colors_device", numEnts);
     // Create views
-    kkLidView adj_offsets_view ("adj_offsets_view", numEnts+1);
+    LIDs adj_offsets_view ("adj_offsets_view", numEnts+1);
     hostToDevice(adj_offsets_view, adj_offsets);
-    kkLidView adj_lists_view ("adj_lists_view", adj_offsets[numEnts]);
+    LIDs adj_lists_view ("adj_lists_view", adj_offsets[numEnts]);
     hostToDevice(adj_lists_view, adj_lists);
     // Typedefs to simplify kokkos template calls 
-    typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, exe_space::device_type, void, int> crsMat_t;
+    typedef KokkosSparse::CrsMatrix<agi::lid_t, agi::lid_t, exeSpace::device_type, void, int> crsMat_t;
     typedef crsMat_t::StaticCrsGraphType graph_t;
     typedef graph_t::entries_type::non_const_type color_view_t;
     typedef graph_t::row_map_type lno_view_t;
     typedef graph_t::entries_type lno_nnz_view_t;
     typedef graph_t::entries_type::non_const_type  color_view_t;
     typedef KokkosKernels::Experimental::KokkosKernelsHandle <agi::lid_t, agi::lid_t, agi::lid_t, 
-            exe_space::execution_space, exe_space::memory_space, exe_space::memory_space> KernelHandle; 
+            exeSpace::execution_space, exeSpace::memory_space, exeSpace::memory_space> KernelHandle; 
     // Create kernel handle which will call graph color
     KernelHandle* kh = new KernelHandle();
     kh->set_team_work_size(32);
@@ -72,7 +53,7 @@ namespace engpar {
     kh->create_graph_coloring_handle(KokkosGraph::COLORING_DEFAULT);
     // Run kokkos Coloring and delete handle
     double t0 = PCU_Time();
-    KokkosGraph::Experimental::graph_color<KernelHandle, kkLidView, kkLidView>
+    KokkosGraph::Experimental::graph_color<KernelHandle, LIDs, LIDs>
       (kh, numEnts, numEnts, adj_offsets_view, adj_lists_view);
     printf ("Coloring time: %f\n", PCU_Time()-t0);
     colors_d = kh->get_graph_coloring_handle()->get_vertex_colors();

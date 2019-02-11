@@ -24,7 +24,7 @@ set(ENGPAR_SOURCES
 set(ENGPAR_HEADERS
   engpar_input.h
   engpar.h
-  engpar_types.h
+  engpar_ptn_types.h
   )
 
 
