@@ -24,7 +24,7 @@ namespace engpar {
    *  \remark this supports procedures that will use the
    *  coloring on the device
    */
-  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, LIDs colors);
+  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors);
 }
 
 #endif //KOKKOS_ENABLED
