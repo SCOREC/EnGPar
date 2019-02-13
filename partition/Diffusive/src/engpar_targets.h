@@ -12,15 +12,19 @@ namespace engpar {
     Targets(bool isHyper, double step_factor, Sides* s, Weights* targetW, int sideTol,
             Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;
+      //For each side
       for (itr = s->begin();itr!=s->end();itr++) {
         int neighbor = itr->first;
         bool canSend=!isHyper || s->get(neighbor)<=sideTol;
+	//Check if we can send to this neighbor based on previously balanced edges/vtxs
         for (unsigned int i=0;i<completedTolerances.size();i++) {
           if (completedWs[i]->get(neighbor)>=completedTolerances[i])
             canSend=false;
         }
         if (!canSend)
           continue;
+
+	//See if we need to send weight for the target type and add if we do
         wgt_t myW = targetW->myWeight();
         wgt_t neighborW = targetW->get(neighbor);
         if (myW>neighborW) {
@@ -32,6 +36,7 @@ namespace engpar {
         }
       }
     }
+
     Targets(bool isHyper, double, Sides* s, agi::WeightPartitionMap* wp_map,
             int sideTol, Weights** completedWs,std::vector<wgt_t>& completedTolerances) {
       Sides::iterator itr;

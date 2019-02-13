@@ -10,14 +10,18 @@ namespace engpar {
 
   typedef std::unordered_set<agi::GraphVertex*> Cavity;
   typedef std::vector<part_t> Peers;
+
   typedef std::unordered_map<part_t,wgt_t> Sending;
+  typedef std::pair<agi::GraphVertex*,agi::GraphVertex*> Connection;
+  //Array of weights
   typedef double* Ws;
-  typedef std::unordered_map<int, Ws> Midd;
+  //Map from part id to weights
+  typedef std::unordered_map<part_t, Ws> Midd;
   struct Migr;
   struct CompareMigr;
   typedef std::set<Migr,CompareMigr> MigrComm;
   typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
-  
+
   class Selector {
   public:
     Selector(DiffusiveInput* in_, Queue* queue,
