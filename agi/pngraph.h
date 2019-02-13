@@ -86,7 +86,7 @@ class PNgraph {
   lid_t* degree_list[MAX_TYPES];
   /** \brief The list of edges off of each vertex
    *
-   * size = num_local_edges
+   * size = degree_list[t][num_local_verts]
    * The starting position for a given vertex is found at degree_list[type][vertex]
    * and goes up to degree_list[type][vertex+1].
    */
