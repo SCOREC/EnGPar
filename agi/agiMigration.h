@@ -18,7 +18,7 @@ namespace agi {
     bool has(GraphVertex*) const;
     int get(GraphVertex*) const;
 
-    void insert(std::pair<GraphVertex*, int>);
+    bool insert(std::pair<GraphVertex*, int>);
 
     void clear();
     typedef std::vector<GraphVertex*>::iterator iterator;

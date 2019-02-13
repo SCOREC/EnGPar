@@ -3,10 +3,10 @@
 namespace engpar {
 
   /*Given a graph edge find:
-   *  All the non onwed vertices surrounding the edge -> others
+   *  All the non owned vertices surrounding the edge -> others
    *  The vertex that this part owns of the cavity -> <returned value>
    */
-  agi::GraphVertex* getCavity(agi::Ngraph* g, agi::GraphEdge* edge, Cavity& others) {
+  agi::GraphVertex* getWeightCavity(agi::Ngraph* g, agi::GraphEdge* edge, Cavity& others) {
     agi::PinIterator* pitr = g->pins(edge);
     agi::GraphVertex* vtx;
     agi::GraphVertex* v = NULL;
@@ -15,7 +15,7 @@ namespace engpar {
         v = vtx;
       }
       else
-        others.push_back(vtx);
+        others.insert(vtx);
     }
     g->destroy(pitr);
     return v;
@@ -31,18 +31,19 @@ namespace engpar {
       if (planW > targets->total()) break;
       //Create Cavity and peers
       Cavity cav;
-      agi::GraphVertex* mine = getCavity(in->g,q->get(itr),cav);
+      agi::GraphVertex* mine = getWeightCavity(in->g,q->get(itr),cav);
       wgt_t w = in->g->weight(mine) - vSending[mine];
-      for (unsigned int i=0;i<cav.size();i++) {
-        part_t owner = in->g->owner(cav[i]);
+      Cavity::iterator cav_itr;
+      for (cav_itr = cav.begin(); cav_itr != cav.end(); ++cav_itr) {
+        part_t owner = in->g->owner(*cav_itr);
         if (targets->has(owner) && sending[owner] < targets->get(owner)) {
-          int x = w*alpha/cav.size();
-          if (x> targets->get(owner)-sending[owner])
-            x = targets->get(owner)-sending[owner];
+          int x = w * alpha / cav.size();
+          if (x > targets->get(owner) - sending[owner])
+            x = targets->get(owner) - sending[owner];
           //Add to plan
-          plan->insert(mine,cav[i],x);
-          sending[owner]+=x;
-          vSending[mine]+=x;
+          plan->insert(mine, *cav_itr, x);
+          sending[owner] += x;
+          vSending[mine] += x;
           planW+=x;
         }
       }

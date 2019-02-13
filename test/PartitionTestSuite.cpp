@@ -224,7 +224,7 @@ int testVtxBalancer(agi::Ngraph* g) {
 int testBalancer(agi::Ngraph* g) {
   double step_factor = 0.1;
   engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
-  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+  for (agi::etype t = 0; t < g->numEdgeTypes() && t < 1; t++)
     input->addPriority(t,1.1);
   input->addPriority(-1,1.1);
 
@@ -238,7 +238,7 @@ int testBalancer(agi::Ngraph* g) {
   agi::checkValidity(g);
 
   //Ensure the graph was balanced to the target tolerance
-  for (agi::etype t = 0; t < g->numEdgeTypes(); t++)
+  for (agi::etype t = 0; t < g->numEdgeTypes() && t < 1; t++)
     if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,t)) >= 1.11)
       return t+2;
   if (engpar::EnGPar_Get_Imbalance(engpar::getWeight(g,-1)) >= 1.11)

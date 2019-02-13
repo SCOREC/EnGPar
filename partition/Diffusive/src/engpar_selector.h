@@ -8,15 +8,15 @@
 #include <unordered_set>
 namespace engpar {
 
-  typedef std::vector<agi::GraphVertex*> Cavity;
+  typedef std::unordered_set<agi::GraphVertex*> Cavity;
   typedef std::vector<part_t> Peers;
   typedef std::unordered_map<part_t,wgt_t> Sending;
   typedef double* Ws;
-  typedef std::map<int, Ws> Midd;
+  typedef std::unordered_map<int, Ws> Midd;
   struct Migr;
   struct CompareMigr;
   typedef std::set<Migr,CompareMigr> MigrComm;
-
+  typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
   
   class Selector {
   public:
@@ -30,8 +30,12 @@ namespace engpar {
 
     void updatePartWeight(agi::Migration* plan, int target_dimension, agi::WeightPartitionMap* wp_map);
   protected:
-      
-    typedef std::unordered_set<agi::GraphEdge*> EdgeSet;
+    //Create the initial cavities
+    void constructCavities();
+    //Remove vertices that are planned to be sent in cavities
+    void updateCavities(agi::Migration* plan);
+    
+
     typedef std::map<int,EdgeSet> PeerEdgeSet;
     //Trim functions
     void insertInteriorEdges(agi::GraphVertex*,agi::part_t, EdgeSet&,int);
@@ -54,10 +58,12 @@ namespace engpar {
     void calculatePlanWeight(agi::Migration* plan, int target_dimension,
                              std::unordered_map<part_t,wgt_t>& weight);
 
+    
     DiffusiveInput* in;
     agi::Ngraph* g;
     Sending sending;
     Queue* q;
+    std::unordered_map<agi::GraphEdge*, Cavity> cavities;
     std::vector<int>* completed_dimensions;
     std::vector<double>* completed_weights;
   };
