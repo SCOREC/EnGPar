@@ -7,17 +7,19 @@ namespace engpar {
 
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
                  Cavity& cav, Peers& peers) {
+
+    //Grab all vertices connected to the edge that are on part
     agi::PinIterator* pitr = g->pins(edge);
     agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
-    typedef std::map<agi::part_t, std::unordered_set<agi::GraphEdge*> > Peer_Map;
+    typedef std::unordered_map<agi::part_t, std::unordered_set<agi::GraphEdge*> > Peer_Map;
     Peer_Map peerMap;
-    std::set<agi::GraphEdge*> edgesOfCavity;
-    for (agi::lid_t i =0;i<deg;i++) {
-      vtx = g->iterate(pitr);
+    std::unordered_set<agi::GraphEdge*> edgesOfCavity;
+    while ((vtx = g->iterate(pitr))) {
       if (g->owner(vtx)==PCU_Comm_Self()) {
         if(!plan->has(vtx)) {
           cav.push_back(vtx);
+	  //Add all of the edges of the vertex to a set
           agi::GraphEdge* e;
           agi::EdgeIterator* eitr = g->edges(vtx);
           while ((e=g->iterate(eitr)))
@@ -27,29 +29,32 @@ namespace engpar {
       }
     }
     g->destroy(pitr);
-    std::set<agi::GraphEdge*>::iterator sitr;
+
+    //Locate all of the cut edges around the cavity
+    std::unordered_set<agi::GraphEdge*>::iterator sitr;
     for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
       agi::GraphVertex* v;
       pitr = g->pins(*sitr);
       while ((v = g->iterate(pitr))) {
         if (g->owner(v)!=PCU_Comm_Self())
           peerMap[g->owner(v)].insert(*sitr);
+	else if (plan->has(v))
+	  peerMap[plan->get(v)].insert(*sitr);
       }
       g->destroy(pitr);
     }
-    while (peers.size()!=peerMap.size()) {
-      unsigned int max =0;
-      Peer_Map::iterator itr;
-      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
-        if (itr->second.size() > max)
-          max = itr->second.size();
-      if (max<2&&peers.size()>0)
-        break;
-      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
-        if (itr->second.size() == max) {
-          peers.insert(itr->first);
-          itr->second.clear();
-        }
+
+    //Reverse the Peer Map
+    std::map<agi::lid_t, agi::part_t> edges_to_part;
+    Peer_Map::iterator itr;
+    for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
+      edges_to_part.insert(std::make_pair(itr->second.size(),itr->first));
+    
+    //Order the peers by largest surface area with cavity
+    std::map<agi::lid_t, agi::part_t>::iterator etp_itr;
+    for (etp_itr = edges_to_part.end(); etp_itr != edges_to_part.begin();) {
+      --etp_itr;
+      peers.push_back(etp_itr->second);
     }
   }
 

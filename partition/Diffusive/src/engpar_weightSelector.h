@@ -13,7 +13,7 @@ namespace agi {
 namespace engpar {
 
   typedef std::vector<agi::GraphVertex*> Cavity;
-  typedef std::unordered_set<part_t> Peers;
+  typedef std::vector<part_t> Peers;
   typedef std::unordered_map<part_t,wgt_t> Sending;
   typedef std::unordered_map<agi::GraphVertex*,wgt_t> VertexSending;
   class WeightSelector {
