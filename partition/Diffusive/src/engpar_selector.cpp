@@ -140,6 +140,24 @@ namespace engpar {
     return uncut_pins * 1.0 / cut_pins;
   }
 
+  wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
+                         wgt_t planW, unsigned int cavSize,int target_dimension) {
+    //compute colors
+    //for color in colors {
+      //build all the cavities and peers in this color
+      //parallel for each cavity: compute cavity size mask
+      //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
+      //parallel for each cavity: compute neighbor target mask
+      //parallel for each cavity: compute neighbor sending mask
+      //parallel sort of selected cavities based on distance -> selection mask
+      //create numEdges sized array of ints to store plan
+      //parallel for each cavity: use logical and of masks to compute peer for each cavity entity
+      //if enough weight found break
+    //}
+    //build Migration object from plan array
+    return planW;
+  }
+
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
     q->startIteration();
