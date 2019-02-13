@@ -740,6 +740,7 @@ namespace agi {
     destroy(eitr);
   }
 
+
 #ifdef KOKKOS_ENABLED // {
   void Ngraph::parallel_create_eve(agi::etype t) {
     using engpar::LIDs;
@@ -756,9 +757,9 @@ namespace agi {
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
     LIDs degree_view ("degree_view", M+1);
-    LIDs edge_view ("edge_view", pg->num_local_pins[t]);
-    hostToDevice(degree_view, pg->degree_list[t]); 
-    hostToDevice(edge_view, pg->edge_list[t]); 
+    LIDs edge_view ("edge_view", pg->degree_list[t][M]);
+    hostToDevice(degree_view, pg->degree_list[t]);
+    hostToDevice(edge_view, pg->edge_list[t]);
     // make hint for map size to avoid resize
     int numAdj = 0;
     Kokkos::parallel_reduce (M, KOKKOS_LAMBDA(const int v, int& upd) {
