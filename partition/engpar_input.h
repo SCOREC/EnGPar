@@ -19,6 +19,7 @@ namespace engpar {
   class DiffusiveInput;
   class SplitInput;
   class WeightInput;
+  class ColoringInput;
   
   SplitInput* createLocalSplitInput(agi::Ngraph* g, MPI_Comm smallComm,
                                MPI_Comm largeComm, bool isPartOfSmall,
@@ -30,6 +31,7 @@ namespace engpar {
   DiffusiveInput* createDiffusiveInput(agi::Ngraph* g, double step_factor);
   WeightInput* createWeightInput(agi::Ngraph* g, double tolerance,
                                  double step_factor=0.1, agi::etype edge_type=0);
+  ColoringInput* createColoringInput(agi::Ngraph* g, agi::lid_t primaryType, bool vtx_color=false);
 }
 
 #endif

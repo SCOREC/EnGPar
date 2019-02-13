@@ -592,16 +592,4 @@ bool checkValidity(Ngraph* g);
  
 } //namespace
 
-
-
-#ifdef KOKKOS_ENABLED
-#include <Kokkos_Core.hpp>
-#define KOKKOS_FOR_VERTS(g,v)                                           \
-  Kokkos::parallel_for(g->numLocalVtxs(),KOKKOS_LAMBDA(uintptr_t i) {   \
-      agi::GraphVertex* v = reinterpret_cast<agi::GraphVertex*>((char*)(i+1));
-      
-#define KOKKOS_END_FOR() });
-#endif
-
-
 #endif
