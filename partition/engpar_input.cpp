@@ -54,4 +54,10 @@ namespace engpar {
   ColoringInput* createColoringInput(agi::Ngraph* g, agi::lid_t primaryType, bool vtxColoring) {
     return new ColoringInput(g,primaryType,vtxColoring);
   }
+
+  ColoringInput* createBdryColoringInput(agi::Ngraph* g, agi::lid_t primaryType) {
+    bool vtxColoring = false;
+    bool bdryOnly = true;
+    return new ColoringInput(g,primaryType,vtxColoring,bdryOnly);
+  }
 }

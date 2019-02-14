@@ -25,7 +25,7 @@ namespace engpar {
       // Edge coloring
       double t0 = PCU_Time();
       //in->g->create_eve_adjacency(in->edgeType);
-      in->g->parallel_create_eve(in->edgeType);
+      in->g->parallel_create_eve(in->edgeType, in->boundaryOnly);
       printf ("eve partition time: %f\n", PCU_Time()-t0); 
       numEnts = pg->num_local_edges[in->edgeType];
       adj_offsets = pg->eve_offsets[in->edgeType];

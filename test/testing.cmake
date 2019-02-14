@@ -217,6 +217,12 @@ if (ENABLE_KOKKOS)
     "${MESHES}/torus/torus.dmg"
     "${MESHES}/torus/4imb/torus.smb"
     1)
+
+  mpi_test(colorBdryMeshTorus 4
+    ./kokkosMeshColoringBdry
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb"
+    )
   
   mpi_test(colorMeshUpright 1
     ./kokkosMeshColoring

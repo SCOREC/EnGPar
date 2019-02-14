@@ -101,7 +101,7 @@ class PNgraph {
   lid_t* pin_degree_list[MAX_TYPES];
   /** \brief The list of pins off of each edge
    *
-   * size = num_local_pins
+   * size = pin_degree_list[type][num_local_edges]
    * Only needed when isHyperGraph=true.
    * The starting position for a given edge is found at pin_degree_list[type][edge]
    * and goes up to pin_degree_list[type][edge+1].
