@@ -73,6 +73,7 @@ if (KOKKOS_ENABLED)
   make_utility(bfsSearch bfsSearch.cpp)
   make_utility(kokkosColoring kokkosColoring.cpp)
   make_utility(kokkosMeshColoring kokkosMeshColoring.cpp)
+  make_utility(kokkosMeshColoringBdry kokkosMeshColoringBdry.cpp)
   make_utility(kokkosMeshBfs kokkosMeshBfs.cpp)
 endif()
 
