@@ -3,6 +3,9 @@
 
 #include <stdexcept>
 #include "pngraph.h"
+#ifdef KOKKOS_ENABLED
+#include "engpar_support.h" //LIDs
+#endif
 /** \file ngraph.h
     \brief The N-Graph interface 
 */
@@ -296,6 +299,11 @@ public:
    */
   void create_eve_adjacency(etype t, bool compress = true);
 #ifdef KOKKOS_ENABLED
+  //TODO this should use the class to store device pointers
+  void buildSharedVtxMask(agi::lid_t numVerts, agi::lid_t numEdges,
+      engpar::LIDs degree_view, engpar::LIDs edge_view,
+      engpar::LIDs pin_degree_view, engpar::LIDs pin_edge_view,
+      engpar::LIDs isSharedVtx);
   void parallel_create_eve(agi::etype t, bool boundaryOnly = false);
 #endif
   /** \brief Creates an iterator over the vertex-edge-vertex adjacencies.

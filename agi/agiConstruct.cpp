@@ -746,7 +746,7 @@ namespace agi {
   using engpar::hostToDevice;
   using engpar::deviceToHost;
 
-  void buildSharedVtxMask(agi::lid_t numVerts, agi::lid_t numEdges,
+  void Ngraph::buildSharedVtxMask(agi::lid_t numVerts, agi::lid_t numEdges,
       LIDs degree_view, LIDs edge_view,
       LIDs pin_degree_view, LIDs pin_edge_view,
       LIDs isSharedVtx) {
