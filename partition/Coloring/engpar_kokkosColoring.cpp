@@ -57,11 +57,12 @@ namespace engpar {
       (kh, numEnts, numEnts, adj_offsets_view, adj_lists_view);
     printf ("Coloring time: %f\n", PCU_Time()-t0);
     colors_d = kh->get_graph_coloring_handle()->get_vertex_colors();
+    size_t numColors = kh->get_graph_coloring_handle()->get_num_colors();
     kh->destroy_graph_coloring_handle();  
     // Move coloring into array on host 
     *colors = new agi::lid_t[numEnts];
     deviceToHost(colors_d, *colors);
-    return 0;
+    return numColors;
   }
 }
 
