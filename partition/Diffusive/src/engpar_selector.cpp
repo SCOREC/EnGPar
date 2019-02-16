@@ -39,6 +39,7 @@ namespace engpar {
       }
       g->destroy(pitr);
     }
+    //create a sorted list (in an unordered set?) of peers
     while (peers.size()!=peerMap.size()) {
       unsigned int max =0;
       Peer_Map::iterator itr;
@@ -148,8 +149,9 @@ namespace engpar {
    * \param plan (In) size=numVerts, plan(i) = -1   : not in plan
    *                                         >= 0   : otherwise
    */
-  void getCavitiesAndPeers(int numEdges, int numVerts, int numGhostVerts,
-      LIDs pin_degree, LIDs pins, LIDs plan) {
+  void getCavities(int numEdges, int numVerts, int numGhostVerts,
+      LIDs pin_degree, LIDs pins, LIDs plan,
+      CSR& cavs) {
     //create the ownership mask - this can be moved outside the select function
     LIDs isVtxOwned("isVtxOwned", numVerts+numGhostVerts); //make this random access
     Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
@@ -160,8 +162,8 @@ namespace engpar {
     Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
       isVtxInPlan(v) = ( plan(v) != -1 );
     });
-    //count the size of each cavity - pad it by one to store CSR offsets
-    LIDs cavitySize("cavitySize", numEdges+1);
+
+    //count the size of each cavity
     //loop over the edges - the last entry is to support the next operation where
     // we reuse this array to store the CSR offsets
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
@@ -170,37 +172,68 @@ namespace engpar {
       int size = 0;
       for(int pinIdx = 0; pinIdx < degree; pinIdx++) { //TODO nested parallel reduce?
         const int v = pins(firstPin+pinIdx);
-        size += ( isVtxOwned(v) && isVtxInPlan(v) ); //random access
+        size += ( isVtxOwned(v) && !isVtxInPlan(v) ); //random access
       }
-      cavitySize(e) = size;
+      cavs.off(e) = size;
     });
     //construct the cavity csr
     // -create the offsets with an exclusive scan
-    Kokkos::parallel_scan(numEdges+1,
-        KOKKOS_LAMBDA (const int& e, int& upd, const bool& final) {
-      const float size = cavitySize(e);
-      if (final) cavitySize(e) = upd;
-      upd += size;
-    });
-    // -compute the size of the csr list
-    int cavityListSize = 0;
-    Kokkos::parallel_reduce(numEdges, KOKKOS_LAMBDA(const int e, int& size) {
-      size += cavitySize(e);
-    }, cavityListSize);
-    // -create the csr list view
-    LIDs cavityVtxList("cavityVtxList", cavityListSize);
+    degreeToOffset(cavs);
+    allocateItems(cavs);
     // -fill the csr list view
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       const int degree = pin_degree(e+1)-pin_degree(e);
       const int firstPin = pin_degree(e);
-      int cavIdx = cavitySize(e);
+      const int cavIdx = cavs.off(e);
       for(int pinIdx = 0; pinIdx < degree; pinIdx++) {
         const int v = pins(firstPin+pinIdx);
-        if ( isVtxOwned(v) && isVtxInPlan(v) ) { //random access
-          cavityVtxList(cavIdx+pinIdx) = v;
+        if ( isVtxOwned(v) && !isVtxInPlan(v) ) { //random access
+          cavs.items(cavIdx+pinIdx) = v;
         }
       }
     });
+  }
+
+  /**
+   * \brief
+   */
+  void getPeers(int numEdges, int numVerts, int numGhostVerts,
+      LIDs edge_degree, LIDs edges,
+      LIDs pin_degree, LIDs pins,
+      CSR& cavs, CSR& peers) {
+    CSR eoc("edgesOfCavity",numEdges);
+    //count the number of edges adjacent to cavity vertices
+    // there will be duplicate edges; that should not change
+    // the list of peers
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int degree = cavs.off(e+1)-cavs.off(e);
+      const int firstPin = cavs.off(e);
+      for(int pinIdx = 0; pinIdx < degree; pinIdx++) { //parallel reduce on the count?
+        const int v = cavs.items(firstPin+pinIdx);
+        eoc.off(e) += edge_degree(v+1)-edge_degree(v);
+      }
+    });
+    degreeToOffset(eoc);
+    allocateItems(eoc);
+  }
+
+
+  void Selector::getCavitiesAndPeers(agi::etype t, LIDs plan,
+      CSR& cavs, CSR& peers) {
+    agi::PNgraph* pg = g->publicize();
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts;
+    const int G = pg->num_ghost_verts;
+    LIDs edge_degree("edge_degree", M+1);
+    LIDs edges("edges", pg->degree_list[t][M]);
+    LIDs pin_degree("pin_degree", N+1);
+    LIDs pins("pins", pg->pin_degree_list[t][N]);
+    hostToDevice(edge_degree, pg->degree_list[t]);
+    hostToDevice(edges, pg->edge_list[t]);
+    hostToDevice(pin_degree, pg->pin_degree_list[t]);
+    hostToDevice(pins, pg->pin_list[t]);
+    getCavities(N,M,G,pin_degree,pins,plan,cavs);
+    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,cavs,peers);
   }
 
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
@@ -211,26 +244,15 @@ namespace engpar {
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
     const int G = pg->num_ghost_verts;
-    LIDs degree_view("degree_view", M+1);
-    LIDs edge_view("edge_view", pg->degree_list[t][M]);
-    LIDs pin_degree_view("pin_degree_view", N+1);
-    LIDs pin_edge_view("pin_edge_view", pg->pin_degree_list[t][N]);
-    hostToDevice(degree_view, pg->degree_list[t]);
-    hostToDevice(edge_view, pg->edge_list[t]);
-    hostToDevice(pin_degree_view, pg->pin_degree_list[t]);
-    hostToDevice(pin_edge_view, pg->pin_list[t]);
-    LIDs isSharedVtx("isVtxShared", M);
-    g->buildSharedVtxMask(M, N,
-        degree_view, edge_view,
-        pin_degree_view, pin_edge_view,
-        isSharedVtx);
     engpar::ColoringInput* in = engpar::createBdryColoringInput(g, t);
     agi::lid_t* colors;
     size_t numColors = engpar::EnGPar_KokkosColoring(in, &colors);
     LIDs plan_view("plan_view", M+G);
     for(size_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) break;
-      getCavitiesAndPeers(N,M,G,pin_degree_view,pin_edge_view,plan_view);
+      CSR cavs("cavities",N);
+      CSR peers("cavityPeers",N);
+      getCavitiesAndPeers(t,plan_view,cavs,peers);
       //build all the cavities and peers in this color
       //parallel for each cavity: compute cavity size mask
       //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))

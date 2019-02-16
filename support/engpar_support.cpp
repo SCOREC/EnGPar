@@ -52,6 +52,24 @@ namespace engpar {
     for(size_t i=0; i<hv.size(); ++i)
       h[i] = hv(i);
   }
+  void degreeToOffset(CSR& c) {
+    Kokkos::parallel_scan(c.off.dimension_0(),
+      KOKKOS_LAMBDA (const int& e, int& upd, const bool& final) {
+      const float size = c.off(e);
+      if (final) c.off(e) = upd;
+      upd += size;
+    });
+  }
+  void allocateItems(CSR& c) {
+    int listSize = 0;
+    Kokkos::parallel_reduce(c.off.dimension_0()-1,
+      KOKKOS_LAMBDA(const int e, int& size) {
+        size += c.off(e);
+      },
+    listSize);
+    std::string name = c.name + "_items";
+    c.items = LIDs(name, listSize);
+  }
 }
 
 #endif

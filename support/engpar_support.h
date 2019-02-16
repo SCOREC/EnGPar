@@ -39,6 +39,24 @@ typedef Kokkos::View<ENGPAR_LID_T*, exeSpace::device_type> LIDs;
 void hostToDevice(LIDs d, ENGPAR_LID_T* h);
 /** \brief helper function to transfer a device view to a host array */
 void deviceToHost(LIDs d, ENGPAR_LID_T* h);
+/** \brief a list of n objects where object i has off(i+1)-off(i)
+ *         related objects stored in items(off(i):off(i+1))
+ */
+struct csr {
+  std::string name;
+  int n;
+  LIDs off;
+  LIDs items;
+  csr(std::string s, int numObjs) {
+    name=s;
+    n=numObjs;
+    std::string str = name + "_offsets";
+    off = LIDs(str, n+1);
+  }
+};
+typedef struct csr CSR;
+void degreeToOffset(CSR& c);
+void allocateItems(CSR& c);
 }
 #endif
 
