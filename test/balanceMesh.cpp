@@ -14,6 +14,7 @@
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
+  Kokkos::initialize(argc,argv);
   EnGPar_Open_Log();
   
   if (argc != 5 && argc != 6) {
@@ -50,12 +51,12 @@ int main(int argc, char* argv[]) {
     name = "edge_02";
     int edges[2] = {0,2};
     //balance vtx>edge>elm
-    g = agi::createAPFGraph(m,name.c_str(),3,edges,2);
+    g = agi::createAPFGraph(m,name.c_str(),m->getDimension(),edges,2);
   }
   else {
     name = "edge_0";
     //balance vtx>elm
-    g = agi::createAPFGraph(m,name.c_str(),3,0);
+    g = agi::createAPFGraph(m,name.c_str(),m->getDimension(),0);
   }
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
