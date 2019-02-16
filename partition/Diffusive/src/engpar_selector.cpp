@@ -1,5 +1,7 @@
 #include "engpar_selector.h"
 #include <engpar_metrics.h>
+#include <engpar_kokkosColoring.h>
+#include <engpar_support.h>
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
@@ -140,10 +142,95 @@ namespace engpar {
     return uncut_pins * 1.0 / cut_pins;
   }
 
+  /**
+   * \brief a cavity is defined as the vertices adjacent to a given hyperedge
+   *        that are owned and not in the plan
+   * \param plan (In) size=numVerts, plan(i) = -1   : not in plan
+   *                                         >= 0   : otherwise
+   */
+  void getCavitiesAndPeers(int numEdges, int numVerts, int numGhostVerts,
+      LIDs pin_degree, LIDs pins, LIDs plan) {
+    //create the ownership mask - this can be moved outside the select function
+    LIDs isVtxOwned("isVtxOwned", numVerts+numGhostVerts); //make this random access
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      isVtxOwned(v) = 1;
+    });
+    //create the plan mask: 1 if in plan, 0 otherwise
+    LIDs isVtxInPlan("isVtxInPlan", numVerts+numGhostVerts); //make this random access
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      isVtxInPlan(v) = ( plan(v) != -1 );
+    });
+    //count the size of each cavity - pad it by one to store CSR offsets
+    LIDs cavitySize("cavitySize", numEdges+1);
+    //loop over the edges - the last entry is to support the next operation where
+    // we reuse this array to store the CSR offsets
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int degree = pin_degree(e+1)-pin_degree(e);
+      const int firstPin = pin_degree(e);
+      int size = 0;
+      for(int pinIdx = 0; pinIdx < degree; pinIdx++) { //TODO nested parallel reduce?
+        const int v = pins(firstPin+pinIdx);
+        size += ( isVtxOwned(v) && isVtxInPlan(v) ); //random access
+      }
+      cavitySize(e) = size;
+    });
+    //construct the cavity csr
+    // -create the offsets with an exclusive scan
+    Kokkos::parallel_scan(numEdges+1,
+        KOKKOS_LAMBDA (const int& e, int& upd, const bool& final) {
+      const float size = cavitySize(e);
+      if (final) cavitySize(e) = upd;
+      upd += size;
+    });
+    // -compute the size of the csr list
+    int cavityListSize = 0;
+    Kokkos::parallel_reduce(numEdges, KOKKOS_LAMBDA(const int e, int& size) {
+      size += cavitySize(e);
+    }, cavityListSize);
+    // -create the csr list view
+    LIDs cavityVtxList("cavityVtxList", cavityListSize);
+    // -fill the csr list view
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int degree = pin_degree(e+1)-pin_degree(e);
+      const int firstPin = pin_degree(e);
+      int cavIdx = cavitySize(e);
+      for(int pinIdx = 0; pinIdx < degree; pinIdx++) {
+        const int v = pins(firstPin+pinIdx);
+        if ( isVtxOwned(v) && isVtxInPlan(v) ) { //random access
+          cavityVtxList(cavIdx+pinIdx) = v;
+        }
+      }
+    });
+  }
+
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
-    //compute colors
-    //for color in colors {
+#ifdef KOKKOS_ENABLED
+    agi::etype t = target_dimension;
+    agi::PNgraph* pg = g->publicize();
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts;
+    const int G = pg->num_ghost_verts;
+    LIDs degree_view("degree_view", M+1);
+    LIDs edge_view("edge_view", pg->degree_list[t][M]);
+    LIDs pin_degree_view("pin_degree_view", N+1);
+    LIDs pin_edge_view("pin_edge_view", pg->pin_degree_list[t][N]);
+    hostToDevice(degree_view, pg->degree_list[t]);
+    hostToDevice(edge_view, pg->edge_list[t]);
+    hostToDevice(pin_degree_view, pg->pin_degree_list[t]);
+    hostToDevice(pin_edge_view, pg->pin_list[t]);
+    LIDs isSharedVtx("isVtxShared", M);
+    g->buildSharedVtxMask(M, N,
+        degree_view, edge_view,
+        pin_degree_view, pin_edge_view,
+        isSharedVtx);
+    engpar::ColoringInput* in = engpar::createBdryColoringInput(g, t);
+    agi::lid_t* colors;
+    size_t numColors = engpar::EnGPar_KokkosColoring(in, &colors);
+    LIDs plan_view("plan_view", M+G);
+    for(size_t c=1; c<=numColors; c++) {
+      if (planW > targets->total()) break;
+      getCavitiesAndPeers(N,M,G,pin_degree_view,pin_edge_view,plan_view);
       //build all the cavities and peers in this color
       //parallel for each cavity: compute cavity size mask
       //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
@@ -152,10 +239,13 @@ namespace engpar {
       //parallel sort of selected cavities based on distance -> selection mask
       //create numEdges sized array of ints to store plan
       //parallel for each cavity: use logical and of masks to compute peer for each cavity entity
-      //if enough weight found break
-    //}
+    }
     //build Migration object from plan array
     return planW;
+#else
+    fprintf(stderr,"ERROR: kokkos cavity selection disabled, recompile with ENABLE_KOKKOS\n");
+    exit(1);
+#endif
   }
 
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,

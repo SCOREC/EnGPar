@@ -138,7 +138,13 @@ namespace engpar {
     agi::Migration* plan = new agi::Migration(input->g);
     wgt_t planW = 0.0;
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
+#ifdef KOKKOS_ENABLED
+      printf("calling kkSelect cavSize %d\n", cavSize);
+      planW = selector->kkSelect(targets,plan,planW,cavSize,target_dimension);
+#else
+      printf("calling select\n");
       planW = selector->select(targets,plan,planW,cavSize,target_dimension);
+#endif
     }
     selector->selectDisconnected(plan,target_dimension);
     if (completed_dimensions.size()>0) {
