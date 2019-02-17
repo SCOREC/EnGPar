@@ -150,13 +150,8 @@ namespace engpar {
    *                                         >= 0   : otherwise
    */
   void getCavities(int numEdges, int numVerts, int numGhostVerts,
-      LIDs pin_degree, LIDs pins, LIDs plan,
+      LIDs pin_degree, LIDs pins, LIDs plan, LIDs isVtxOwned,
       CSR& cavs) {
-    //create the ownership mask - this can be moved outside the select function
-    LIDs isVtxOwned("isVtxOwned", numVerts+numGhostVerts); //make this random access
-    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
-      isVtxOwned(v) = 1;
-    });
     //create the plan mask: 1 if in plan, 0 otherwise
     LIDs isVtxInPlan("isVtxInPlan", numVerts+numGhostVerts); //make this random access
     Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
@@ -195,28 +190,79 @@ namespace engpar {
   }
 
   /**
-   * \brief
+   * \brief for each cavity get the list of processes that share
+   *        edges adjacent to the cavity vertices
+   * \remark the list of processes will contain duplicates
    */
   void getPeers(int numEdges, int numVerts, int numGhostVerts,
       LIDs edge_degree, LIDs edges,
       LIDs pin_degree, LIDs pins,
+      LIDs isVtxOwned,
       CSR& cavs, CSR& peers) {
     CSR eoc("edgesOfCavity",numEdges);
     //count the number of edges adjacent to cavity vertices
     // there will be duplicate edges; that should not change
     // the list of peers
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      const int degree = cavs.off(e+1)-cavs.off(e);
-      const int firstPin = cavs.off(e);
-      for(int pinIdx = 0; pinIdx < degree; pinIdx++) { //parallel reduce on the count?
-        const int v = cavs.items(firstPin+pinIdx);
+      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) { //parallel reduce on the count?
+        const int v = cavs.items(firstVtx+vtxIdx);
         eoc.off(e) += edge_degree(v+1)-edge_degree(v);
       }
     });
     degreeToOffset(eoc);
     allocateItems(eoc);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      int itemIdx = eoc.off(e);
+      for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) {
+        const int v = cavs.items(firstVtx+vtxIdx);
+        const int numAdjEdges = edge_degree(v+1)-edge_degree(v);
+        const int firstEdge = edge_degree(v);
+        for(int edgeIdx = 0; edgeIdx < numAdjEdges; edgeIdx++) {
+          eoc.items(itemIdx) = edges(firstEdge+edgeIdx);
+          itemIdx++;
+        }
+      }
+    });
+    //count the number of non-owned (ghost) vertices adj to each cavity edge
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) { //parallel reduce?
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
+        const int firstPin = pins(adjEdge);
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins.items(firstPin+pinIdx);
+          peers.off(e) += !isVtxOwned(pin); //TODO make isVtxOwned random access
+        }
+      }
+    });
+    degreeToOffset(peers);
+    allocateItems(peers);
+    //insert the owners of the ghost vertices
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      int itemIdx = peers.off(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
+        const int firstPin = pins(adjEdge);
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins.items(firstPin+pinIdx);
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
+            peers.items(itemIdx) = owner;
+            itemIdx++;
+          }
+        }
+      }
+    });
   }
-
 
   void Selector::getCavitiesAndPeers(agi::etype t, LIDs plan,
       CSR& cavs, CSR& peers) {
@@ -224,16 +270,21 @@ namespace engpar {
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
     const int G = pg->num_ghost_verts;
-    LIDs edge_degree("edge_degree", M+1);
-    LIDs edges("edges", pg->degree_list[t][M]);
-    LIDs pin_degree("pin_degree", N+1);
-    LIDs pins("pins", pg->pin_degree_list[t][N]);
+    LIDs edge_degree("edge_degree", M+1); //convert to CSR
+    LIDs edges("edges", pg->degree_list[t][M]); //convert to CSR
+    LIDs pin_degree("pin_degree", N+1); //convert to CSR
+    LIDs pins("pins", pg->pin_degree_list[t][N]); //convert to CSR
     hostToDevice(edge_degree, pg->degree_list[t]);
     hostToDevice(edges, pg->edge_list[t]);
     hostToDevice(pin_degree, pg->pin_degree_list[t]);
     hostToDevice(pins, pg->pin_list[t]);
-    getCavities(N,M,G,pin_degree,pins,plan,cavs);
-    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,cavs,peers);
+    //create the ownership mask - this can be moved outside the select function
+    LIDs isVtxOwned("isVtxOwned", numVerts+numGhostVerts); //make this random access
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      isVtxOwned(v) = 1;
+    });
+    getCavities(N,M,G,pin_degree,pins,plan,isVtxOwned,cavs);
+    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,isVtxOwned,cavs,peers);
   }
 
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
