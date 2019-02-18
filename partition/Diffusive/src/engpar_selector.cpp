@@ -197,7 +197,7 @@ namespace engpar {
   void getPeers(int numEdges, int numVerts, int numGhostVerts,
       LIDs edge_degree, LIDs edges,
       LIDs pin_degree, LIDs pins,
-      LIDs isVtxOwned,
+      LIDs isVtxOwned, LIDs vtxOwner,
       CSR& cavs, CSR& peers) {
     CSR eoc("edgesOfCavity",numEdges);
     //count the number of edges adjacent to cavity vertices
@@ -236,7 +236,7 @@ namespace engpar {
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pins(adjEdge);
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
-          const int pin = pins.items(firstPin+pinIdx);
+          const int pin = pins(firstPin+pinIdx);
           peers.off(e) += !isVtxOwned(pin); //TODO make isVtxOwned random access
         }
       }
@@ -253,7 +253,7 @@ namespace engpar {
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pins(adjEdge);
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
-          const int pin = pins.items(firstPin+pinIdx);
+          const int pin = pins(firstPin+pinIdx);
           const int owner = vtxOwner(pin); //TODO make vtxOwner random access
           if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
             peers.items(itemIdx) = owner;
@@ -279,12 +279,54 @@ namespace engpar {
     hostToDevice(pin_degree, pg->pin_degree_list[t]);
     hostToDevice(pins, pg->pin_list[t]);
     //create the ownership mask - this can be moved outside the select function
-    LIDs isVtxOwned("isVtxOwned", numVerts+numGhostVerts); //make this random access
-    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+    LIDs isVtxOwned("isVtxOwned", M+G); //make this random access
+    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
       isVtxOwned(v) = 1;
     });
     getCavities(N,M,G,pin_degree,pins,plan,isVtxOwned,cavs);
-    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,isVtxOwned,cavs,peers);
+    //create the owners mask - this can be moved outside the select function
+    LIDs vtxOwner("vtxOwner", M+G); //make this random access
+    LIDs ghostOwners("ghostOwners", G);
+    hostToDevice(ghostOwners,pg->owners);
+    ENGPAR_LID_T self = PCU_Comm_Self();
+    LIDs processId("processId", 1);
+    hostToDevice(processId,&self);
+    hostToDevice(pins, pg->pin_list[t]);
+    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v) = processId(0);
+    });
+    Kokkos::parallel_for(G, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v+M) = ghostOwners(v);
+    });
+    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,
+        isVtxOwned,vtxOwner,cavs,peers);
+  }
+
+  /**
+   * \brief the entry for a cavity is set to 1 if its
+   *        color is 'color', 0 otherwise
+   */
+  LIDs buildColorMask(LIDs colors, int color) {
+    const int numEdges = colors.dimension_0();
+    LIDs colorMask("colorMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      colorMask(e) = ( colors(e) == color );
+    });
+    return colorMask;
+  }
+
+  /**
+   * \brief the entry for a cavity is set to 1 if it is smaller
+   *        than maxSize, 0 otherwise
+   */
+  LIDs buildSizeMask(CSR cavs, int maxSize) {
+    const int numEdges = cavs.n;
+    LIDs sizeMask("sizeMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int size = cavs.off(e+1)-cavs.off(e);
+      sizeMask(e) = ( size < maxSize );
+    });
+    return sizeMask;
   }
 
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
@@ -296,16 +338,20 @@ namespace engpar {
     const int M = pg->num_local_verts;
     const int G = pg->num_ghost_verts;
     engpar::ColoringInput* in = engpar::createBdryColoringInput(g, t);
-    agi::lid_t* colors;
-    size_t numColors = engpar::EnGPar_KokkosColoring(in, &colors);
+    agi::lid_t numColors;
+    LIDs colors = engpar::EnGPar_KokkosColoring(in, numColors);
     LIDs plan_view("plan_view", M+G);
-    for(size_t c=1; c<=numColors; c++) {
+    //loop over colors
+    for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) break;
+      //build all the cavities and peers
       CSR cavs("cavities",N);
       CSR peers("cavityPeers",N);
       getCavitiesAndPeers(t,plan_view,cavs,peers);
-      //build all the cavities and peers in this color
+      //parallel for each cavity: compute cavity color mask
+      LIDs colorMask = buildColorMask(colors,c);
       //parallel for each cavity: compute cavity size mask
+      LIDs sizeMask = buildSizeMask(cavs,cavSize);
       //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
       //parallel for each cavity: compute neighbor target mask
       //parallel for each cavity: compute neighbor sending mask
