@@ -5,7 +5,7 @@
 
 #ifdef KOKKOS_ENABLED
 namespace engpar {
-  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors) { 
+  LIDs EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t& numColors) { 
     agi::PNgraph* pg = in->g->publicize();
     // Retrieve relavent information from graph  
     agi::lid_t* adj_offsets = nullptr;
@@ -57,10 +57,16 @@ namespace engpar {
       (kh, numEnts, numEnts, adj_offsets_view, adj_lists_view);
     printf ("Coloring time: %f\n", PCU_Time()-t0);
     colors_d = kh->get_graph_coloring_handle()->get_vertex_colors();
-    size_t numColors = kh->get_graph_coloring_handle()->get_num_colors();
+    numColors = kh->get_graph_coloring_handle()->get_num_colors();
     kh->destroy_graph_coloring_handle();  
+    return colors_d;
+  }
+
+  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors) { 
+    agi::lid_t numColors;
+    LIDs colors_d = EnGPar_KokkosColoring(in, numColors);
     // Move coloring into array on host 
-    *colors = new agi::lid_t[numEnts];
+    *colors = new agi::lid_t[colors_d.dimension_0()];
     deviceToHost(colors_d, *colors);
     return numColors;
   }
