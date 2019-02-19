@@ -329,6 +329,24 @@ namespace engpar {
     return sizeMask;
   }
 
+  /**
+   * \brief the entry for a cavity is > 0 if it is shared with
+   *        tgtPeer, 0 otherwise
+   */
+  LIDs buildTargetMask(CSR peers, int tgtPeer) {
+    const int numEdges = peers.n;
+    LIDs targetMask("targetMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int size = peers.off(e+1)-peers.off(e);
+      const int firstPeer = peers.off(e);
+      for( int i=0; i<size; i++ ) {
+        targetMask(e) += ( peers.items(firstPeer+i) == tgtPeer );
+      }
+    });
+    return targetMask;
+  }
+
+
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
 #ifdef KOKKOS_ENABLED
@@ -344,20 +362,30 @@ namespace engpar {
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) break;
-      //build all the cavities and peers
-      CSR cavs("cavities",N);
-      CSR peers("cavityPeers",N);
-      getCavitiesAndPeers(t,plan_view,cavs,peers);
-      //parallel for each cavity: compute cavity color mask
-      LIDs colorMask = buildColorMask(colors,c);
-      //parallel for each cavity: compute cavity size mask
-      LIDs sizeMask = buildSizeMask(cavs,cavSize);
-      //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
-      //parallel for each cavity: compute neighbor target mask
-      //parallel for each cavity: compute neighbor sending mask
-      //parallel sort of selected cavities based on distance -> selection mask
-      //create numEdges sized array of ints to store plan
-      //parallel for each cavity: use logical and of masks to compute peer for each cavity entity
+      Targets::iterator tgt;
+      for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
+        const int tgtPeer = tgt->first;
+        const wgt_t tgtWeight = tgt->second;
+        if( sending[tgtPeer] >= tgtWeight )
+          continue; //sent enough weight to this peer
+        //build all the cavities and peers
+        CSR cavs("cavities",N);
+        CSR peers("cavityPeers",N);
+        getCavitiesAndPeers(t,plan_view,cavs,peers);
+        //parallel for each cavity: compute cavity color mask
+        LIDs colorMask = buildColorMask(colors,c);
+        //parallel for each cavity: compute cavity size mask
+        LIDs sizeMask = buildSizeMask(cavs,cavSize);
+        //parallel for each cavity: compute target mask
+        LIDs targetMask = buildTargetMask(peers,tgtPeer);
+        //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
+        //LIDs edgeCutMask = buildEdgeCutMask(cavs,cavSize);
+        //parallel for each cavity: compute neighbor target mask
+        //parallel for each cavity: compute neighbor sending mask
+        //parallel sort of selected cavities based on distance -> selection mask
+        //create numEdges sized array of ints to store plan
+        //parallel for each cavity: use logical and of masks to compute peer for each cavity entity
+      }
     }
     //build Migration object from plan array
     return planW;
