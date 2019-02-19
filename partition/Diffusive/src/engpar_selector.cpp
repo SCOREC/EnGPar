@@ -346,19 +346,98 @@ namespace engpar {
     return targetMask;
   }
 
+  /**
+   * \brief the entry for a cavity is = 1 if the edge cut growth
+   *        is less than maxGrowth, 0 otherwise
+   */
+  LIDs buildEdgeCutMask(CSR peers, int tgtPeer, float maxGrowth) {
+    const int numEdges = peers.n;
+    LIDs cutPins("edgeCutMask", numEdges);
+    LIDs edgeCutMask("edgeCutMask", numEdges);
+    if( maxGrowth <= 0 ) {
+      // edgeCutGrowth disabled, set all cavities to 'true'
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        edgeCutMask(e) = 1;
+      });
+      return edgeCutMask;
+    } else {
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        const int size = peers.off(e+1)-peers.off(e);
+        const int firstPeer = peers.off(e);
+        for( int i=0; i<size; i++ ) {
+          cutPins(e) += ( peers.items(firstPeer+i) == tgtPeer );
+        }
+        const int uncutPins = size - cutPins(e);
+        const float edgeCutGrowth = static_cast<float>(uncutPins)/cutPins(e);
+        edgeCutMask(e) = ( edgeCutGrowth < maxGrowth );
+      });
+      return edgeCutMask;
+    }
+  }
 
-  wgt_t Selector::kkSelect(Targets* targets, agi::Migration* plan,
+  /**
+   * \brief the entry for a cavity is set to 1 if it will 
+   *        be migrated, 0 otherwise
+   */
+  LIDs buildMigrationMask(CSR cavs, LIDs colorMask, LIDs sizeMask,
+      LIDs targetMask, LIDs edgeCutMask) {
+    const int numEdges = cavs.n;
+    LIDs migrMask("migrationMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      migrMask(e) = ( colorMask(e) & sizeMask(e) & targetMask(e) & edgeCutMask(e) );
+    });
+    return migrMask;
+  }
+
+  /**
+   * \brief the entry for a vertex is set to the destination process id
+   */
+  LIDs setVtxDestination(CSR cavs, LIDs migrMask, int numVerts, int tgtPeer) {
+    LIDs dest("planNext", numVerts);
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      dest(v) = -1; //mark as not sending
+    });
+    Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
+      const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      for( int i=0; i<numAdjVerts; i++ ) {
+        const int v = cavs.items(firstVtx+i);
+        dest(v) = tgtPeer;
+      }
+    });
+    return dest;
+  }
+
+  /**
+   * \brief return the weight of the vertices being migrated
+   */
+  wgt_t getVtxWeight(LIDs plan, WGTs vtxWeights) {
+    wgt_t totWeight = 0;
+    Kokkos::parallel_reduce(plan.dimension_0(), 
+      KOKKOS_LAMBDA(const int v, wgt_t& w) {
+        w += ( plan(v) >= 0 ) * vtxWeights(v); }, totWeight);
+    return totWeight;
+  }
+
+  wgt_t getEdgeWeight(CSR cavs, LIDs migrationMask, WGTs edgeWeights) {
+    return 0;
+  }
+
+  wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
 #ifdef KOKKOS_ENABLED
     agi::etype t = target_dimension;
     agi::PNgraph* pg = g->publicize();
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
-    const int G = pg->num_ghost_verts;
-    engpar::ColoringInput* in = engpar::createBdryColoringInput(g, t);
+    WGTs vtxWeights("vtxWeights", M);
+    hostToDevice(vtxWeights,pg->local_weights);
+    WGTs edgeWeights("edgeWeights", N);
+    hostToDevice(edgeWeights,pg->edge_weights[target_dimension]);
+    engpar::ColoringInput* inC = engpar::createBdryColoringInput(g, t);
     agi::lid_t numColors;
-    LIDs colors = engpar::EnGPar_KokkosColoring(in, numColors);
-    LIDs plan_view("plan_view", M+G);
+    LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
+    LIDs plan("plan", M);
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) break;
@@ -371,20 +450,26 @@ namespace engpar {
         //build all the cavities and peers
         CSR cavs("cavities",N);
         CSR peers("cavityPeers",N);
-        getCavitiesAndPeers(t,plan_view,cavs,peers);
+        getCavitiesAndPeers(t,plan,cavs,peers);
         //parallel for each cavity: compute cavity color mask
         LIDs colorMask = buildColorMask(colors,c);
         //parallel for each cavity: compute cavity size mask
         LIDs sizeMask = buildSizeMask(cavs,cavSize);
         //parallel for each cavity: compute target mask
         LIDs targetMask = buildTargetMask(peers,tgtPeer);
-        //parallel for each cavity: compute edgecutgrowth mask; size = sum_edges(peers(edge))
-        //LIDs edgeCutMask = buildEdgeCutMask(cavs,cavSize);
-        //parallel for each cavity: compute neighbor target mask
-        //parallel for each cavity: compute neighbor sending mask
+        //parallel for each cavity: compute edge cut growth mask
+        LIDs edgeCutMask = buildEdgeCutMask(peers,tgtPeer,in->limitEdgeCutGrowth);
+        //parallel for each cavity: logical and masks to determine if cavity is in plan
+        LIDs migrationMask = buildMigrationMask(cavs,colorMask,sizeMask,targetMask,edgeCutMask);
+        //parallel for each cavity: logical and masks to determine if cavity is in plan
+        LIDs planNext = setVtxDestination(cavs,migrationMask,M,tgtPeer);
+        //compute plan weight
+        if( target_dimension == -1 ) { //vertices
+          sending[tgtPeer] += getVtxWeight(planNext,vtxWeights);
+        } else {
+          sending[tgtPeer] += getEdgeWeight(cavs,migrationMask,edgeWeights);
+        }
         //parallel sort of selected cavities based on distance -> selection mask
-        //create numEdges sized array of ints to store plan
-        //parallel for each cavity: use logical and of masks to compute peer for each cavity entity
       }
     }
     //build Migration object from plan array
