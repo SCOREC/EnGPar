@@ -198,8 +198,7 @@ namespace engpar {
       LIDs edge_degree, LIDs edges,
       LIDs pin_degree, LIDs pins,
       LIDs isVtxOwned, LIDs vtxOwner,
-      CSR& cavs, CSR& peers) {
-    CSR eoc("edgesOfCavity",numEdges);
+      CSR& cavs, CSR& peers, CSR& eoc) {
     //count the number of edges adjacent to cavity vertices
     // there will be duplicate edges; that should not change
     // the list of peers
@@ -264,8 +263,9 @@ namespace engpar {
     });
   }
 
-  void Selector::getCavitiesAndPeers(agi::etype t, LIDs plan,
-      CSR& cavs, CSR& peers) {
+  void Selector::getCavitiesAndPeers(agi::etype t,
+      LIDs plan, LIDs vtxOwner,
+      CSR& cavs, CSR& peers, CSR& eoc) {
     agi::PNgraph* pg = g->publicize();
     const int N = pg->num_local_edges[t];
     const int M = pg->num_local_verts;
@@ -284,22 +284,8 @@ namespace engpar {
       isVtxOwned(v) = 1;
     });
     getCavities(N,M,G,pin_degree,pins,plan,isVtxOwned,cavs);
-    //create the owners mask - this can be moved outside the select function
-    LIDs vtxOwner("vtxOwner", M+G); //make this random access
-    LIDs ghostOwners("ghostOwners", G);
-    hostToDevice(ghostOwners,pg->owners);
-    ENGPAR_LID_T self = PCU_Comm_Self();
-    LIDs processId("processId", 1);
-    hostToDevice(processId,&self);
-    hostToDevice(pins, pg->pin_list[t]);
-    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
-      vtxOwner(v) = processId(0);
-    });
-    Kokkos::parallel_for(G, KOKKOS_LAMBDA(const int v) {
-      vtxOwner(v+M) = ghostOwners(v);
-    });
     getPeers(N,M,G,edge_degree,edges,pin_degree,pins,
-        isVtxOwned,vtxOwner,cavs,peers);
+        isVtxOwned,vtxOwner,cavs,peers,eoc);
   }
 
   /**
@@ -419,8 +405,49 @@ namespace engpar {
     return totWeight;
   }
 
-  wgt_t getEdgeWeight(CSR cavs, LIDs migrationMask, WGTs edgeWeights) {
-    return 0;
+  /**
+   * \brief return the weight of the edges being migrated
+   */
+  wgt_t getEdgeWeight(CSR eoc, CSR pins,
+      LIDs migrationMask, LIDs vtxOwner, 
+      WGTs edgeWeights, int tgtPeer) {
+    wgt_t totWeight = 0;
+    Kokkos::parallel_reduce(numEdges, KOKKOS_LAMBDA(const int e, wgt_t& w) {
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      const int isMigrated = migrationMask(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pins.off(adjEdge+1)-pins.off(adjEdge);
+        const int firstPin = pins.off(adjEdge);
+        int residentOnPeer = 0;
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins.items(firstPin+pinIdx);
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          residentOnPeer += (owner == tgtPeer);
+        }
+        w += (!residentOnPeer & isMigrated) * edgeWeights(adjEdge);
+      }
+    }, totWeight);
+    return totWeight;
+  }
+
+  LIDs buildVtxOwners(agi::PNgraph* pg, int targetDim) {
+    const int N = pg->num_local_edges[targetDim];
+    const int M = pg->num_local_verts;
+    LIDs vtxOwner("vtxOwner", M+G); //make this random access
+    LIDs ghostOwners("ghostOwners", G);
+    hostToDevice(ghostOwners,pg->owners);
+    ENGPAR_LID_T self = PCU_Comm_Self();
+    LIDs processId("processId", 1);
+    hostToDevice(processId,&self);
+    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v) = processId(0);
+    });
+    Kokkos::parallel_for(G, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v+M) = ghostOwners(v);
+    });
+    return vtxOwner;
   }
 
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
@@ -433,7 +460,10 @@ namespace engpar {
     WGTs vtxWeights("vtxWeights", M);
     hostToDevice(vtxWeights,pg->local_weights);
     WGTs edgeWeights("edgeWeights", N);
-    hostToDevice(edgeWeights,pg->edge_weights[target_dimension]);
+    hostToDevice(edgeWeights,pg->edge_weights[t]);
+    CSR pins("pins", N, pg->pin_degree_list[t], pg->pin_list[t]);
+    LIDs vtxOwners = buildVtxOwners(pg,t);
+    //create the owners mask - this can be moved outside the select function
     engpar::ColoringInput* inC = engpar::createBdryColoringInput(g, t);
     agi::lid_t numColors;
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
@@ -450,7 +480,8 @@ namespace engpar {
         //build all the cavities and peers
         CSR cavs("cavities",N);
         CSR peers("cavityPeers",N);
-        getCavitiesAndPeers(t,plan,cavs,peers);
+        CSR eoc("edgesOfCavity",N);
+        getCavitiesAndPeers(t,plan,vtxOwner,cavs,peers,eoc);
         //parallel for each cavity: compute cavity color mask
         LIDs colorMask = buildColorMask(colors,c);
         //parallel for each cavity: compute cavity size mask
@@ -467,7 +498,8 @@ namespace engpar {
         if( target_dimension == -1 ) { //vertices
           sending[tgtPeer] += getVtxWeight(planNext,vtxWeights);
         } else {
-          sending[tgtPeer] += getEdgeWeight(cavs,migrationMask,edgeWeights);
+          sending[tgtPeer] += getEdgeWeight(eoc,pins,migrationMask,vtxOwner,
+              edgeWeights,tgtPeer);
         }
         //parallel sort of selected cavities based on distance -> selection mask
       }
