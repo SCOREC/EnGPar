@@ -35,8 +35,10 @@ void EnGPar_Error_Message(const char*, ...);
 namespace engpar {
 typedef Kokkos::DefaultExecutionSpace exeSpace;
 typedef Kokkos::View<ENGPAR_LID_T*, exeSpace::device_type> LIDs;
+typedef Kokkos::View<ENGPAR_WGT_T*, exeSpace::device_type> WGTs;
 /** \brief helper function to transfer a host array to a device view */
 void hostToDevice(LIDs d, ENGPAR_LID_T* h);
+void hostToDevice(WGTs d, ENGPAR_WGT_T* h);
 /** \brief helper function to transfer a device view to a host array */
 void deviceToHost(LIDs d, ENGPAR_LID_T* h);
 /** \brief a list of n objects where object i has off(i+1)-off(i)
