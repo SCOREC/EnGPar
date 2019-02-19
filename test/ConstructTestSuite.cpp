@@ -24,9 +24,17 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   EnGPar_Set_Verbosity(-1);
+
+  double mem = EnGPar_Peak_Memory();
+  if (!PCU_Comm_Self())
+    printf("Peak memory before tests is %.4f\n", mem);
   //Create the testing suite
   TestingSuite suite(argv[0]);
-    
+
+  mem = EnGPar_Peak_Memory();
+  if (!PCU_Comm_Self())
+    printf("Peak memory after creating suite is %.4f\n", mem);
+
   //Gather specific tests that have more fine grain checks
   suite.addFineTest("Construct Graph",testGraph);
   suite.addFineTest("Construct HyperGraph",testHyperGraph);
@@ -37,11 +45,20 @@ int main(int argc, char* argv[]) {
   suite.addFineTest("Construct .ebin Graphs",testEBINGraphs);
   #endif
   suite.addFineTest("Construct .bgd Graphs",testBGDGraphs);
-  
+
+
+  mem = EnGPar_Peak_Memory();
+  if (!PCU_Comm_Self())
+    printf("Peak memory after creating tests is %.4f\n", mem);
+
   //Gather the graphs for the general tests
   gatherBuildGraphs(suite);
   gatherEBINGraphs(suite);
   gatherBGDGraphs(suite);
+
+  mem = EnGPar_Peak_Memory();
+  if (!PCU_Comm_Self())
+    printf("Peak memory after creating graphs is %.4f\n", mem);
 
   //Gather general tests that run on the graphs collected prior to this
   suite.addGeneralTest("Check Validity",isValid);
@@ -49,6 +66,10 @@ int main(int argc, char* argv[]) {
   //Run the tests and get the number of failures
   int ierr = suite.runTests();
 
+  mem = EnGPar_Peak_Memory();
+  if (!PCU_Comm_Self())
+    printf("Peak memory after running tests is %.4f\n", mem);
+  
   suite.deleteTestGraphs();
   EnGPar_Finalize();
   MPI_Finalize();
