@@ -49,6 +49,17 @@ struct csr {
   int n;
   LIDs off;
   LIDs items;
+  csr(std::string s, int numObjs,
+      ENGPAR_LID_T* offsets, ENGPAR_LID_T* itms) {
+    name=s;
+    n=numObjs;
+    std::string oname = name + "_offsets";
+    std::string iname = name + "_items";
+    off = LIDs(oname, n+1);
+    items = LIDs(iname, offsets[n]);
+    hostToDevice(off, offsets);
+    hostToDevice(items, itms);
+  }
   csr(std::string s, int numObjs) {
     name=s;
     n=numObjs;
