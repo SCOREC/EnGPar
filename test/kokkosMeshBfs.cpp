@@ -62,14 +62,32 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t) {
   LIDs iter_d("iter_d", 1);
   //run bfs
   do {
-    fprintf(stderr, "iter %d\n", iter);
-    iter++;
+    found = 0; // reset the found flag
+    iter++;  // increment the iteration count
     hostToDevice(iter_d, &iter);
+    hostToDevice(found_d, &found);
     //
     // insert bfs code here
+    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
+      visited_d(u) |= visited_next_d(u);
+      visited_next_d(u) = 0;
+    });
+
+    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
+      // loop over adjacent vertices
+      for (int adj = offsets_d(u); adj < offsets_d(u+1); adj++) {
+        int v = lists_d(adj);
+        visited_next_d(u) |= visited_d(v);
+      }
+      dist_d(u) = dist_d(u) + ((visited_next_d(u) && !visited_d(u)) * iter_d(0));
+      // set the flag to indicate that a new vertex was found 
+      if (visited_next_d(u) && !visited_d(u)) found_d(0) = 1;
+    });
+    deviceToHost(found_d, &found);
     //
   } while (found && iter < max_iter);
   //transfer the distance to the host
+  fprintf(stderr, "\n%d total iterations\n", iter);
   agi::lid_t* dist = new int[numEnts];
   deviceToHost(dist_d, dist);
   return dist;
