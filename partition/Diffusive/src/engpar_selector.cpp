@@ -463,13 +463,13 @@ namespace engpar {
     });
   }
 
-  void buildMigrationPlan(LIDs plan,agi::Migration* migrPlan) {
+  void buildMigrationPlan(agi::PNgraph* pg, LIDs plan, agi::Migration* migrPlan) {
     const int n = plan.dimension_0();
     agi::lid_t* plan_h = new agi::lid_t[n];
     deviceToHost(plan,plan_h);
     for(int i=0; i<n; i++) {
       if( plan_h[i] != -1 ) {
-        agi::GraphVertex* v = static_cast<agi::GraphVertex*>(agi::toPtr(i));
+        agi::GraphVertex* v = pg->getVertex(i);
         migrPlan->insert(std::make_pair(v,plan_h[i]));
       }
     }
@@ -494,13 +494,16 @@ namespace engpar {
     agi::lid_t numColors;
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
     LIDs plan = makePlan("plan",M);
+    PCU_Debug_Print("%s 0.1 numColors %d\n", __func__, numColors);
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
+      PCU_Debug_Print("%s c %d 0.2\n", __func__, c);
       if (planW > targets->total()) break;
       Targets::iterator tgt;
       for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
         const int tgtPeer = tgt->first;
         const wgt_t tgtWeight = tgt->second;
+        PCU_Debug_Print("%s c %d tgtPeer %d 0.2\n", __func__, c, tgtPeer);
         if( sending[tgtPeer] >= tgtWeight )
           continue; //sent enough weight to this peer
         //build all the cavities and peers
@@ -522,17 +525,21 @@ namespace engpar {
         //parallel for each cavity: logical and masks to determine if cavity is in plan
         LIDs planNext = setVtxDestination(cavs,migrationMask,M,tgtPeer);
         //compute plan weight
+        wgt_t w = 0;
         if( target_dimension == -1 ) { //vertices
-          sending[tgtPeer] += getVtxWeight(planNext,vtxWeights);
+          w = getVtxWeight(planNext,vtxWeights);
         } else {
-          sending[tgtPeer] += getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
+          w = getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
               edgeWeights,tgtPeer);
         }
+        sending[tgtPeer] += w;
+        planW += w;
         updatePlan(plan,planNext);
       }
     }
     //build Migration object from plan array
-    buildMigrationPlan(plan,migrPlan);
+    buildMigrationPlan(pg,plan,migrPlan);
+    PCU_Debug_Print("%s migrPlan.size() %d\n", __func__, migrPlan->size());
     return planW;
 #else
     fprintf(stderr,"ERROR: kokkos cavity selection disabled, recompile with ENABLE_KOKKOS\n");
