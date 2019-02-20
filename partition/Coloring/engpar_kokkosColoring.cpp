@@ -15,7 +15,6 @@ namespace engpar {
       // Vertex colorings
       double t0 = PCU_Time();
       in->g->create_vev_adjacency(in->edgeType);
-      printf ("eve partition time: %f\n", PCU_Time()-t0); 
       numEnts = in->g->numLocalVtxs();
       adj_offsets = pg->vev_offsets[in->edgeType];
       adj_lists = pg->vev_lists[in->edgeType];
@@ -26,7 +25,6 @@ namespace engpar {
       double t0 = PCU_Time();
       //in->g->create_eve_adjacency(in->edgeType);
       in->g->parallel_create_eve(in->edgeType, in->boundaryOnly);
-      printf ("eve partition time: %f\n", PCU_Time()-t0); 
       numEnts = pg->num_local_edges[in->edgeType];
       adj_offsets = pg->eve_offsets[in->edgeType];
       adj_lists = pg->eve_lists[in->edgeType];
@@ -55,7 +53,6 @@ namespace engpar {
     double t0 = PCU_Time();
     KokkosGraph::Experimental::graph_color<KernelHandle, LIDs, LIDs>
       (kh, numEnts, numEnts, adj_offsets_view, adj_lists_view);
-    printf ("Coloring time: %f\n", PCU_Time()-t0);
     colors_d = kh->get_graph_coloring_handle()->get_vertex_colors();
     numColors = kh->get_graph_coloring_handle()->get_num_colors();
     kh->destroy_graph_coloring_handle();  
