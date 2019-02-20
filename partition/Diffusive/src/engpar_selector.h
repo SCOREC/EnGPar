@@ -27,8 +27,9 @@ namespace engpar {
                  wgt_t planW, unsigned int cavSize,int);
     wgt_t kkSelect(Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
-    void getCavitiesAndPeers(agi::etype t, LIDs plan,
-        CSR& cavities, CSR& peers);
+    void getCavitiesAndPeers(agi::etype t,
+        LIDs plan, LIDs vtxOwner,
+        CSR& cavities, CSR& peers, CSR& eoc);
     void selectDisconnected(agi::Migration* plan, int target_dimension);
     Midd* trim(Targets* targets, agi::Migration* plan);
     void cancel(agi::Migration*& plan,Midd* capacity);

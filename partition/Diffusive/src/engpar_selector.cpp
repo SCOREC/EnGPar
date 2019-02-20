@@ -5,6 +5,7 @@
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
+#include <agi_typeconvert.h>
 namespace engpar {
 
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
@@ -375,14 +376,19 @@ namespace engpar {
     return migrMask;
   }
 
+  LIDs makePlan(std::string name, int size) {
+    LIDs plan(name, size);
+    Kokkos::parallel_for(size, KOKKOS_LAMBDA(const int v) {
+      plan(v) = -1;
+    });
+    return plan;
+  }
+
   /**
    * \brief the entry for a vertex is set to the destination process id
    */
   LIDs setVtxDestination(CSR cavs, LIDs migrMask, int numVerts, int tgtPeer) {
-    LIDs dest("planNext", numVerts);
-    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
-      dest(v) = -1; //mark as not sending
-    });
+    LIDs dest = makePlan("planNext", numVerts);
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
       const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
       const int firstVtx = cavs.off(e);
@@ -412,7 +418,7 @@ namespace engpar {
       LIDs migrationMask, LIDs vtxOwner, 
       WGTs edgeWeights, int tgtPeer) {
     wgt_t totWeight = 0;
-    Kokkos::parallel_reduce(numEdges, KOKKOS_LAMBDA(const int e, wgt_t& w) {
+    Kokkos::parallel_reduce(eoc.n, KOKKOS_LAMBDA(const int e, wgt_t& w) {
       const int numCavEdges = eoc.off(e+1)-eoc.off(e);
       const int firstEdge = eoc.off(e);
       const int isMigrated = migrationMask(e);
@@ -433,8 +439,8 @@ namespace engpar {
   }
 
   LIDs buildVtxOwners(agi::PNgraph* pg, int targetDim) {
-    const int N = pg->num_local_edges[targetDim];
     const int M = pg->num_local_verts;
+    const int G = pg->num_ghost_verts;
     LIDs vtxOwner("vtxOwner", M+G); //make this random access
     LIDs ghostOwners("ghostOwners", G);
     hostToDevice(ghostOwners,pg->owners);
@@ -448,6 +454,26 @@ namespace engpar {
       vtxOwner(v+M) = ghostOwners(v);
     });
     return vtxOwner;
+  }
+
+  void updatePlan(LIDs plan, LIDs planNext) {
+    const int n = plan.dimension_0();
+    Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int v) {
+      plan(v) += (planNext(v) != -1) * planNext(v);
+    });
+  }
+
+  void buildMigrationPlan(LIDs plan,agi::Migration* migrPlan) {
+    const int n = plan.dimension_0();
+    agi::lid_t* plan_h = new agi::lid_t[n];
+    deviceToHost(plan,plan_h);
+    for(int i=0; i<n; i++) {
+      if( plan_h[i] != -1 ) {
+        agi::GraphVertex* v = static_cast<agi::GraphVertex*>(agi::toPtr(i));
+        migrPlan->insert(std::make_pair(v,plan_h[i]));
+      }
+    }
+    delete [] plan_h;
   }
 
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
@@ -467,7 +493,7 @@ namespace engpar {
     engpar::ColoringInput* inC = engpar::createBdryColoringInput(g, t);
     agi::lid_t numColors;
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
-    LIDs plan("plan", M);
+    LIDs plan = makePlan("plan",M);
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) break;
@@ -481,7 +507,7 @@ namespace engpar {
         CSR cavs("cavities",N);
         CSR peers("cavityPeers",N);
         CSR eoc("edgesOfCavity",N);
-        getCavitiesAndPeers(t,plan,vtxOwner,cavs,peers,eoc);
+        getCavitiesAndPeers(t,plan,vtxOwners,cavs,peers,eoc);
         //parallel for each cavity: compute cavity color mask
         LIDs colorMask = buildColorMask(colors,c);
         //parallel for each cavity: compute cavity size mask
@@ -492,19 +518,21 @@ namespace engpar {
         LIDs edgeCutMask = buildEdgeCutMask(peers,tgtPeer,in->limitEdgeCutGrowth);
         //parallel for each cavity: logical and masks to determine if cavity is in plan
         LIDs migrationMask = buildMigrationMask(cavs,colorMask,sizeMask,targetMask,edgeCutMask);
+        //TODO parallel sort of selected cavities based on distance
         //parallel for each cavity: logical and masks to determine if cavity is in plan
         LIDs planNext = setVtxDestination(cavs,migrationMask,M,tgtPeer);
         //compute plan weight
         if( target_dimension == -1 ) { //vertices
           sending[tgtPeer] += getVtxWeight(planNext,vtxWeights);
         } else {
-          sending[tgtPeer] += getEdgeWeight(eoc,pins,migrationMask,vtxOwner,
+          sending[tgtPeer] += getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
               edgeWeights,tgtPeer);
         }
-        //parallel sort of selected cavities based on distance -> selection mask
+        updatePlan(plan,planNext);
       }
     }
     //build Migration object from plan array
+    buildMigrationPlan(plan,migrPlan);
     return planW;
 #else
     fprintf(stderr,"ERROR: kokkos cavity selection disabled, recompile with ENABLE_KOKKOS\n");
