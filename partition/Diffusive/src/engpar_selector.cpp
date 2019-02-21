@@ -327,7 +327,7 @@ namespace engpar {
       const int size = peers.off(e+1)-peers.off(e);
       const int firstPeer = peers.off(e);
       for( int i=0; i<size; i++ ) {
-        targetMask(e) += ( peers.items(firstPeer+i) == tgtPeer );
+        targetMask(e) |= ( peers.items(firstPeer+i) == tgtPeer );
       }
     });
     return targetMask;
@@ -371,7 +371,7 @@ namespace engpar {
     const int numEdges = cavs.n;
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      migrMask(e) = ( colorMask(e) & sizeMask(e) & targetMask(e) & edgeCutMask(e) );
+      migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
     });
     return migrMask;
   }
@@ -394,7 +394,11 @@ namespace engpar {
       const int firstVtx = cavs.off(e);
       for( int i=0; i<numAdjVerts; i++ ) {
         const int v = cavs.items(firstVtx+i);
-        dest(v) = migrMask(e) * tgtPeer;
+        //using a conditional to keep the destination set
+        //  to -1 if it is not being mirated
+        if( migrMask(e) )
+          dest(v) = tgtPeer;
+        }
       }
     });
     return dest;
@@ -466,9 +470,14 @@ namespace engpar {
     agi::lid_t* plan_h = new agi::lid_t[n];
     deviceToHost(plan,plan_h);
     for(int i=0; i<n; i++) {
-      if( plan_h[i] != -1 ) {
+      const int dest = plan_h[i];
+      if( dest != -1 ) {
+        if(dest <0 || dest >= PCU_Comm_Peers()) {
+          printf("ERROR dest is not valid v dest %4d %4d\n", i, dest);
+        }
+        assert(dest >= 0 && dest <PCU_Comm_Peers());
         agi::GraphVertex* v = pg->getVertex(i);
-        migrPlan->insert(std::make_pair(v,plan_h[i]));
+        migrPlan->insert(std::make_pair(v,dest));
       }
     }
     delete [] plan_h;
