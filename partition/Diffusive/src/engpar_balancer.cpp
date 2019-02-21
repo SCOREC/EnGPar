@@ -133,8 +133,6 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
-    if( !PCU_Comm_Self() )
-      fprintf(stderr, "edgecutgrowth %f\n", inp->limitEdgeCutGrowth);
     Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
     PCU_Debug_Open();
@@ -209,8 +207,11 @@ namespace engpar {
       }
     }
 
-    if (numMigrate == 0)
+    if (numMigrate == 0) {
+      if(!PCU_Comm_Self())
+        fprintf(stderr,"No vertices migrated\n");
       return 3;
+    }
 
     return 0; //not done balancing
   }
