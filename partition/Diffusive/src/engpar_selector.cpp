@@ -6,6 +6,10 @@
 #include <PCU.h>
 #include <agiMigration.h>
 #include <agi_typeconvert.h>
+
+#define DEBUG_RANK 0
+#define DEBUG_EDGE 1496
+
 namespace engpar {
 
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
@@ -171,6 +175,8 @@ namespace engpar {
         size += ( isVtxOwned(v) && !isVtxInPlan(v) ); //random access
       }
       cavs.off(e) = size;
+      if( e == DEBUG_EDGE )
+        printf("e cav.degree %4d %3d\n", e, size);
     });
     //construct the cavity csr
     // -create the offsets with an exclusive scan
@@ -200,6 +206,7 @@ namespace engpar {
       LIDs pin_degree, LIDs pins,
       LIDs isVtxOwned, LIDs vtxOwner,
       CSR& cavs, CSR& peers, CSR& eoc) {
+    const int self = PCU_Comm_Self();
     //count the number of edges adjacent to cavity vertices
     // there will be duplicate edges; that should not change
     // the list of peers
@@ -237,11 +244,23 @@ namespace engpar {
         const int firstPin = pin_degree(adjEdge);
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
           const int pin = pins(firstPin+pinIdx);
+          assert(pin>=0 && pin<numVerts+numGhostVerts);
           peers.off(e) += !isVtxOwned(pin); //TODO make isVtxOwned random access
         }
       }
     });
     degreeToOffset(peers);
+    if(self == DEBUG_RANK) {
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        if( e == DEBUG_EDGE) {
+          printf("e cavDegree eocDegree peerDegree %5d %5d %5d %5d\n",
+            e,
+            cavs.off(e+1)-cavs.off(e),
+            eoc.off(e+1)-eoc.off(e),
+            peers.off(e+1)-peers.off(e));
+        }
+      });
+    }
     allocateItems(peers);
     //insert the owners of the ghost vertices
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
@@ -368,10 +387,15 @@ namespace engpar {
    */
   LIDs buildMigrationMask(CSR cavs, LIDs colorMask, LIDs sizeMask,
       LIDs targetMask, LIDs edgeCutMask) {
+    const int self = PCU_Comm_Self();
     const int numEdges = cavs.n;
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
+      if(self == DEBUG_RANK && e == DEBUG_EDGE) {
+        printf("e mask c s t %5d %2d %2d %2d %3d\n",
+          e, migrMask(e), colorMask(e), sizeMask(e), targetMask(e));
+      }
     });
     return migrMask;
   }
@@ -388,6 +412,7 @@ namespace engpar {
    * \brief the entry for a vertex is set to the destination process id
    */
   LIDs setVtxDestination(CSR cavs, LIDs migrMask, int numVerts, int tgtPeer) {
+    const int self = PCU_Comm_Self();
     LIDs dest = makePlan("planNext", numVerts);
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
       const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
@@ -398,6 +423,9 @@ namespace engpar {
         //  to -1 if it is not being mirated
         if( migrMask(e) )
           dest(v) = tgtPeer;
+        if(self == DEBUG_RANK && e == DEBUG_EDGE && migrMask(e) ) {
+          printf("sending e migrMask(e) dest(v) tgtPeer %4d %4d %3d %3d\n",
+            e, migrMask(e), dest(v), tgtPeer);
         }
       }
     });
@@ -486,6 +514,9 @@ namespace engpar {
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
 #ifdef KOKKOS_ENABLED
+    if( PCU_Comm_Self() == DEBUG_RANK ) {
+      fprintf(stderr, "cavSize %3d\n", cavSize);
+    }
     agi::etype t = target_dimension;
     agi::etype edgeType = t;
     if( edgeType == -1 )
@@ -510,6 +541,9 @@ namespace engpar {
       Targets::iterator tgt;
       for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
         const int tgtPeer = tgt->first;
+        if( PCU_Comm_Self() == DEBUG_RANK ) {
+          fprintf(stderr, "color tgtPeer %3d %2d\n", c, tgtPeer);
+        }
         const wgt_t tgtWeight = tgt->second;
         if( sending[tgtPeer] >= tgtWeight )
           continue; //sent enough weight to this peer
@@ -574,6 +608,9 @@ namespace engpar {
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+                if( PCU_Comm_Self() == DEBUG_RANK ) {
+                  printf("sending edge cav.size() peer %4d %3zu %3d\n", g->localID(q->get(itr)), cav.size(), peer);
+                }
                 planW+=w;
                 sending[peer]+=w;
                 sent=true;
