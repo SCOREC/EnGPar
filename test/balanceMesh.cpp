@@ -61,12 +61,14 @@ int main(int argc, char* argv[]) {
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
   double step_factor = .1;
-  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
+  engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
   input->addPriority(0,tol);
   if (isMultiEdge) {
     input->addPriority(1,tol);
   }
   input->addPriority(-1,tol);
+  input->maxIterationsPerType=0;
+  input->kkSelect=1;
 
   //Create the balancer
   int verbosity = 1;

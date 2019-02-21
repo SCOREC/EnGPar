@@ -93,6 +93,8 @@ namespace engpar {
      * defaults to 0 (values less than or equal to 0 ignore this operation)
      */
     double limitEdgeCutGrowth;
+
+    int kkSelect;
   };
 }
 
