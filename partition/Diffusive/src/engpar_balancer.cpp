@@ -133,6 +133,8 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
+    if( !PCU_Comm_Self() )
+      fprintf(stderr, "edgecutgrowth %f\n", inp->limitEdgeCutGrowth);
     Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
     PCU_Debug_Open();
@@ -140,15 +142,12 @@ namespace engpar {
     wgt_t planW = 0.0;
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
 #ifdef KOKKOS_ENABLED
-      PCU_Debug_Print("kkSelect cavSize %d\n", cavSize);
       planW = selector->kkSelect(targets,plan,planW,cavSize,target_dimension);
 #else
       planW = selector->select(targets,plan,planW,cavSize,target_dimension);
 #endif
     }
-    PCU_Debug_Print("%s 0.1\n", __func__);
     selector->selectDisconnected(plan,target_dimension);
-    PCU_Debug_Print("%s 0.2\n", __func__);
     if (completed_dimensions.size()>0) {
       int sizes[2];
       sizes[0] = plan->size();
@@ -171,15 +170,27 @@ namespace engpar {
 
     stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
-    PCU_Debug_Print("%s 0.2 numMigrate %d\n", __func__, numMigrate);
+    typedef std::map<agi::part_t,int> mii;
+    mii peerToVerts;
+    agi::Migration::iterator itr;
+    for(itr = plan->begin();itr!=plan->end();itr++) {
+      agi::GraphVertex* v = *itr;
+      agi::part_t peer = plan->get(v);
+      peerToVerts[peer]++;
+    }
+    mii::iterator it = peerToVerts.begin();
+    while(it != peerToVerts.end()) {
+      PCU_Debug_Print("%s migr %d verts to %d\n",
+          __func__, it->second, it->first);
+      it++;
+    }
     numMigrate = PCU_Add_Int(numMigrate);
-    PCU_Debug_Print("%s 0.3 numMigrate %d\n", __func__, numMigrate);
+    PCU_Debug_Print("%s numMigrate %d\n", __func__, numMigrate);
 
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
     else
       delete plan;
-    PCU_Debug_Print("%s 0.4\n", __func__);
     
     if (verbosity >= 1) {
       char buffer[100];
