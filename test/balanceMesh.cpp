@@ -127,6 +127,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
 
+  Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();
 }
