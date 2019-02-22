@@ -17,16 +17,17 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc,argv);
   EnGPar_Open_Log();
   
-  if (argc != 5 && argc != 6) {
+  if (argc != 6 && argc != 7) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> [multi-edgetypes]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> <kkSelect=[1:on|0:off]> [multi-edgetypes]\n", argv[0]);
     }
     EnGPar_Finalize();
     assert(false);
   }
 
+  int kkselect = (atoi(argv[5]) > 0);
   int isMultiEdge = 0;
-  if( argc == 6 ) isMultiEdge = 1;
+  if( argc == 7 ) isMultiEdge = 1;
 
   apf::Mesh2* m=NULL;
   agi::Ngraph* g=NULL;
@@ -68,7 +69,7 @@ int main(int argc, char* argv[]) {
   }
   input->addPriority(-1,tol);
   input->maxIterationsPerType=0;
-  input->kkSelect=1;
+  input->kkSelect=kkselect;
 
   //Create the balancer
   int verbosity = 1;
