@@ -839,8 +839,8 @@ namespace agi {
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
         Kokkos::pair<int,int> p = m.key_at(i);
-        int e = deg(p.first);
-        int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
+        const int e = deg(p.first);
+        const int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
         edgeList(e+idx) = p.second;
       }
     });
