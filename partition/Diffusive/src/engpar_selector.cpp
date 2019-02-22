@@ -392,7 +392,7 @@ namespace engpar {
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
-      if(self == DEBUG_RANK && e == DEBUG_EDGE) {
+      if(self == DEBUG_RANK && migrMask(e) ) {
         printf("e mask c s t %5d %2d %2d %2d %3d\n",
           e, migrMask(e), colorMask(e), sizeMask(e), targetMask(e));
       }
@@ -412,6 +412,7 @@ namespace engpar {
    * \brief the entry for a vertex is set to the destination process id
    */
   LIDs setVtxDestination(CSR cavs, LIDs migrMask, int numVerts, int tgtPeer) {
+    assert(tgtPeer >= 0 && tgtPeer < PCU_Comm_Peers());
     const int self = PCU_Comm_Self();
     LIDs dest = makePlan("planNext", numVerts);
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
@@ -423,10 +424,6 @@ namespace engpar {
         //  to -1 if it is not being mirated
         if( migrMask(e) )
           dest(v) = tgtPeer;
-        if(self == DEBUG_RANK && e == DEBUG_EDGE && migrMask(e) ) {
-          printf("sending e migrMask(e) dest(v) tgtPeer %4d %4d %3d %3d\n",
-            e, migrMask(e), dest(v), tgtPeer);
-        }
       }
     });
     return dest;
@@ -487,9 +484,11 @@ namespace engpar {
   }
 
   void updatePlan(LIDs plan, LIDs planNext) {
+    const int numPeers = PCU_Comm_Peers();
     const int n = plan.dimension_0();
     Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int v) {
-      plan(v) += (planNext(v) != -1) * planNext(v);
+      if( planNext(v) != -1 )
+        plan(v) = planNext(v);
     });
   }
 
