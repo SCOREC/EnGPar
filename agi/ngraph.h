@@ -176,7 +176,7 @@ public:
    * \param cs an array of 3-D coordinates of size numLocalVtxs()
    */
   void setCoords(coord_t* cs);
-  /** \brief Sets the weights of the vertices
+  /** \brief Sets the weights of the local vertices
    * \param wgts the vertex weights
    */
   void setWeights(wgt_t* wgts);
@@ -248,7 +248,7 @@ public:
    * \return the destination vertex
    */
   GraphVertex* v(GraphEdge* edge) const;
-  /** \brief Sets the weights of the edges of a specific type
+  /** \brief Sets the weights of the local edges of a specific type
    * \param wgts the edge weights
    * \param t the edge type of the weights
    */
