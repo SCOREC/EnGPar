@@ -154,6 +154,15 @@ if (ENABLE_PARMETIS)
       "${MESHES}/torus/4imb/torus.smb"
       1.05
       1 #render
+      0 #kokkos selection off
+      )
+
+    mpi_test(balanceTorusKK 4
+      ./balanceMesh --kokkos-threads=1
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      1.05
+      1 #render
       1 #kokkos selection on
       )
 
