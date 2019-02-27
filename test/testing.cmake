@@ -148,6 +148,15 @@ if (ENABLE_PARMETIS)
     ./PartitionTestSuite 13)
 
   IF(ENABLE_PUMI)
+    mpi_test(balanceTorus 4
+      ./balanceMesh
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      1.05
+      1 #render
+      1 #kokkos selection on
+      )
+
     mpi_test(splitAndBalanceMeshPUMI 8
       ./splitAndBalanceMesh
       "${MESHES}/torus/torus.dmg"
