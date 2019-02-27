@@ -15,6 +15,7 @@ set(ALL_LIBS
   ${ALL_LIBS}
   interfaces
   engpar
+  ${MPI_C_LIBRARIES}
 )
 
 if(ENABLE_PUMI)

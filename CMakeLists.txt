@@ -11,6 +11,9 @@ set(CMAKE_MODULE_PATH
    ${CMAKE_MODULE_PATH} 
    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+find_package(MPI REQUIRED)
+include_directories(${MPI_C_INCLUDE_DIRS})
+
 #Setup doxygen documentation
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
