@@ -9,6 +9,7 @@
 
 #define DEBUG_RANK 0
 #define DEBUG_EDGE 1496
+#define DEBUG_KK 0
 
 namespace engpar {
 
@@ -175,8 +176,10 @@ namespace engpar {
         size += ( isVtxOwned(v) && !isVtxInPlan(v) ); //random access
       }
       cavs.off(e) = size;
+#if DEBUG_KK==1
       if( e == DEBUG_EDGE )
         printf("e cav.degree %4d %3d\n", e, size);
+#endif
     });
     //construct the cavity csr
     // -create the offsets with an exclusive scan
@@ -250,6 +253,7 @@ namespace engpar {
       }
     });
     degreeToOffset(peers);
+#if DEBUG_KK==1
     if(self == DEBUG_RANK) {
       Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
         if( e == DEBUG_EDGE) {
@@ -261,6 +265,7 @@ namespace engpar {
         }
       });
     }
+#endif
     allocateItems(peers);
     //insert the owners of the ghost vertices
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
@@ -392,10 +397,12 @@ namespace engpar {
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
+#if DEBUG_KK==1
       if(self == DEBUG_RANK && migrMask(e) ) {
         printf("e mask c s t %5d %2d %2d %2d %3d\n",
           e, migrMask(e), colorMask(e), sizeMask(e), targetMask(e));
       }
+#endif
     });
     return migrMask;
   }
@@ -513,9 +520,11 @@ namespace engpar {
   wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
 #ifdef KOKKOS_ENABLED
+#if DEBUG_KK==1
     if( PCU_Comm_Self() == DEBUG_RANK ) {
       fprintf(stderr, "cavSize %3d\n", cavSize);
     }
+#endif
     agi::etype t = target_dimension;
     agi::etype edgeType = t;
     if( edgeType == -1 )
@@ -540,9 +549,11 @@ namespace engpar {
       Targets::iterator tgt;
       for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
         const int tgtPeer = tgt->first;
+#if DEBUG_KK==1
         if( PCU_Comm_Self() == DEBUG_RANK ) {
           fprintf(stderr, "color tgtPeer %3d %2d\n", c, tgtPeer);
         }
+#endif
         const wgt_t tgtWeight = tgt->second;
         if( sending[tgtPeer] >= tgtWeight )
           continue; //sent enough weight to this peer
@@ -607,9 +618,11 @@ namespace engpar {
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+#if DEBUG_KK==1
                 if( PCU_Comm_Self() == DEBUG_RANK ) {
                   printf("sending edge cav.size() peer %4d %3zu %3d\n", g->localID(q->get(itr)), cav.size(), peer);
                 }
+#endif
                 planW+=w;
                 sending[peer]+=w;
                 sent=true;
