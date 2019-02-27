@@ -2,6 +2,7 @@
 #include <set>
 #include <PCU.h>
 #include <ngraph.h>
+#include <engpar_support.h>
 
 //Builds a traditional ring graph with an undirected edge between each
 //sequentially numbered pair of vertices.
@@ -80,7 +81,7 @@ agi::Ngraph* buildHyperGraph() {
   pins.push_back(verts[1]);
   pins.push_back(verts[3]);
   for (agi::gid_t i=0;i<local_verts;i++) {
-    gid_t v = (verts[i]+2)%global_verts;
+    agi::gid_t v = (verts[i]+2)%global_verts;
     pins.push_back(v);
     
     if (v<start_vert||v>end_vert) {
@@ -93,7 +94,7 @@ agi::Ngraph* buildHyperGraph() {
     edges.push_back((edges[0]+global_edges-1)%global_edges);
     degrees.push_back(4);
     for (agi::gid_t i=0;i<local_verts;i++) {
-      gid_t v = (verts[i]+global_verts-2)%global_verts;
+      agi::gid_t v = (verts[i]+global_verts-2)%global_verts;
       pins.push_back(v);
       if (v<start_vert||v>end_vert)
         ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
@@ -199,7 +200,7 @@ agi::Ngraph* buildHyperGraphParts() {
   pins.push_back(verts[1]);
   pins.push_back(verts[3]);
   for (agi::gid_t i=0;i<local_verts;i++) {
-    gid_t v = (verts[i]+2)%global_verts;
+    agi::gid_t v = (verts[i]+2)%global_verts;
     pins.push_back(v);
     
     if (v<start_vert||v>end_vert) {
@@ -212,7 +213,7 @@ agi::Ngraph* buildHyperGraphParts() {
     edges.push_back((edges[0]+global_edges-1)%global_edges);
     degrees.push_back(4);
     for (agi::gid_t i=0;i<local_verts;i++) {
-      gid_t v = (verts[i]+global_verts-2)%global_verts;
+      agi::gid_t v = (verts[i]+global_verts-2)%global_verts;
       pins.push_back(v);
       if (v<start_vert||v>end_vert)
         ghost_owners[v] = (PCU_Comm_Self()+PCU_Comm_Peers()-1)%PCU_Comm_Peers();
