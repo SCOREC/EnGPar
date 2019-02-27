@@ -53,9 +53,15 @@ namespace engpar {
     return PCU_Add_Double(w) / PCU_Comm_Peers();
   }
   double averageSides(Sides* s) {
-    double tot = s->total();
-    tot = PCU_Add_Double(tot);
-    return tot / PCU_Comm_Peers();
+    if( PCU_Comm_Peers() > 2 ) {
+      double tot = s->total();
+      tot = PCU_Add_Double(tot);
+      return tot / PCU_Comm_Peers();
+    } else {
+      double max = s->total();
+      max = PCU_Max_Double(max);
+      return max;
+    }
   }
   
   Balancer::Balancer(agi::Ngraph*& g, double f, int v, const char* n) :
