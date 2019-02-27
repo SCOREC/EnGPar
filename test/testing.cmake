@@ -148,6 +148,26 @@ if (ENABLE_PARMETIS)
     ./PartitionTestSuite 13)
 
   IF(ENABLE_PUMI)
+    mpi_test(balanceSquare 2
+      ./balanceMesh
+      "${MESHES}/square/square.dmg"
+      "${MESHES}/square/2/"
+      1.05
+      1 #render
+      0 #kokkos selection off
+      1 #skew weights
+      )
+
+    mpi_test(balanceSquareKK 2
+      ./balanceMesh --kokkos-threads=1
+      "${MESHES}/square/square.dmg"
+      "${MESHES}/square/2/"
+      1.05
+      1 #render
+      1 #kokkos selection on
+      1 #skew weights
+      )
+
     mpi_test(balanceTorus 4
       ./balanceMesh
       "${MESHES}/torus/torus.dmg"
@@ -155,6 +175,7 @@ if (ENABLE_PARMETIS)
       1.05
       1 #render
       0 #kokkos selection off
+      0 #don't skew weights
       )
 
     mpi_test(balanceTorusKK 4
@@ -164,6 +185,7 @@ if (ENABLE_PARMETIS)
       1.05
       1 #render
       1 #kokkos selection on
+      0 #don't skew weights
       )
 
     mpi_test(splitAndBalanceMeshPUMI 8
