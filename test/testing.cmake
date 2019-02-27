@@ -168,6 +168,26 @@ if (ENABLE_PARMETIS)
       1 #skew weights
       )
 
+    mpi_test(balanceCube 4
+      ./balanceMesh
+      "${MESHES}/cube/cube.dmg"
+      "${MESHES}/cube/pumi670/4/cube.smb"
+      1.05
+      1 #render
+      0 #kokkos selection off
+      1 #skew weights
+      )
+
+    mpi_test(balanceCubeKK 4
+      ./balanceMesh
+      "${MESHES}/cube/cube.dmg"
+      "${MESHES}/cube/pumi670/4/cube.smb"
+      1.05
+      1 #render
+      1 #kokkos selection off
+      1 #skew weights
+      )
+
     mpi_test(balanceTorus 4
       ./balanceMesh
       "${MESHES}/torus/torus.dmg"
