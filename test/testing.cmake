@@ -148,7 +148,7 @@ if (ENABLE_PARMETIS)
     ./PartitionTestSuite 13)
 
   IF(ENABLE_PUMI)
-    mpi_test(balanceSquare 2
+    mpi_test(balanceSquareS 2
       ./balanceMesh
       "${MESHES}/square/square.dmg"
       "${MESHES}/square/2/"
@@ -168,7 +168,7 @@ if (ENABLE_PARMETIS)
       1 #skew weights
       )
 
-    mpi_test(balanceCube 4
+    mpi_test(balanceCubeS 4
       ./balanceMesh
       "${MESHES}/cube/cube.dmg"
       "${MESHES}/cube/pumi670/4/cube.smb"
@@ -188,7 +188,7 @@ if (ENABLE_PARMETIS)
       1 #skew weights
       )
 
-    mpi_test(balanceTorus 4
+    mpi_test(balanceTorusS 4
       ./balanceMesh
       "${MESHES}/torus/torus.dmg"
       "${MESHES}/torus/4imb/torus.smb"
