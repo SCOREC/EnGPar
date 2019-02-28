@@ -8,8 +8,13 @@
 #include <agi_typeconvert.h>
 
 #define DEBUG_RANK 0
-#define DEBUG_EDGE 1496
+#define DEBUG_EDGE 50
 #define DEBUG_KK 0
+
+/** \brief define an upper limit on the number of remote 
+ *          processes a hyperedge can exist on
+ */
+#define MAX_PEERS 40
 
 namespace engpar {
 
@@ -199,6 +204,42 @@ namespace engpar {
     });
   }
 
+  //need to do something to inline these and make them device callable
+  typedef struct PeerList {
+    int n;
+    int e[MAX_PEERS];
+  } peerList;
+
+  peerList makePeerList() {
+    peerList p;
+    p.n = 0;
+    for(int i=0; i<MAX_PEERS; i++) {
+      p.e[i] = -1;
+    }
+    return p;
+  }
+
+  int find(peerList& a, int v) {
+    assert(v != -1);
+    int has = 0;
+    for(int i=0; i<MAX_PEERS; i++) {
+      has += (v == a.e[i]);
+    }
+    return has;
+  }
+
+  void unionPeers(peerList& a, peerList& b) {
+    for(int i=0; i<b.n; i++) {
+      const int v = b.e[i];
+      const int has = find(a,v); 
+      if( has == 0 ) {
+        a.e[a.n] = v;
+        a.n++;
+        assert(a.n < MAX_PEERS);
+      }
+    }
+  }
+
   /**
    * \brief for each cavity get the list of processes that share
    *        edges adjacent to the cavity vertices
@@ -239,18 +280,27 @@ namespace engpar {
     });
     //count the number of non-owned (ghost) vertices adj to each cavity edge
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      peerList cavPeers = makePeerList();
       const int numCavEdges = eoc.off(e+1)-eoc.off(e);
       const int firstEdge = eoc.off(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) { //parallel reduce?
         const int adjEdge = eoc.items(firstEdge+edgeIdx);
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pin_degree(adjEdge);
+        peerList vtxPeers = makePeerList();
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
           const int pin = pins(firstPin+pinIdx);
           assert(pin>=0 && pin<numVerts+numGhostVerts);
-          peers.off(e) += !isVtxOwned(pin); //TODO make isVtxOwned random access
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
+            vtxPeers.e[vtxPeers.n] = owner;
+            vtxPeers.n++;
+            assert(vtxPeers.n<MAX_PEERS);
+          }
         }
+        unionPeers(cavPeers,vtxPeers); 
       }
+      peers.off(e) = cavPeers.n;
     });
     degreeToOffset(peers);
 #if DEBUG_KK==1
@@ -269,21 +319,29 @@ namespace engpar {
     allocateItems(peers);
     //insert the owners of the ghost vertices
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      peerList cavPeers = makePeerList();
       const int numCavEdges = eoc.off(e+1)-eoc.off(e);
       const int firstEdge = eoc.off(e);
-      int itemIdx = peers.off(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
         const int adjEdge = eoc.items(firstEdge+edgeIdx);
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pin_degree(adjEdge);
+        peerList vtxPeers = makePeerList();
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
           const int pin = pins(firstPin+pinIdx);
           const int owner = vtxOwner(pin); //TODO make vtxOwner random access
           if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
-            peers.items(itemIdx) = owner;
-            itemIdx++;
+            vtxPeers.e[vtxPeers.n] = owner;
+            vtxPeers.n++;
+            assert(vtxPeers.n<MAX_PEERS);
           }
         }
+        unionPeers(cavPeers,vtxPeers); 
+      }
+      const int itemIdx = peers.off(e);
+      assert( cavPeers.n == peers.off(e+1)-peers.off(e) );
+      for(int i=0; i<cavPeers.n; i++) {
+        peers.items(itemIdx+i) = cavPeers.e[i];
       }
     });
   }
@@ -397,12 +455,10 @@ namespace engpar {
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
-#if DEBUG_KK==1
       if(self == DEBUG_RANK && migrMask(e) ) {
         printf("e mask c s t %5d %2d %2d %2d %3d\n",
           e, migrMask(e), colorMask(e), sizeMask(e), targetMask(e));
       }
-#endif
     });
     return migrMask;
   }
