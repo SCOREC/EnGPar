@@ -524,7 +524,7 @@ namespace engpar {
           const int owner = vtxOwner(pin); //TODO make vtxOwner random access
           residentOnPeer += (owner == tgtPeer);
         }
-        w += (!residentOnPeer & isMigrated) * edgeWeights(adjEdge);
+        w += (!residentOnPeer && isMigrated) * edgeWeights(adjEdge);
       }
     }, totWeight);
     return totWeight;
