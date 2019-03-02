@@ -665,6 +665,7 @@ namespace engpar {
       //Create Cavity and peers
       Cavity cav;
       Peers peers;
+      agi::GraphEdge* e = q->get(itr);
       getCavity(g,q->get(itr),plan,cav,peers);
       bool sent = false;
       if (cav.size() < cavSize) { //If the cavity is small enough
@@ -675,6 +676,7 @@ namespace engpar {
               sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
               (in->limitEdgeCutGrowth <= 0 ||
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
+                printf("e dest %5d %4d\n", g->localID(e), peer);
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
 #if DEBUG_KK==1
