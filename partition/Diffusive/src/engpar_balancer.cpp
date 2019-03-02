@@ -144,11 +144,13 @@ namespace engpar {
     PCU_Debug_Open();
     agi::Migration* plan = new agi::Migration(input->g);
     wgt_t planW = 0.0;
-    for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
-      if(inp->kkSelect)
-        planW = selector->kkSelect(targets,plan,planW,cavSize,target_dimension);
-      else
-        planW = selector->select(targets,plan,planW,cavSize,target_dimension);
+    if( ! PCU_Comm_Self() ) {
+      for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
+        if(inp->kkSelect)
+          planW = selector->kkSelect(targets,plan,planW,cavSize,target_dimension);
+        else
+          planW = selector->select(targets,plan,planW,cavSize,target_dimension);
+      }
     }
     selector->selectDisconnected(plan,target_dimension);
     if (completed_dimensions.size()>0) {
