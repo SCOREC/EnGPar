@@ -91,6 +91,7 @@ int main(int argc, char* argv[]) {
   input->maxIterationsPerType=0;
   input->kkSelect=kkselect;
 
+  engpar::evaluatePartition(g);
   //Create the balancer
   int verbosity = 1;
   engpar::balance(input,verbosity);
