@@ -481,6 +481,9 @@ namespace engpar {
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
       const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
       const int firstVtx = cavs.off(e);
+      if( migrMask(e) ) {
+        printf("e dest %5d %4d\n", e, tgtPeer);
+      }
       for( int i=0; i<numAdjVerts; i++ ) {
         const int v = cavs.items(firstVtx+i);
         //using a conditional to keep the destination set
