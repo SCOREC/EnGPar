@@ -27,7 +27,7 @@ apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t) {
   return f;
 }
 
-agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t) {
+agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
   assert(g->isHyper());
   agi::PNgraph* pg = g->publicize();
   g->parallel_create_eve(t);
@@ -41,17 +41,31 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t) {
   //create a device array for the visited flag and initialize it
   LIDs visited_d("visited_d", numEnts);
   LIDs visited_next_d("visited_next_d", numEnts);
-  Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
-    visited_d(e) = 0;
-    if(e==0)
-      visited_next_d(e) = 1; //the starting vertex
-    else
-      visited_next_d(e) = 0;
-  });
+  //Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+  //  visited_d(e) = 0;
+  //  if(e==0)
+  //    visited_next_d(e) = 1; //the starting vertex
+  //  else
+  //    visited_next_d(e) = 0;
+  //});
   //create a device array for the distance and initialize it
   LIDs dist_d("dist_d", numEnts);
   Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+    visited_d(e) = 0;
+    visited_next_d(e) = 0;
     dist_d(e) = 0;
+  });
+  //label starting vertices
+  agi::lid_t numStarts = static_cast<int>(start_vs.size());
+  //convert std::vector to agi::lid_t array for hostToDevice
+  agi::lid_t *starts = (agi::lid_t*)calloc(numStarts, sizeof(agi::lid_t));
+  for (int i = 0; i < numStarts; i++) {
+    starts[i] = start_vs[i];
+  }
+  LIDs starts_d("starts_d", numStarts);
+  hostToDevice(starts_d, starts);
+  Kokkos::parallel_for(numStarts, KOKKOS_LAMBDA(const int e) {
+    visited_next_d(starts_d(e)) = 1;
   });
   //create a flag to indicate if any distances have changed
   agi::lid_t found = 0;
@@ -71,9 +85,6 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t) {
     Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
-    });
-
-    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
       // loop over adjacent vertices
       for (int adj = offsets_d(u); adj < offsets_d(u+1); adj++) {
         int v = lists_d(adj);
@@ -111,7 +122,7 @@ int main(int argc, char* argv[]) {
   int edges[1] = {0}; 
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",3,edges,1);
   // run bfs
-  agi::lid_t* distance = bfs(g,edges[0]);
+  agi::lid_t* distance = bfs(g,edges[0],{ 0, 20, 40 });
   // Move colors to mesh
   apf::MeshTag* dist = m->createIntTag("distance",1);
   apf::MeshIterator* vitr = m->begin(0);
