@@ -475,7 +475,6 @@ namespace engpar {
     const int self = PCU_Comm_Self();
     LIDs dest = makePlan("planNext", numVerts);
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
-      if( migrMask(e) ) printf("e dest %5d %4d\n", e, tgtPeer);
       const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
       const int firstVtx = cavs.off(e);
       for( int i=0; i<numAdjVerts; i++ ) {
@@ -492,9 +491,30 @@ namespace engpar {
   /**
    * \brief return the weight of the vertices being migrated
    */
-  wgt_t getVtxWeight(LIDs plan, WGTs vtxWeights) {
+  wgt_t getVtxWeight(LIDs plan, WGTs vtxWeights,
+      const wgt_t peerTgtW, const wgt_t tgtW) {
+    const int nverts = plan.dimension_0();
     wgt_t totWeight = 0;
-    Kokkos::parallel_reduce(plan.dimension_0(), 
+    WGTs accW("accumulatedWeights", nverts);
+    //inclusive scan over weights to find the saturation point for this peer or
+    //the total
+    Kokkos::parallel_scan(nverts,
+      KOKKOS_LAMBDA (const int v, wgt_t& upd, const bool& final) {
+      const wgt_t val = ( plan(v) >= 0 ) * vtxWeights(v);
+      if (final) {
+        accW(v) = upd;
+      upd += val;
+      }
+    });
+    //remove vertices from the plan if including them exceeds a weight limit
+    //...this may cause poor cuts
+    Kokkos::parallel_for(nverts, KOKKOS_LAMBDA(const int v) {
+      const wgt_t w = accW(v);
+      if( w > peerTgtW || w > tgtW )
+        plan(v) = -1;
+    });
+    //sum the plan weight
+    Kokkos::parallel_reduce(nverts,
       KOKKOS_LAMBDA(const int v, wgt_t& w) {
         w += ( plan(v) >= 0 ) * vtxWeights(v); }, totWeight);
     return totWeight;
@@ -611,18 +631,27 @@ namespace engpar {
     LIDs plan = makePlan("plan",M);
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
-      if (planW > targets->total()) break;
+      if (planW > targets->total()) {
+        printf("sending enough total weight\n");
+        break;
+      }
       Targets::iterator tgt;
       for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
         const int tgtPeer = tgt->first;
+        if (planW > targets->total()) {
+          printf("sending enough total weight\n");
+          break;
+        }
 #if DEBUG_KK==1
         if( PCU_Comm_Self() == DEBUG_RANK ) {
           fprintf(stderr, "color tgtPeer %3d %2d\n", c, tgtPeer);
         }
 #endif
         const wgt_t tgtWeight = tgt->second;
-        if( sending[tgtPeer] >= tgtWeight )
+        if( sending[tgtPeer] >= tgtWeight ) {
+          printf("sending enough weight to peer %d\n", tgtPeer);
           continue; //sent enough weight to this peer
+        }
         //build all the cavities and peers
         CSR cavs("cavities",N);
         CSR peers("cavityPeers",N);
@@ -644,7 +673,13 @@ namespace engpar {
         //compute plan weight
         wgt_t w = 0;
         if( target_dimension == -1 ) { //vertices
-          w = getVtxWeight(planNext,vtxWeights);
+          const wgt_t peerCap = tgtWeight-sending[tgtPeer];
+          const wgt_t totCap = targets->total()-planW;
+          w = getVtxWeight(planNext,vtxWeights,peerCap,totCap);
+          if( w != 0 ) {
+            printf("peer %d peerTgtW %f tgtW %f totWeight %f\n",
+                tgtPeer, peerCap, totCap, w);
+          }
         } else {
           w = getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
               edgeWeights,tgtPeer);
@@ -668,7 +703,10 @@ namespace engpar {
     q->startIteration();
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
-      if (planW > targets->total()) break;
+      if (planW > targets->total()) {
+        printf("sending enough total weight\n");
+        break;
+      }
       //Create Cavity and peers
       Cavity cav;
       Peers peers;
@@ -679,8 +717,10 @@ namespace engpar {
         Peers::iterator pitr;
         for (pitr = peers.begin(); pitr != peers.end(); ++pitr) {
           part_t peer = *pitr;
+          if( targets->has(peer) && sending[peer] >= targets->get(peer) )
+            printf("sending enough weight to peer %d\n", peer);
           if (targets->has(peer) && // Targeting this neighbor
-              sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
+              sending[peer]<targets->get(peer) && //Havent sent too much weight to this peer
               (in->limitEdgeCutGrowth <= 0 ||
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
                 printf("e dest %5d %4d\n", g->localID(e), peer);
