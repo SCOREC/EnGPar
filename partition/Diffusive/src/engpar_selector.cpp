@@ -388,7 +388,7 @@ namespace engpar {
    * \brief the entry for a cavity is set to 1 if it is smaller
    *        than maxSize, 0 otherwise
    */
-  LIDs buildSizeMask(CSR cavs, int maxSize) {
+  LIDs buildSizeMask(CSR cavs, const int maxSize) {
     const int numEdges = cavs.n;
     LIDs sizeMask("sizeMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
@@ -455,10 +455,6 @@ namespace engpar {
     LIDs migrMask("migrationMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
-      if(self == DEBUG_RANK && migrMask(e) ) {
-        printf("e mask c s t %5d %2d %2d %2d %3d\n",
-          e, migrMask(e), colorMask(e), sizeMask(e), targetMask(e));
-      }
     });
     return migrMask;
   }
@@ -479,15 +475,13 @@ namespace engpar {
     const int self = PCU_Comm_Self();
     LIDs dest = makePlan("planNext", numVerts);
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
+      if( migrMask(e) ) printf("e dest %5d %4d\n", e, tgtPeer);
       const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
       const int firstVtx = cavs.off(e);
-      if( migrMask(e) ) {
-        printf("e dest %5d %4d\n", e, tgtPeer);
-      }
       for( int i=0; i<numAdjVerts; i++ ) {
         const int v = cavs.items(firstVtx+i);
         //using a conditional to keep the destination set
-        //  to -1 if it is not being mirated
+        //  to -1 if it is not being migrated
         if( migrMask(e) )
           dest(v) = tgtPeer;
       }
@@ -507,26 +501,38 @@ namespace engpar {
   }
 
   /**
-   * \brief return the weight of the edges being migrated
+   * \brief return the weight of the edges that will be added to the part
+   * boundary after migrating the cavity
    */
   wgt_t getEdgeWeight(CSR eoc, CSR pins,
       LIDs migrationMask, LIDs vtxOwner, 
       WGTs edgeWeights, int tgtPeer) {
     wgt_t totWeight = 0;
     Kokkos::parallel_reduce(eoc.n, KOKKOS_LAMBDA(const int e, wgt_t& w) {
+      const int isMigrated = migrationMask(e);
       const int numCavEdges = eoc.off(e+1)-eoc.off(e);
       const int firstEdge = eoc.off(e);
-      const int isMigrated = migrationMask(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
         const int adjEdge = eoc.items(firstEdge+edgeIdx);
         const int pinDegree = pins.off(adjEdge+1)-pins.off(adjEdge);
         const int firstPin = pins.off(adjEdge);
         int residentOnPeer = 0;
+        //The same vertex will be visited multiple times - consider forming list
+        //of unique second adjacent vertices bounded by the cavity edge.
+        //We have the following adjacencies,
+        //edge1-verts1-edges2-verts2
+        //where edge1 is the cavity edge that is cut by the part boundary, the set
+        //of verts1 that will be migrated to peer, and the edges2 that will be on
+        //the part boundary.  An edge in edges2 will already exist on peer if
+        //one of its adjacent vertices is owned by peer.
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
           const int pin = pins.items(firstPin+pinIdx);
           const int owner = vtxOwner(pin); //TODO make vtxOwner random access
           residentOnPeer += (owner == tgtPeer);
         }
+        //If the edge is not already resident on the peer (one of its adjacent
+        //vertices is owned by the peer) then after migration the edge will
+        //exist on the peer and its weight needs to be included.
         w += (!residentOnPeer && isMigrated) * edgeWeights(adjEdge);
       }
     }, totWeight);
@@ -550,6 +556,7 @@ namespace engpar {
   }
 
   void updatePlan(LIDs plan, LIDs planNext) {
+    assert( plan.dimension_0() == planNext.dimension_0() );
     const int numPeers = PCU_Comm_Peers();
     const int n = plan.dimension_0();
     Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int v) {
