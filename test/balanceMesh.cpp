@@ -84,7 +84,6 @@ int main(int argc, char* argv[]) {
   times[1] = PCU_Time();
   double step_factor = .1;
   engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
-  input->addPriority(0,tol);
   if (isMultiEdge) {
     input->addPriority(1,tol);
   }
