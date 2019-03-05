@@ -6,6 +6,7 @@
 #include <PCU.h>
 #include <agiMigration.h>
 #include <agi_typeconvert.h>
+#include <Kokkos_Sort.hpp>
 
 #define DEBUG_RANK 0
 #define DEBUG_EDGE 50
@@ -603,7 +604,7 @@ namespace engpar {
     delete [] plan_h;
   }
 
-  wgt_t Selector::kkSelect(Targets* targets, agi::Migration* migrPlan,
+  wgt_t Selector::kkSelect(LIDs order, Targets* targets, agi::Migration* migrPlan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
 #ifdef KOKKOS_ENABLED
 #if DEBUG_KK==1
@@ -629,6 +630,15 @@ namespace engpar {
     agi::lid_t numColors;
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
     LIDs plan = makePlan("plan",M);
+
+    Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
+        printf("orderIn %d %d\n", e, order(e));
+    });
+    Kokkos::sort(order);
+    Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
+        printf("orderOut%d %d\n", e, order(e));
+    });
+
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) {

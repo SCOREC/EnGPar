@@ -139,6 +139,8 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
+    LIDs cavOrder = getCavityOrder(input->g, 0, pq);
+
     Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
     PCU_Debug_Open();
@@ -147,7 +149,7 @@ namespace engpar {
     if( ! PCU_Comm_Self() ) {
       for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
         if(inp->kkSelect)
-          planW = selector->kkSelect(targets,plan,planW,cavSize,target_dimension);
+          planW = selector->kkSelect(cavOrder,targets,plan,planW,cavSize,target_dimension);
         else
           planW = selector->select(targets,plan,planW,cavSize,target_dimension);
       }
@@ -225,7 +227,7 @@ namespace engpar {
   void Balancer::balance() {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     if (EnGPar_Is_Log_Open()) {
-      char message[1000];
+      char message[4096];
       sprintf(message,"balance() : \n");
       //Log the input parameters
       sprintf(message,"%s priorities :",message);

@@ -25,7 +25,7 @@ namespace engpar {
              std::vector<int>* cd, std::vector<double>* cw);
     wgt_t select(Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
-    wgt_t kkSelect(Targets* targets,agi::Migration* plan,
+    wgt_t kkSelect(LIDs order, Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
     void getCavitiesAndPeers(agi::etype t,
         LIDs plan, LIDs vtxOwner,
