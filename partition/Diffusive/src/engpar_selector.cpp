@@ -211,6 +211,7 @@ namespace engpar {
     int e[MAX_PEERS];
   } peerList;
 
+  KOKKOS_INLINE_FUNCTION
   peerList makePeerList() {
     peerList p;
     p.n = 0;
@@ -220,6 +221,7 @@ namespace engpar {
     return p;
   }
 
+  KOKKOS_INLINE_FUNCTION
   int find(peerList& a, int v) {
     assert(v != -1);
     int has = 0;
@@ -229,6 +231,7 @@ namespace engpar {
     return has;
   }
 
+  KOKKOS_INLINE_FUNCTION
   void unionPeers(peerList& a, peerList& b) {
     for(int i=0; i<b.n; i++) {
       const int v = b.e[i];
