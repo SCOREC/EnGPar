@@ -45,6 +45,20 @@ set(VALGRIND "" CACHE string
 set(VALGRIND_ARGS "" CACHE string
   "the command line arguments to VALGRIND")
 
+option(ENGPAR_USE_CUDA "Build for CUDA" OFF)
+option(ENGPAR_USE_OPENMP "Build for OpenMP" OFF)
+
+if(ENGPAR_USE_CUDA)
+  message(STATUS "EnGPar using CUDA")
+endif()
+if(ENGPAR_USE_OPENMP)
+  message(STATUS "EnGPar using OpenMP")
+endif()
+if(ENGPAR_USE_OPENMP AND ENGPAR_USE_CUDA)
+  message(FATAL_ERROR "EnGPar cannot use"
+    "OpenMP and CUDA at the same time")
+endif()
+
 if (ENABLE_KOKKOS)
   find_package(KokkosCore REQUIRED)
   find_package(KokkosKernels REQUIRED)
@@ -63,6 +77,19 @@ if (ENABLE_KOKKOS)
   set(CMAKE_C_FLAGS ${KokkosCore_C_FLAGS})
   message(STATUS "Kokkos CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS}")
   message(STATUS "Kokkos CMAKE_C_FLAGS ${KokkosCore_C_FLAGS}")
+
+  include(${CMAKE_CURRENT_LIST_DIR}/cmake/detect_trilinos_opts.cmake)
+  detect_trilinos_opts()
+  if(KokkosCore_HAS_CUDA AND (NOT KokkosCore_HAS_CUDA_LAMBDA))
+    message(FATAL_ERROR
+      "Please reconfigure Kokkos with
+      -DKokkos_ENABLE_Cuda_Lambda:BOOL=ON")
+  endif()
+  if(ENGPAR_USE_CUDA AND (NOT KokkosCore_HAS_CUDA))
+    message(FATAL_ERROR
+      "Kokkos was not build with CUDA, reconfigure EnGPar"
+      "-DENGPAR_USE_CUDA:BOOL=OFF")
+  endif()
 endif()
 
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
