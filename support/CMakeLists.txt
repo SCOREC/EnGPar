@@ -11,12 +11,14 @@ set(SOURCES
   engpar_log.cpp
   engpar_message.cpp
   engpar_version.cpp
+  engpar_sort.cpp
   )
 
 set(SUPPORT_HEADERS
   engpar_support.h
   engpar_version.h
   engpar_types.h
+  engpar_sort.h
   )
 
 add_library(engpar_support ${SOURCES})
