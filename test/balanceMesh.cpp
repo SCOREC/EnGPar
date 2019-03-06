@@ -31,6 +31,8 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   Kokkos::initialize(argc,argv);
+  if(!PCU_Comm_Self())
+    Kokkos::print_configuration(std::cout);
   EnGPar_Open_Log();
   
   if (argc != 7 && argc != 8) {
