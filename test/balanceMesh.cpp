@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
   input->kkSelect=kkselect;
 
   engpar::evaluatePartition(g);
-  EnGPar_Debug_Open();
+  EnGPar_Debug_Open("e");
   //Create the balancer
   int verbosity = 1;
   engpar::balance(input,verbosity);
