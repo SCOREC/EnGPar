@@ -6,7 +6,7 @@
 #include <PCU.h>
 #include <agiMigration.h>
 #include <agi_typeconvert.h>
-#include <Kokkos_Sort.hpp>
+#include <engpar_sort.h>
 
 #define DEBUG_RANK 0
 #define DEBUG_EDGE 50
@@ -637,9 +637,9 @@ namespace engpar {
     Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
         printf("orderIn %d %d\n", e, order(e));
     });
-    Kokkos::sort(order);
+    LIDs permute = engpar::sort_by_keys(order);
     Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
-        printf("orderOut%d %d\n", e, order(e));
+        printf("orderOut%d %d\n", e, order(permute(e)));
     });
 
     //loop over colors
