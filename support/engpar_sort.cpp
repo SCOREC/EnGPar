@@ -58,7 +58,7 @@ struct CompareKeySets {
 };
 
 LIDs sort_by_keys(LIDs keys) {
-  auto n = keys.size();
+  size_t n = keys.size();
   LIDs perm("permutation", n);
   Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int i) {
       perm(i) = i;
@@ -66,8 +66,13 @@ LIDs sort_by_keys(LIDs keys) {
   ENGPAR_LID_T* begin = perm.data();
   ENGPAR_LID_T* end = perm.data() + n;
   ENGPAR_LID_T const* keyptr = keys.data();
-  parallel_sort<ENGPAR_LID_T, CompareKeySets<ENGPAR_LID_T> >(
-      begin, end, CompareKeySets<ENGPAR_LID_T>(keyptr));
+  typedef struct CompareKeySets<ENGPAR_LID_T> CompLid;
+  CompLid c(keyptr);
+  Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int i) {
+      bool res = c(i,i+1);
+      printf("%d %d %d\n", keyptr[i], keyptr[i+1], res);
+  });
+  parallel_sort<ENGPAR_LID_T, CompLid >(begin, end, c);
   return perm;
 }
 
