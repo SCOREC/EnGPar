@@ -50,9 +50,11 @@ option(ENGPAR_USE_OPENMP "Build for OpenMP" OFF)
 
 if(ENGPAR_USE_CUDA)
   message(STATUS "EnGPar using CUDA")
+  add_definitions(-DENGPAR_USE_CUDA)
 endif()
 if(ENGPAR_USE_OPENMP)
   message(STATUS "EnGPar using OpenMP")
+  add_definitions(-DENGPAR_USE_OPENMP)
 endif()
 if(ENGPAR_USE_OPENMP AND ENGPAR_USE_CUDA)
   message(FATAL_ERROR "EnGPar cannot use"
