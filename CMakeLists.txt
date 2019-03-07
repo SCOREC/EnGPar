@@ -48,18 +48,6 @@ set(VALGRIND_ARGS "" CACHE string
 option(ENGPAR_USE_CUDA "Build for CUDA" OFF)
 option(ENGPAR_USE_OPENMP "Build for OpenMP" OFF)
 
-if(ENGPAR_USE_CUDA)
-  message(STATUS "EnGPar using CUDA")
-  add_definitions(-DENGPAR_USE_CUDA)
-endif()
-if(ENGPAR_USE_OPENMP)
-  message(STATUS "EnGPar using OpenMP")
-  add_definitions(-DENGPAR_USE_OPENMP)
-endif()
-if(ENGPAR_USE_OPENMP AND ENGPAR_USE_CUDA)
-  message(FATAL_ERROR "EnGPar cannot use"
-    "OpenMP and CUDA at the same time")
-endif()
 
 if (ENABLE_KOKKOS)
   find_package(KokkosCore REQUIRED)
@@ -121,6 +109,19 @@ macro(engpar_export_lib target headers)
 endmacro(engpar_export_lib)
 
 set(ENGPAR_DEFINITIONS)
+if(ENGPAR_USE_CUDA)
+  message(STATUS "EnGPar using CUDA")
+  set(ENGPAR_DEFINITIONS ${ENGPAR_DEFINITIONS} -DENGPAR_USE_CUDA)
+endif()
+if(ENGPAR_USE_OPENMP)
+  message(STATUS "EnGPar using OpenMP")
+  set(ENGPAR_DEFINITIONS ${ENGPAR_DEFINITIONS} -DENGPAR_USE_OPENMP)
+endif()
+if(ENGPAR_USE_OPENMP AND ENGPAR_USE_CUDA)
+  message(FATAL_ERROR "EnGPar cannot use"
+    "OpenMP and CUDA at the same time")
+endif()
+
 option(LONG_LOCAL_INDICES "Turn on if a 32 byte int is too small for local indices [ON|OFF]" OFF)
 if (LONG_LOCAL_INDICES)
   message(STATUS "Local indices are 64 bytes")
@@ -128,16 +129,12 @@ if (LONG_LOCAL_INDICES)
     ${ENGPAR_DEFINITIONS}
     -DLOCAL_ID_TYPE=int64_t
     -DLOCAL_ID_FTYPE=C_INT64_T)
-  add_definitions(-DLOCAL_ID_TYPE=int64_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT64_T)
 else()
   message(STATUS "Local indices are 32 bytes")
     set(ENGPAR_DEFINITIONS
       ${ENGPAR_DEFINITIONS}
       -DLOCAL_ID_TYPE=int32_t
       -DLOCAL_ID_FTYPE=C_INT32_T)
-  add_definitions(-DLOCAL_ID_TYPE=int32_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT32_T)
 endif()
 option(BIG_ENDIAN "Turn on if on a big endian machine [ON|OFF]" OFF)
 if (BIG_ENDIAN)
@@ -145,8 +142,11 @@ if (BIG_ENDIAN)
   set(ENGPAR_DEFINITIONS
     ${ENGPAR_DEFINITIONS}
     -DENGPAR_BIG_ENDIAN)
-  add_definitions(-DENGPAR_BIG_ENDIAN)
 endif(BIG_ENDIAN)
+
+foreach(def ${ENGPAR_DEFINITIONS})
+  add_definitions(${def})
+endforeach()
 
 add_subdirectory(support)
 
