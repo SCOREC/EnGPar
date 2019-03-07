@@ -634,13 +634,17 @@ namespace engpar {
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
     LIDs plan = makePlan("plan",M);
 
-    Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
-        printf("orderIn %d %d\n", e, order(e));
-    });
+    if(!PCU_Comm_Self()) {
+      Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
+          printf("orderIn %d %d\n", e, order(e));
+      });
+    }
     LIDs permute = engpar::sort_by_keys(order);
-    Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
-        printf("orderOut%d %d\n", e, order(permute(e)));
-    });
+    if(!PCU_Comm_Self()) {
+      Kokkos::parallel_for(N, KOKKOS_LAMBDA(const int e) {
+          printf("orderOut%d %d\n", e, order(permute(e)));
+      });
+    }
 
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
