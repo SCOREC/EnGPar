@@ -52,7 +52,7 @@ struct CompareKeySets {
   bool operator()(const int& a, const int& b) const {
     T x = keys_[a];
     T y = keys_[b];
-    if (x != y) return x < y;
+    if (x != y) return x > y;
     return false;
   }
 };
