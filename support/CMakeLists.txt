@@ -12,6 +12,7 @@ set(SOURCES
   engpar_message.cpp
   engpar_version.cpp
   engpar_sort.cpp
+  engpar_reduce.cpp
   )
 
 set(SUPPORT_HEADERS
@@ -19,6 +20,7 @@ set(SUPPORT_HEADERS
   engpar_version.h
   engpar_types.h
   engpar_sort.h
+  engpar_reduce.h
   )
 
 add_library(engpar_support ${SOURCES})
