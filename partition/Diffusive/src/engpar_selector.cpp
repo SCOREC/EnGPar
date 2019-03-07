@@ -6,7 +6,7 @@
 #include <PCU.h>
 #include <agiMigration.h>
 #include <agi_typeconvert.h>
-#include <engpar_sort.h>
+#include <engpar_reduce.h>
 
 #define DEBUG_RANK 0
 #define DEBUG_EDGE 50
@@ -634,8 +634,10 @@ namespace engpar {
     LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
     LIDs plan = makePlan("plan",M);
 
-    LIDs permute = engpar::sort_by_keys(order);
+    const agi::lid_t maxPos = getMax(order);
+    printf("maxPos %d\n", maxPos);
 
+    //for(agi::lid_t pos=0; pos
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) {
@@ -674,7 +676,6 @@ namespace engpar {
         LIDs edgeCutMask = buildEdgeCutMask(peers,tgtPeer,in->limitEdgeCutGrowth);
         //parallel for each cavity: logical and masks to determine if cavity is in plan
         LIDs migrationMask = buildMigrationMask(cavs,colorMask,sizeMask,targetMask,edgeCutMask);
-        //TODO parallel sort of selected cavities based on distance
         //parallel for each cavity: logical and masks to determine if cavity is in plan
         LIDs planNext = setVtxDestination(cavs,migrationMask,M,tgtPeer);
         //compute plan weight
