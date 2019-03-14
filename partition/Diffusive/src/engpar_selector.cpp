@@ -3,53 +3,99 @@
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
-namespace engpar {
 
-  void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
-                 Cavity& cav, Peers& peers) {
+//Adapted from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
+namespace std {
+  template <>
+  struct hash<engpar::Connection> {
+    std::size_t operator()(const engpar::Connection& k) const {
+      return ((std::hash<agi::GraphVertex*>()(k.first)
+	       ^ (hash<agi::GraphVertex*>()(k.second) << 1)) >> 1);
+    }
+  };
+}
+
+namespace engpar {
+  void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, Cavity& cav) {
+    //Grab all vertices connected to the edge that are on part
     agi::PinIterator* pitr = g->pins(edge);
     agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
-    typedef std::map<agi::part_t, std::unordered_set<agi::GraphEdge*> > Peer_Map;
-    Peer_Map peerMap;
-    std::set<agi::GraphEdge*> edgesOfCavity;
-    for (agi::lid_t i =0;i<deg;i++) {
-      vtx = g->iterate(pitr);
-      if (g->owner(vtx)==PCU_Comm_Self()) {
-        if(!plan->has(vtx)) {
-          cav.push_back(vtx);
-          agi::GraphEdge* e;
-          agi::EdgeIterator* eitr = g->edges(vtx);
-          while ((e=g->iterate(eitr)))
-            edgesOfCavity.insert(e);
-          g->destroy(eitr);
-        }
+    while ((vtx = g->iterate(pitr)))
+      if (g->owner(vtx)==PCU_Comm_Self())
+	cav.insert(vtx);
+    g->destroy(pitr);
+  }
+  
+  void Selector::constructCavities() {
+    q->startIteration();
+    int cav_sizes[100];
+    for (int i =0; i < 100; ++i)
+      cav_sizes[i] = 0;
+    Queue::iterator itr;
+    for (itr = q->begin();itr!=q->end();itr++) {
+      Cavity cav;
+      getCavity(g, q->get(itr), cav);
+      cavities.insert(std::make_pair(q->get(itr),cav));
+      q->addElement(q->get(itr));
+      cav_sizes[cav.size()]++;
+    }
+  }
+  
+  void Selector::updateCavities(agi::Migration* plan) {
+    std::unordered_map<agi::GraphEdge*, Cavity>::iterator c_itr;
+    for (c_itr = cavities.begin(); c_itr != cavities.end(); ++c_itr) {
+      agi::Migration::iterator p_itr;
+      for (p_itr = plan->begin(); p_itr != plan->end(); ++p_itr) {
+	c_itr->second.erase(*p_itr);
       }
     }
-    g->destroy(pitr);
-    std::set<agi::GraphEdge*>::iterator sitr;
+  }
+  
+  void getCavityPeers(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
+		      Cavity& cav, Peers& peers) {
+
+    //Grab all vertices connected to the edge that are on part
+    typedef std::unordered_map<agi::part_t, std::unordered_set<agi::GraphEdge*> > Peer_Map;
+    Peer_Map peerMap;
+    EdgeSet edgesOfCavity;
+    Cavity::iterator c_itr;
+    //Add all of the edges of the vertex to a set
+    for (c_itr = cav.begin(); c_itr != cav.end(); ++c_itr) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->edges(*c_itr);
+      while ((e=g->iterate(eitr)))
+	edgesOfCavity.insert(e);
+      g->destroy(eitr);
+    }
+
+    //Locate all of the cut edges around the cavity
+    EdgeSet::iterator sitr;
+    agi::GraphVertex* v;
+    agi::PinIterator* pitr;
     for (sitr = edgesOfCavity.begin(); sitr != edgesOfCavity.end(); sitr++) {
-      agi::GraphVertex* v;
       pitr = g->pins(*sitr);
       while ((v = g->iterate(pitr))) {
         if (g->owner(v)!=PCU_Comm_Self())
           peerMap[g->owner(v)].insert(*sitr);
+	else if (plan->has(v))
+	  peerMap[plan->get(v)].insert(*sitr);
       }
       g->destroy(pitr);
     }
-    while (peers.size()!=peerMap.size()) {
-      unsigned int max =0;
-      Peer_Map::iterator itr;
-      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
-        if (itr->second.size() > max)
-          max = itr->second.size();
-      if (max<2&&peers.size()>0)
-        break;
-      for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
-        if (itr->second.size() == max) {
-          peers.insert(itr->first);
-          itr->second.clear();
-        }
+
+    //Reverse the Peer Map
+    std::map<agi::lid_t, agi::part_t> edges_to_part;
+    Peer_Map::iterator itr;
+    for (itr = peerMap.begin(); itr != peerMap.end(); itr++)
+      edges_to_part.insert(std::make_pair(itr->second.size(),itr->first));
+    
+    //Order the peers by largest surface area with cavity
+    //  Iterate map backwards
+    std::map<agi::lid_t, agi::part_t>::iterator etp_itr;
+    for (etp_itr = edges_to_part.end(); etp_itr != edges_to_part.begin();) {
+      --etp_itr;
+      peers.push_back(etp_itr->second);
     }
   }
 
@@ -58,20 +104,21 @@ namespace engpar {
                   int target_dimension) {
     Cavity::iterator itr;
     wgt_t w=0.0;
-    std::set<agi::GraphEdge*> target_edges;
+    EdgeSet target_edges;
     for (itr = cav.begin();itr!=cav.end();itr++) {
-      plan->insert(std::make_pair(*itr,peer));
-      if (target_dimension==-1)
-        w+= g->weight(*itr);
-      else {
-        agi::EdgeIterator* eitr = g->edges(*itr,target_dimension);
-        agi::GraphEdge* e;
-        while ((e=g->iterate(eitr)))
-          target_edges.insert(e);
-        g->destroy(eitr);
+      if (plan->insert(std::make_pair(*itr,peer))) {
+	if (target_dimension==-1)
+	  w+= g->weight(*itr);
+	else {
+	  agi::EdgeIterator* eitr = g->edges(*itr, target_dimension);
+	  agi::GraphEdge* e;
+	  while ((e = g->iterate(eitr)))
+	    target_edges.insert(e);
+	  g->destroy(eitr);
+	}
       }
     }
-    std::set<agi::GraphEdge*>::iterator sitr;
+    EdgeSet::iterator sitr;
     for (sitr = target_edges.begin();sitr!=target_edges.end();++sitr) {
       agi::GraphEdge* e = *sitr;
       if (!g->isResidentOn(e,peer))
@@ -79,22 +126,21 @@ namespace engpar {
     }
     return w;
   }
-
-  typedef std::pair<agi::GraphVertex*,agi::GraphVertex*> Connection;
-  typedef std::map<Connection,int> Connection_Count;
-  void getCavityConnections(agi::Ngraph* g,agi::etype con, int minCon, Cavity cav,
+  typedef std::unordered_map<Connection,int> Connection_Count;
+  void getCavityConnections(agi::Ngraph* g,agi::etype con, int minCon, Cavity& cav,
                             Connection_Count& conns) {
-    for (unsigned int i=0;i<cav.size();i++) {
-      agi::GraphVertex* u = cav[i];
+    Cavity::iterator itr;
+    for (itr = cav.begin(); itr != cav.end(); ++itr) {
+      agi::GraphVertex* u = *itr;
       agi::GraphIterator* gitr = g->adjacent(u,con);
       agi::GraphVertex* v;
-      std::map<agi::GraphVertex*, int> occ;
+      std::unordered_map<agi::GraphVertex*, int> occ;
       while ((v = g->iterate(gitr))) {
         if (v==u) continue;
         occ[v]++;
       }
       g->destroy(gitr);
-      std::map<agi::GraphVertex*, int>::iterator itr;
+      std::unordered_map<agi::GraphVertex*, int>::iterator itr;
       for (itr=occ.begin();itr!=occ.end();itr++) {
         if (itr->second>=minCon) {
           agi::GraphVertex* v = itr->first;
@@ -110,7 +156,7 @@ namespace engpar {
   //Returns true if the cavity isn't fully connected to the part
   //  In the example of a mesh, full connectivity is having a face connection
   bool isPartiallyConnected(agi::Ngraph* g,agi::etype con, int minCon,
-                            agi::Migration* plan, Cavity cav) {
+                            agi::Migration* plan, Cavity& cav) {
     Connection_Count conns;
     getCavityConnections(g,con,minCon,cav,conns);
     Connection_Count::iterator itr;
@@ -123,11 +169,12 @@ namespace engpar {
     return true;
   }
 
-  double edgeCutGrowth(agi::Ngraph* g, Cavity cav, part_t peer) {
+  double edgeCutGrowth(agi::Ngraph* g, Cavity& cav, part_t peer) {
     int cut_pins = 0;
     int uncut_pins = 0;
-    for (size_t i = 0; i < cav.size(); ++i) {
-      agi::EdgeIterator* eitr = g->edges(cav[i]);
+    Cavity::iterator itr;
+    for (itr = cav.begin(); itr != cav.end(); ++itr) {
+      agi::EdgeIterator* eitr = g->edges(*itr);
       agi::GraphEdge* e;
       while ((e = g->iterate(eitr))) {
         if (g->isResidentOn(e,peer))
@@ -147,9 +194,10 @@ namespace engpar {
     for (itr = q->begin();itr!=q->end();itr++) {
       if (planW > targets->total()) break;
       //Create Cavity and peers
-      Cavity cav;
+      std::unordered_map<agi::GraphEdge*, Cavity>::iterator citr = cavities.find(q->get(itr));
+      Cavity& cav = cavities[q->get(itr)];
       Peers peers;
-      getCavity(g,q->get(itr),plan,cav,peers);
+      getCavityPeers(g,q->get(itr),plan,cav,peers);
       bool sent = false;
       if (cav.size() < cavSize) { //If the cavity is small enough
         Peers::iterator pitr;
@@ -168,23 +216,26 @@ namespace engpar {
           }
         }
       }
-      if (!sent) {
+      if (!sent)
         q->addElement(q->get(itr));
-      }
+      else
+	cavities.erase(q->get(itr));
     }
+    updateCavities(plan);
     return planW;
   }
 
   void Selector::selectDisconnected(agi::Migration* plan, int target_dimension) {
+    if (in->minConnectivity <= 1)
+      return;
     q->startIteration();
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
       //Create Cavity and peers
-      Cavity cav;
+      Cavity& cav = cavities[q->get(itr)];
       Peers peers;
-      getCavity(g,q->get(itr),plan,cav,peers);
-      if (in->minConnectivity > 1 &&
-          isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
+      getCavityPeers(g,q->get(itr),plan,cav,peers);
+      if (isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
         addCavity(g,cav,*peers.begin(),plan,target_dimension);
       }
     }
@@ -241,7 +292,10 @@ namespace engpar {
     }
   };
 
-  void Selector::calculatePlanWeights(agi::Migration* plan, std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
+  void Selector::calculatePlanWeights(agi::Migration* plan,
+				      std::unordered_map<int,double>& vtx_weight,
+				      PeerEdgeSet* peerEdges,
+				      std::unordered_set<part_t>& neighbors) {
     agi::Migration::iterator itr;
     for(itr = plan->begin();itr!=plan->end();itr++) {
       agi::GraphVertex* vtx = *itr;
@@ -258,7 +312,8 @@ namespace engpar {
 
   }
 
-  void Selector::sendPlanWeight(std::unordered_map<int,double>& vtx_weight, PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
+  void Selector::sendPlanWeight(std::unordered_map<int,double>& vtx_weight,
+				PeerEdgeSet* peerEdges, std::unordered_set<part_t>& neighbors) {
     std::unordered_set<part_t>::iterator sitr;
     for (sitr = neighbors.begin();sitr!=neighbors.end();sitr++) {
       const int dest = *sitr;
@@ -282,10 +337,10 @@ namespace engpar {
         PCU_COMM_UNPACK(w);
         migr.addWeight(w);
       }
-      incoming.insert(migr);        
+      incoming.insert(migr);
     }
-
   }
+
   bool Selector::determineAvailability(Ws& avail) {
     bool isAvail = true;
     for (unsigned int i=0;i<completed_dimensions->size();i++) {
@@ -303,20 +358,20 @@ namespace engpar {
       const int nbor = (*in).id;
       if(isAvail) {
         bool hasSpace= true;
-        for (unsigned int i=0;i<completed_dimensions->size();i++)
+        for (unsigned int i = 0;i < completed_dimensions->size(); ++i)
           if ((*in).ws[i] > avail[i])
             hasSpace=false;
         accept[nbor] = new double[completed_dimensions->size()];
         if( hasSpace ) {
-          for (unsigned int i=0;i<completed_dimensions->size();i++) 
-            isAvail = (avail[i]-=accept[nbor][i] = (*in).ws[i])>0;
+          for (unsigned int i = 0; i < completed_dimensions->size(); ++i)
+            isAvail = (avail[i] -= accept[nbor][i] = (*in).ws[i])>0;
         } else {
-          for (unsigned int i=0;i<completed_dimensions->size();i++)
-            isAvail = (avail[i] -=accept[nbor][i] = avail[i])>0;
+          for (unsigned int i = 0; i < completed_dimensions->size(); ++i)
+            isAvail = (avail[i] -= accept[nbor][i] = avail[i]) > 0;
         }
       } else {
-        accept[nbor] = new double[completed_dimensions->size()];        
-        for (unsigned int i=0;i<completed_dimensions->size();i++)
+        accept[nbor] = new double[completed_dimensions->size()];
+        for (unsigned int i = 0; i < completed_dimensions->size(); ++i)
           accept[nbor][i] = 0;
       }
     }
@@ -361,7 +416,6 @@ namespace engpar {
     MigrComm incoming;
     receiveIncomingWeight(incoming);
 
-
     Ws avail = new double[completed_dimensions->size()];
     bool isAvail=determineAvailability(avail);
 
@@ -383,8 +437,7 @@ namespace engpar {
   void Selector::combineSets(EdgeSet& edges,const EdgeSet& tempEdges) {
     EdgeSet::const_iterator itr;
     for (itr=tempEdges.begin();itr!=tempEdges.end();itr++) 
-      edges.insert(*itr);
-    
+      edges.insert(*itr);    
   }
   
 
@@ -398,18 +451,18 @@ namespace engpar {
     PeerEdgeSet* peerEdges = new PeerEdgeSet[completed_dimensions->size()];
     std::unordered_map<int,double> vtx_weight;
     agi::Migration::iterator pitr;
-    for(pitr = plan->begin();pitr!=plan->end();pitr++) {
+    for(pitr = plan->begin(); pitr != plan->end(); ++pitr) {
       agi::GraphVertex* v = *pitr;
       int dest = plan->get(v);
       bool isSpace=true;
       EdgeSet* tmpEdges = new EdgeSet[completed_dimensions->size()];
       
-      for (unsigned int i=0;i<completed_dimensions->size();i++) {
+      for (unsigned int i = 0; i < completed_dimensions->size(); ++i) {
         if (completed_dimensions->at(i)!=-1) {
           tempInsertInteriorEdges(v, dest, tmpEdges[i],
                                   completed_dimensions->at(i),
                                   peerEdges[i][dest]);
-          if(weight(peerEdges[i][dest])+weight(tmpEdges[i])>(*capacity)[dest][i])
+          if(weight(peerEdges[i][dest]) + weight(tmpEdges[i])>(*capacity)[dest][i])
             isSpace=false;
         }
         else {
@@ -482,6 +535,8 @@ namespace engpar {
     in(in_), g(in_->g),
     q(queue),
     completed_dimensions(cd), completed_weights(cw) {
+
+    constructCavities();
   }
 
   Selector* makeSelector(DiffusiveInput* in,Queue* q,

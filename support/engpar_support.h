@@ -31,6 +31,8 @@ void EnGPar_Status_Message(int verbosity, const char*, ...);
 void EnGPar_Warning_Message(const char*, ...);
 void EnGPar_Error_Message(const char*, ...);
 
+double EnGPar_Peak_Memory();
+
 #ifdef KOKKOS_ENABLED
 namespace engpar {
 typedef Kokkos::DefaultExecutionSpace exeSpace;

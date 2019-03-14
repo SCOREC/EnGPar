@@ -11,6 +11,7 @@ set(SOURCES
   engpar_log.cpp
   engpar_message.cpp
   engpar_version.cpp
+  engpar_memory.cpp
   )
 
 set(SUPPORT_HEADERS

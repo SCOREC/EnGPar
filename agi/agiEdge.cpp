@@ -38,6 +38,20 @@ namespace agi {
     destroy(pitr);
     return false;
   }
+  bool Ngraph::isCut(GraphEdge* e) const {
+    agi::PinIterator* pitr = pins(e);
+    agi::GraphVertex* vtx;
+    int part = -1;
+    while ((vtx = iterate(pitr))) {
+      if (part == -1)
+	part = owner(vtx);
+      else if (part != owner(vtx)) {
+	destroy(pitr);
+	return true;
+      }
+    }
+    return false;
+  }
 
   wgt_t Ngraph::weight(GraphEdge* edge) const {
     uintptr_t id = (uintptr_t)(edge)-1;

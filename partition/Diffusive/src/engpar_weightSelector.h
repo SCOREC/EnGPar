@@ -6,14 +6,13 @@
 #include "engpar_targets.h"
 #include "engpar_queue.h"
 #include "engpar_weight_input.h"
+#include "engpar_selector.h"
 
 namespace agi {
   class WeightMigration;
 }
 namespace engpar {
 
-  typedef std::vector<agi::GraphVertex*> Cavity;
-  typedef std::unordered_set<part_t> Peers;
   typedef std::unordered_map<part_t,wgt_t> Sending;
   typedef std::unordered_map<agi::GraphVertex*,wgt_t> VertexSending;
   class WeightSelector {

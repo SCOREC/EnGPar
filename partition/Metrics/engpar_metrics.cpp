@@ -6,19 +6,21 @@ namespace engpar {
   wgt_t getWeight(agi::Ngraph* g, int dimension, bool countGhosts) {
     wgt_t w =0;
     if (dimension==-1) {
-      
       //calculate the total weight of the vertices
       agi::GraphVertex* vtx;
       agi::VertexIterator* vitr = g->begin();
       while ((vtx = g->iterate(vitr)))
         w+=g->weight(vtx);
+
+      //If we are counting ghosts then add the weights of all ghosts
       if (countGhosts) {
-      agi::GhostIterator* gitr = g->beginGhosts();
-      while ((vtx = g->iterate(gitr)))
-        w+=g->weight(vtx);
+	agi::GhostIterator* gitr = g->beginGhosts();
+	while ((vtx = g->iterate(gitr)))
+	  w+=g->weight(vtx);
       }
     }
     else {
+      //Sum the weights of all edges
       agi::GraphEdge* edge;
       agi::EdgeIterator* eitr = g->begin(dimension);
       while ((edge = g->iterate(eitr))) 
@@ -39,7 +41,7 @@ namespace engpar {
   }
 
   void getImbalances(agi::Ngraph* g,char* imbalances, bool countGhosts) {
-    for (agi::etype type = -1;type<g->numEdgeTypes();type++) {
+    for (agi::etype type = -1; type < g->numEdgeTypes(); ++type) {
       agi::wgt_t w = getWeight(g,type, countGhosts);
       double imb = EnGPar_Get_Imbalance(w);
       if (!PCU_Comm_Self())

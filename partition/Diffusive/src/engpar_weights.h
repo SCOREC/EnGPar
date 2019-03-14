@@ -14,6 +14,7 @@ namespace engpar {
     Weights(agi::Ngraph* g, bool countGhosts,Sides* s, int target_dimension) {
       //calculate the total weight of the vertices
       my_weight = getWeight(g,target_dimension,countGhosts);
+
       //Share weight with all neighbors
       PCU_Comm_Begin();
       Sides::iterator itr;

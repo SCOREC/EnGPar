@@ -200,7 +200,11 @@ public:
    * \return whether the target part shares the edge
    */
   bool isResidentOn(GraphEdge* e,part_t peer) const;
-
+  /** \brief Determines if the edge is on the part boundary
+   * \param e the edge
+   * \return true if the edge is cut by the part boundary, false otherwise
+   */
+  bool isCut(GraphEdge* e) const;
   /** \brief Returns the local id of the vertex
    * \param vtx The vertex
    * \return The local id of the vertex.
