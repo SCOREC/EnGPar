@@ -41,13 +41,6 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
   //create a device array for the visited flag and initialize it
   LIDs visited_d("visited_d", numEnts);
   LIDs visited_next_d("visited_next_d", numEnts);
-  //Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
-  //  visited_d(e) = 0;
-  //  if(e==0)
-  //    visited_next_d(e) = 1; //the starting vertex
-  //  else
-  //    visited_next_d(e) = 0;
-  //});
   //create a device array for the distance and initialize it
   LIDs dist_d("dist_d", numEnts);
   Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
@@ -67,6 +60,7 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
   Kokkos::parallel_for(numStarts, KOKKOS_LAMBDA(const int e) {
     visited_next_d(starts_d(e)) = 1;
   });
+  free(starts);
   //create a flag to indicate if any distances have changed
   agi::lid_t found = 0;
   LIDs found_d("found_d", 1);
