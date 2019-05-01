@@ -4,7 +4,8 @@
 source /etc/profile.d/modules.sh
 source /etc/profile
 
-source /lore/cwsmith/develop/EnGPar/envRhel7.sh 
+module load gcc cmake mpich
+module load pumi
 cd /lore/diamog/cdash/repos/EnGPar
 
 #update this repo
