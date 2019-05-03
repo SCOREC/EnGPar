@@ -151,7 +151,7 @@ namespace engpar {
  
 #else
 
-  agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t* colors) {
+  agi::lid_t EnGPar_KokkosColoring(ColoringInput*, agi::lid_t*) {
     throw std::runtime_error("KOKKOS not found\n");
     return 0;
   }
