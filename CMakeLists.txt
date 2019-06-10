@@ -4,6 +4,8 @@ project(EnGPar VERSION 1.1.0 LANGUAGES CXX C)
 
 include(cmake/bob.cmake)
 
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 bob_begin_package()
 
