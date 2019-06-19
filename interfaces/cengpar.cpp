@@ -26,17 +26,20 @@ ngraph cengpar_createEmptyGraph() {
 
 engparInput cengpar_createLocalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
     bool isOrig, int splitFactor, double tol, agi::etype t, agi::part_t* ranks) {
+  MPI_Comm s = MPI_Comm_f2c(smallComm);
+  MPI_Comm l = MPI_Comm_f2c(largeComm);
   agi::Ngraph* ng = (agi::Ngraph*)g;
-  engpar::Input* input = engpar::createLocalSplitInput(ng,smallComm,largeComm,
-                                                       isOrig,splitFactor,tol,ranks,t);
+  engpar::Input* input = engpar::createLocalSplitInput(ng,s,l,isOrig,splitFactor,tol,ranks,t);
   return (engparInput)input;
 }
 
 engparInput cengpar_createGlobalSplitInput(ngraph g, MPI_Fint smallComm, MPI_Fint largeComm,
                                       bool isOrig, double tol, agi::etype t) {
+  MPI_Comm s = MPI_Comm_f2c(smallComm);
+  MPI_Comm l = MPI_Comm_f2c(largeComm);
   agi::Ngraph* ng = (agi::Ngraph*)g;
   engpar::Input* input = engpar::createGlobalSplitInput(
-      ng,smallComm,largeComm,isOrig,tol,t);
+      ng,s,l,isOrig,tol,t);
   return (engparInput)input;
 }
 
