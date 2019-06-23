@@ -1,5 +1,5 @@
 #include "ngraph.h"
-#include <engpar_support.h>
+#include "engpar_support.h"
 #include <cstring>
 #include <stdexcept>
 namespace agi {
@@ -586,6 +586,7 @@ namespace agi {
   }
 
   void Ngraph::printStats() const {
+    EnGPar_Error_Message("foo\n");
     if (isHyperGraph)
       EnGPar_Status_Message("Hyper N-graph Status\n");
     else
