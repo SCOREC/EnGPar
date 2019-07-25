@@ -586,7 +586,6 @@ namespace agi {
   }
 
   void Ngraph::printStats() const {
-    EnGPar_Error_Message("foo\n");
     if (isHyperGraph)
       EnGPar_Status_Message("Hyper N-graph Status\n");
     else
