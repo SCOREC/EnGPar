@@ -34,32 +34,19 @@ message(STATUS "IS_TESTING: ${IS_TESTING}")
 
 get_filename_component(COMPILER_DIR "${CMAKE_CXX_COMPILER}" PATH)
 find_program(MPIRUN NAMES mpirun PATHS "${COMPILER_DIR}")
-set(MPIRUN_PROCFLAG "-np" CACHE string
+set(MPIRUN_PROCFLAG "-np" CACHE STRING
   "the command line flag to give process count to MPIRUN")
 message(STATUS "MPIRUN: ${MPIRUN} ${MPIRUN_PROCFLAG}")
-set(VALGRIND "" CACHE string
+set(VALGRIND "" CACHE STRING
   "the valgrind executable")
-set(VALGRIND_ARGS "" CACHE string
+set(VALGRIND_ARGS "" CACHE STRING
   "the command line arguments to VALGRIND")
 
 if (ENABLE_KOKKOS)
-  find_package(KokkosCore REQUIRED)
+  find_package(Kokkos REQUIRED)
   find_package(KokkosKernels REQUIRED)
   add_definitions(-DKOKKOS_ENABLED)
   set(KOKKOS_ENABLED true)
-  include_directories(${KokkosCore_INCLUDE_DIRS})
-
-  message(STATUS "Kokkos enabled - Overriding compiler selection for consistency with Kokkos install")
-  set(CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER})
-  set(CMAKE_C_COMPILER ${KokkosCore_C_COMPILER})
-  message(STATUS "Kokkos CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER}")
-  message(STATUS "Kokkos CMAKE_C_COMPILER ${KokkosCore_C_COMPILER}")
-
-  message(STATUS "Kokkos enabled - Overriding compiler flags for consistency with Kokkos install")
-  set(CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS})
-  set(CMAKE_C_FLAGS ${KokkosCore_C_FLAGS})
-  message(STATUS "Kokkos CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS}")
-  message(STATUS "Kokkos CMAKE_C_FLAGS ${KokkosCore_C_FLAGS}")
 endif()
 
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")

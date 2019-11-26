@@ -28,6 +28,10 @@ target_include_directories(engpar_support
   $<INSTALL_INTERFACE:include>
   )
 
+if (ENABLE_KOKKOS)
+  target_link_libraries(engpar_support PUBLIC Kokkos::kokkos)
+endif()
+
 engpar_export_lib(engpar_support "${SUPPORT_HEADERS}")
 
 bob_end_subdir()

@@ -34,8 +34,7 @@ target_include_directories(agi PUBLIC
   )
 
 if (KOKKOS_ENABLED)
-  target_include_directories(agi PUBLIC ${KokkosCore_INCLUDE_DIRS})
-  target_link_libraries(agi PUBLIC ${KokkosCore_LIBRARIES})
+  target_link_libraries(agi PUBLIC Kokkos::kokkos)
 endif()
 
 target_link_libraries(agi PUBLIC engpar_support)

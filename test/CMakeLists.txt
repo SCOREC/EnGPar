@@ -3,10 +3,6 @@ include_directories(
   ${ZOLTAN_INCLUDE_DIRS}
   )
 
-if (KOKKOS_ENABLED)
-  include_directories(${KokkosCore_INCLUDE_DIRS} ${KokkosKernels_INCLUDE_DIRS})
-endif()
-
 if(ENGPAR_FORTRAN_INTERFACE)
   set(ALL_LIBS engpar_ftn)
 endif()
@@ -23,12 +19,8 @@ else()
   set(ALL_LIBS ${ALL_LIBS} SCOREC::pcu)
 endif()
 
-set(ALL_LIBS ${ALL_LIBS}
-  ${KOKKOS_LIBRARIES}
-  )
-
 if (KOKKOS_ENABLED)
-  set(ALL_LIBS ${ALL_LIBS} ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES})
+  set(ALL_LIBS ${ALL_LIBS} Kokkos::kokkos Kokkos::kokkoskernels)
 endif()
 
 set(TESTING_SOURCES

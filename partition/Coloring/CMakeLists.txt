@@ -11,15 +11,7 @@ target_include_directories(coloring PUBLIC
   )
 
 if (ENABLE_KOKKOS)
-  target_include_directories(coloring PUBLIC
-    ${KokkosCore_INCLUDE_DIRS}
-    )
-  target_include_directories(coloring PRIVATE
-    ${KokkosKernels_INCLUDE_DIRS}
-    )
-  target_link_libraries(coloring PUBLIC
-    ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES}
-    )
+  target_link_libraries(coloring PUBLIC Kokkos::kokkos Kokkos::kokkoskernels)
 endif()
 
 engpar_export_lib(coloring ${COLORING_HEADERS})

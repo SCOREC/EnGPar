@@ -16,7 +16,7 @@ namespace engpar {
 #ifdef KOKKOS_ENABLED
 
 #include <KokkosSparse_CrsMatrix.hpp>
-#include <KokkosGraph_graph_color.hpp>
+#include <KokkosGraph_Distance1Color.hpp>
 #include <KokkosKernels_Handle.hpp>
 
 namespace engpar {
