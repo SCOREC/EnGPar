@@ -224,11 +224,18 @@ if (ENABLE_KOKKOS)
     "${MESHES}/upright/67k.smb"
     1)
 
+  mpi_test(bfsMeshSquare_p2 2
+    ./kokkosMeshBfs
+    "${MESHES}/square/square.dmg"
+    "${MESHES}/square/2/"
+    "${MESHES}/square/2bfs.vtk")
+
   mpi_test(bfsMeshUpright67k 1
     ./kokkosMeshBfs
     "${MESHES}/upright/upright.dmg"
     "${MESHES}/upright/67k.smb"
     "${MESHES}/upright/67k")
+
   mpi_test(bfsMeshUpright190k 1
     ./kokkosMeshBfs
     "${MESHES}/upright/upright.dmg"
