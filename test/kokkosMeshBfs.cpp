@@ -40,7 +40,8 @@ void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> st
   });
   //label starting vertices
   agi::lid_t numStarts = static_cast<int>(start_vs.size());
-  //convert std::vector to agi::lid_t array for hostToDevice
+  //convert std::vector to agi::lid_t array for hostToDevice - should be able to
+  //go directly from the vector to the device array
   agi::lid_t *starts = (agi::lid_t*)calloc(numStarts, sizeof(agi::lid_t));
   for (int i = 0; i < numStarts; i++) {
     starts[i] = start_vs[i];
@@ -62,20 +63,21 @@ void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> st
   do {
     found = 0; // reset the found flag
     iter++;  // increment the iteration count
-    hostToDevice(iter_d, &iter);
     hostToDevice(found_d, &found);
     // bfs
     Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
+    });
+    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
       // loop over adjacent vertices
       for (int adj = offsets_d(u); adj < offsets_d(u+1); adj++) {
         int v = lists_d(adj);
         visited_next_d(u) |= visited_d(v);
       }
-      dist_d(u) = dist_d(u) + ((visited_next_d(u) && !visited_d(u)) * iter_d(0));
+      dist_d(u) = dist_d(u) + ((visited_next_d(u) && !visited_d(u)) * iter);
       // set the flag to indicate that a new vertex was found 
-      if (visited_next_d(u) && !visited_d(u)) found_d(0) = 1;
+      found_d(0) = (visited_next_d(u) && !visited_d(u)) ? 1 : 0;
     });
     deviceToHost(found_d, &found);
     //
@@ -131,7 +133,6 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
   }, size);
   fprintf(stderr, "\n%d component size: %d\n", PCU_Comm_Self(), size);
   return size;
-
 }
 
 
@@ -200,7 +201,6 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
     componentIdStartDepths[componentIndices[i]] = startingDepth[i];
   } 
   free(startingDepth); 
- 
   
   // run the outside-in BFS to find the core vertices
   std::vector<int> startEdges;
@@ -235,24 +235,21 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   });
   LIDs componentIdStartDepths_d("componentIdStartDepths_d", numComponents);
   hostToDevice(componentIdStartDepths_d, componentIdStartDepths);
-  LIDs compId_d("compId_d", 1);
-  LIDs maxVal_d("maxVal_d", 1);
   for (int compId = 0; compId < numComponents; compId++) {
-    // host compId to device
-    hostToDevice(compId_d, &compId);
-    // parallel_reduce
+    // find max outside-in depth for the component
     int maxVal;
-    Kokkos::parallel_reduce("MaxReduce", numEnts, KOKKOS_LAMBDA(const int& e, int& max) {
-      int d = (componentIds_d(e) == compId_d(0))*oiDepth_d(e);
+    Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int& e, int& max) {
+      int d = (componentIds_d(e) == compId)*oiDepth_d(e);
       if (d > max) max = d;
     }, Kokkos::Max<int>(maxVal));
-    // host maxVal to device
-    hostToDevice(maxVal_d, &maxVal);
-    // parallel_for
+    fprintf(stderr,"%d comp %d maxOiDepth %d\n", PCU_Comm_Self(), compId, maxVal);
+    // mark the edges with max outside-in depth; these are the edges at the
+    // components topological center and are used as the start for the
+    // inside-out BFS
     LIDs seeds_d("seeds_d", numEnts);
     Kokkos::parallel_for("setSeedsAndDepth", numEnts, KOKKOS_LAMBDA(const int e) {
-      seeds_d(e) = (oiDepth_d(e) == maxVal_d(0))*(componentIds_d(e) == compId_d(0));
-      ioDepth_d(e) = (oiDepth_d(e) == maxVal_d(0))*(componentIds_d(e) == compId_d(0))*componentIdStartDepths_d(compId_d(0));
+      seeds_d(e) = (oiDepth_d(e) == maxVal)*(componentIds_d(e) == compId);
+      ioDepth_d(e) = (oiDepth_d(e) == maxVal)*(componentIds_d(e) == compId)*componentIdStartDepths_d(compId); // the value of 18 comes from here
     });
     // get seeds for io BFS
     int *seeds = new int[numEnts];
