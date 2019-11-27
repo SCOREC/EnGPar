@@ -36,7 +36,8 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
   //transfer the eve to the device
   LIDs offsets_d("offsets_d", numEnts+1);
   hostToDevice(offsets_d, pg->eve_offsets[t]);
-  printf("numEnts %d size of lists %d\n", numEnts, pg->eve_offsets[t][numEnts]);
+  printf("%d numEnts %d size of lists %d\n",
+      PCU_Comm_Self(), numEnts, pg->eve_offsets[t][numEnts]);
   LIDs lists_d("lists_d", pg->eve_offsets[t][numEnts]);
   hostToDevice(lists_d, pg->eve_lists[t]);
   //create a device array for the visited flag and initialize it
@@ -93,7 +94,7 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
     //
   } while (found && iter < max_iter);
   //transfer the distance to the host
-  fprintf(stderr, "\n%d total iterations\n", iter);
+  fprintf(stderr, "\n%d total iterations %d\n", PCU_Comm_Self(), iter);
   agi::lid_t* dist = new agi::lid_t[numEnts];
   deviceToHost(dist_d, dist);
   return dist;
@@ -195,13 +196,13 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
     });
     deviceToHost(found_d, &found);
   } while (found && iter < max_iter);
-  fprintf(stderr, "\n%d total iterations\n", iter);
+  fprintf(stderr, "\n%d total iterations %d\n", PCU_Comm_Self(), iter);
   //get size of component
   int size = 0;
   Kokkos::parallel_reduce("SumReduce", numEnts, KOKKOS_LAMBDA(const int i, int& result) {
     result += visited_d(i);
   }, size);
-  fprintf(stderr, "\ncomponent size: %d\n", size);
+  fprintf(stderr, "\n%d component size: %d\n", PCU_Comm_Self(), size);
   return size;
 
 }
@@ -217,7 +218,8 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   //transfer the eve to the device
   LIDs offsets_d("offsets_d", numEnts+1);
   hostToDevice(offsets_d, pg->eve_offsets[t]);
-  printf("numEnts %d size of lists %d\n", numEnts, pg->eve_offsets[t][numEnts]);
+  printf("%d numEnts %d size of lists %d\n",
+      PCU_Comm_Self(), numEnts, pg->eve_offsets[t][numEnts]);
   LIDs lists_d("lists_d", pg->eve_offsets[t][numEnts]);
   hostToDevice(lists_d, pg->eve_lists[t]);
 
@@ -248,9 +250,9 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   }
 
   int numComponents = compId;
-  printf("%d components found\n", numComponents);
+  printf("%d components found %d\n", PCU_Comm_Self(), numComponents);
   for (int i = 0; i < numComponents; i++) {
-    printf("component %d: size %d\n", i, componentSizes[i]);
+    printf("%d component %d: size %d\n", PCU_Comm_Self(), i, componentSizes[i]);
   }
 
   // compute starting depth for each component on the host
@@ -266,7 +268,6 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   int *componentIdStartDepths = new int[numComponents];  // index i is startingDepth of component i
   int sizeSum = componentSizes[0];
   for (int i = 0; i < numComponents; i++) {
-    printf("%d\n", sizeSum);
     startingDepth[i] = sizeSum;
     sizeSum += componentSizes[i];
     componentIdStartDepths[componentIndices[i]] = startingDepth[i];
@@ -279,7 +280,7 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   for (int i = 0; i < numEnts; i++) {
     if (g->isCut(pg->getEdge(i, t))) startEdges.push_back(i);
   }
-  printf("\nstart edges for outside in %u\n", startEdges.size());
+  printf("\n%d start edges for outside in %u\n", PCU_Comm_Self(), startEdges.size());
   LIDs oiDepth_d("oiDepth_d", numEnts);
   Kokkos::parallel_for("compDist_initOiDepth", numEnts, KOKKOS_LAMBDA(const int e) {
     oiDepth_d(e) = -1;
@@ -357,8 +358,9 @@ int main(int argc, char* argv[]) {
   // Load mesh
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
+  const int elmDim = m->getDimension();
   int edges[1] = {0}; 
-  agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",3,edges,1);
+  agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
   agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
 
   // tag mesh vertices with component distance
