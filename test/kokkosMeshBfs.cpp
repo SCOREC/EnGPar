@@ -15,10 +15,10 @@ using engpar::hostToDevice;
 using engpar::deviceToHost;
 using engpar::LIDs;
 
-apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t) {
+apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t, std::string name) {
   apf::MeshEntity* vtx;
   apf::MeshIterator* it = m->begin(0);
-  apf::Field* f = apf::createLagrangeField(m, "vtx_distance", apf::SCALAR, 1);
+  apf::Field* f = apf::createLagrangeField(m, name.c_str(), apf::SCALAR, 1);
   int val;
   while ((vtx = m->iterate(it))) {
     m->getIntTag(vtx, t, &val);
@@ -94,7 +94,7 @@ agi::lid_t* bfs(agi::Ngraph* g, agi::lid_t t, std::vector<int> start_vs) {
   } while (found && iter < max_iter);
   //transfer the distance to the host
   fprintf(stderr, "\n%d total iterations\n", iter);
-  agi::lid_t* dist = new int[numEnts];
+  agi::lid_t* dist = new agi::lid_t[numEnts];
   deviceToHost(dist_d, dist);
   return dist;
 }
@@ -136,8 +136,7 @@ void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> st
     iter++;  // increment the iteration count
     hostToDevice(iter_d, &iter);
     hostToDevice(found_d, &found);
-    //
-    // insert bfs code here
+    // bfs
     Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
@@ -160,7 +159,7 @@ void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> st
 int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::lid_t start, agi::lid_t numEnts, int component_id) {
   LIDs visited_d("visited_d", numEnts);
   LIDs visited_next_d("visited_next_d", numEnts);
-  Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+  Kokkos::parallel_for("bfsComp_markStart", numEnts, KOKKOS_LAMBDA(const int e) {
     visited_d(e) = 0;
     if (e == start) {
       visited_next_d(e) = 1;
@@ -182,7 +181,7 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
     hostToDevice(iter_d, &iter);
     hostToDevice(found_d, &found);
     // bfs main loop
-    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
+    Kokkos::parallel_for("bfsComp_markNext", numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
       // loop over adjacent vertices
@@ -199,7 +198,7 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
   fprintf(stderr, "\n%d total iterations\n", iter);
   //get size of component
   int size = 0;
-  Kokkos::parallel_reduce( "SumReduce", numEnts, KOKKOS_LAMBDA(const int i, int& result) {
+  Kokkos::parallel_reduce("SumReduce", numEnts, KOKKOS_LAMBDA(const int i, int& result) {
     result += visited_d(i);
   }, size);
   fprintf(stderr, "\ncomponent size: %d\n", size);
@@ -209,7 +208,7 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
 
 
 
-void computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
+agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   // graph setup
   assert(g->isHyper());
   agi::PNgraph* pg = g->publicize();
@@ -280,9 +279,9 @@ void computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   for (int i = 0; i < numEnts; i++) {
     if (g->isCut(pg->getEdge(i, t))) startEdges.push_back(i);
   }
-  printf("\n%u start edges for outside in\n", startEdges.size());
+  printf("\nstart edges for outside in %u\n", startEdges.size());
   LIDs oiDepth_d("oiDepth_d", numEnts);
-  Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+  Kokkos::parallel_for("compDist_initOiDepth", numEnts, KOKKOS_LAMBDA(const int e) {
     oiDepth_d(e) = -1;
   });
 
@@ -295,7 +294,7 @@ void computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   }
   LIDs starts_d("starts_d", numStarts);
   hostToDevice(starts_d, starts);
-  Kokkos::parallel_for(numStarts, KOKKOS_LAMBDA(const int e) {
+  Kokkos::parallel_for("compDist_setOiDepthStarts", numStarts, KOKKOS_LAMBDA(const int e) {
     oiDepth_d(starts_d(e)) = 0;
   });
   free(starts);
@@ -323,7 +322,7 @@ void computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
     hostToDevice(maxVal_d, &maxVal);
     // parallel_for
     LIDs seeds_d("seeds_d", numEnts);
-    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+    Kokkos::parallel_for("setSeedsAndDepth", numEnts, KOKKOS_LAMBDA(const int e) {
       seeds_d(e) = (oiDepth_d(e) == maxVal_d(0))*(componentIds_d(e) == compId_d(0));
       ioDepth_d(e) = (oiDepth_d(e) == maxVal_d(0))*(componentIds_d(e) == compId_d(0))*componentIdStartDepths_d(compId_d(0));
     });
@@ -337,17 +336,19 @@ void computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
     // run bfs
     bfs_depth(offsets_d, lists_d, ioDepth_d, startEdges, numEnts);
   }
-  // bfs label each visited hyperedge with its depth in ioDepth
-  
+  //label each visited hyperedge with its depth in ioDepth
+  agi::lid_t* compDist = new agi::lid_t[numEnts];
+  deviceToHost(ioDepth_d, compDist);
+  return compDist;
 }
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   Kokkos::initialize(argc,argv);
-  if ( argc != 3 ) {
+  if ( argc != 4 ) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <model> <mesh>",argv[0]);
+      printf("Usage: %s <in: model> <in: mesh> <out: vtk prefix>",argv[0]);
     Kokkos::finalize();
     EnGPar_Finalize();
     MPI_Finalize();
@@ -358,22 +359,37 @@ int main(int argc, char* argv[]) {
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
   int edges[1] = {0}; 
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",3,edges,1);
-  computeComponentDistance(g, edges[0]);
-  // run bfs
-  agi::lid_t* distance = bfs(g,edges[0],{ 0, 20, 40 });
-  // Move colors to mesh
-  apf::MeshTag* dist = m->createIntTag("distance",1);
+  agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
+
+  // tag mesh vertices with component distance
+  apf::MeshTag* compDistTag = m->createIntTag("compDistance",1);
   apf::MeshIterator* vitr = m->begin(0);
   apf::MeshEntity* ent;
   int i=0;
+  while ((ent = m->iterate(vitr))) {
+    int d = compDist[i];
+    m->setIntTag(ent,compDistTag,&d);
+    i++;
+  }
+  m->end(vitr);
+  convert_my_tag(m,compDistTag,"component_distance");
+  free(compDist);
+
+  // run bfs
+  agi::lid_t* distance = bfs(g,edges[0],{ 0, 20, 40 });
+  // tag mesh vertices with bfs distance
+  apf::MeshTag* dist = m->createIntTag("distance",1);
+  vitr = m->begin(0);
+  i=0;
   while ((ent = m->iterate(vitr))) {
     int d = distance[i];
     m->setIntTag(ent,dist,&d);
     i++;
   }
   m->end(vitr);
-  convert_my_tag(m, dist);
-  apf::writeVtkFiles("meshDistance", m);
+  convert_my_tag(m, dist, "bfs_distance");
+  apf::writeVtkFiles(argv[3], m);
+  free(distance);
 
   destroyGraph(g);
   PCU_Barrier();
