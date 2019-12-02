@@ -30,6 +30,7 @@ apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t, std::string name) {
 
 // bfs for getting the depths from starts
 void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> start_vs, agi::lid_t numEnts) {
+  const int rank = PCU_Comm_Self();
   //create a device array for the visited flag and initialize it
   LIDs visited_d("visited_d", numEnts);
   LIDs visited_next_d("visited_next_d", numEnts);
@@ -58,29 +59,35 @@ void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> st
   //count iterations
   int iter = 0;
   int max_iter = 1000;
-  LIDs iter_d("iter_d", 1);
   //run bfs
   do {
+    if(!rank) {
+      printf("---- iter %d\n", iter);
+      Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+        printf("e %d visited_d %d visited_next_d %d dist_d %d\n", 
+            e, visited_d(e), visited_next_d(e), dist_d(e));
+      });
+    }
     found = 0; // reset the found flag
     iter++;  // increment the iteration count
     hostToDevice(found_d, &found);
     // bfs
-    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
+    Kokkos::parallel_for("bfsDepth_setNext", numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
     });
-    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int u) {
+    Kokkos::parallel_for("bfsDepth_setDist", numEnts, KOKKOS_LAMBDA(const int u) {
       // loop over adjacent vertices
       for (int adj = offsets_d(u); adj < offsets_d(u+1); adj++) {
         int v = lists_d(adj);
         visited_next_d(u) |= visited_d(v);
       }
-      dist_d(u) = dist_d(u) + ((visited_next_d(u) && !visited_d(u)) * iter);
-      // set the flag to indicate that a new vertex was found 
-      found_d(0) = (visited_next_d(u) && !visited_d(u)) ? 1 : 0;
+      dist_d(u) = (visited_next_d(u) && !visited_d(u)) ? iter : dist_d(u);
+      // set the flag to indicate that a new vertex was found
+      if( visited_next_d(u) && !visited_d(u) )
+        found_d(0) = 1;
     });
     deviceToHost(found_d, &found);
-    //
   } while (found && iter < max_iter);
 }
 
@@ -111,9 +118,11 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
     hostToDevice(iter_d, &iter);
     hostToDevice(found_d, &found);
     // bfs main loop
-    Kokkos::parallel_for("bfsComp_markNext", numEnts, KOKKOS_LAMBDA(const int u) {
+    Kokkos::parallel_for("bfsComp_setVisited", numEnts, KOKKOS_LAMBDA(const int u) {
       visited_d(u) |= visited_next_d(u);
       visited_next_d(u) = 0;
+    });
+    Kokkos::parallel_for("bfsComp_markNext", numEnts, KOKKOS_LAMBDA(const int u) {
       // loop over adjacent vertices
       for (int adj = offsets_d(u); adj < offsets_d(u+1); adj++) {
         int v = lists_d(adj);
@@ -138,6 +147,7 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
 
 
 agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
+  const int rank = PCU_Comm_Self();
   // graph setup
   assert(g->isHyper());
   agi::PNgraph* pg = g->publicize();
@@ -178,9 +188,11 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   }
 
   int numComponents = compId;
-  printf("%d components found %d\n", PCU_Comm_Self(), numComponents);
-  for (int i = 0; i < numComponents; i++) {
-    printf("%d component %d: size %d\n", PCU_Comm_Self(), i, componentSizes[i]);
+  if(!rank) {
+    printf("%d components found %d\n", PCU_Comm_Self(), numComponents);
+    for (int i = 0; i < numComponents; i++) {
+      printf("%d component %d: size %d\n", PCU_Comm_Self(), i, componentSizes[i]);
+    }
   }
 
   // compute starting depth for each component on the host
@@ -205,29 +217,32 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   // run the outside-in BFS to find the core vertices
   std::vector<int> startEdges;
   for (int i = 0; i < numEnts; i++) {
-    if (g->isCut(pg->getEdge(i, t))) startEdges.push_back(i);
+    if (g->isCut(pg->getEdge(i, t))) {
+      startEdges.push_back(i);
+      printf("%d edge %d is cut\n", rank, i);
+    }
   }
-  printf("\n%d start edges for outside in %u\n", PCU_Comm_Self(), startEdges.size());
+  if(!rank)
+    printf("\n%d start edges for outside in %u\n", PCU_Comm_Self(), startEdges.size());
   LIDs oiDepth_d("oiDepth_d", numEnts);
   Kokkos::parallel_for("compDist_initOiDepth", numEnts, KOKKOS_LAMBDA(const int e) {
     oiDepth_d(e) = -1;
   });
 
   // set the depth of each edge in startEdges to 0 in oiDepth
-  agi::lid_t numStarts = static_cast<int>(startEdges.size());
-  //convert std::vector to agi::lid_t array for hostToDevice
-  agi::lid_t *starts = (agi::lid_t*)calloc(numStarts, sizeof(agi::lid_t));
-  for (int i = 0; i < numStarts; i++) {
-    starts[i] = startEdges[i];
-  }
+  const int numStarts = static_cast<int>(startEdges.size());
   LIDs starts_d("starts_d", numStarts);
-  hostToDevice(starts_d, starts);
+  hostToDevice(starts_d, &startEdges[0]);
   Kokkos::parallel_for("compDist_setOiDepthStarts", numStarts, KOKKOS_LAMBDA(const int e) {
     oiDepth_d(starts_d(e)) = 0;
   });
-  free(starts);
   bfs_depth(offsets_d, lists_d, oiDepth_d, startEdges, numEnts);
-  
+  if(!rank) {
+    Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+      printf("%d e %d oiDepth_d %d\n", rank, e, oiDepth_d(e));
+    });
+  }
+
   // run the inside-out BFS to compute the distance from the component center to the boundary
   LIDs ioDepth_d("ioDepth_d", numEnts);
   Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
@@ -236,11 +251,17 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   LIDs componentIdStartDepths_d("componentIdStartDepths_d", numComponents);
   hostToDevice(componentIdStartDepths_d, componentIdStartDepths);
   for (int compId = 0; compId < numComponents; compId++) {
+    if(!rank) {
+      Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
+          printf("%d e %d compId %d depth %d\n",
+              rank, e, componentIds_d(e), oiDepth_d(e));
+      });
+    }
     // find max outside-in depth for the component
     int maxVal;
     Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int& e, int& max) {
       int d = (componentIds_d(e) == compId)*oiDepth_d(e);
-      if (d > max) max = d;
+      max = (d > max) ? d : max;
     }, Kokkos::Max<int>(maxVal));
     fprintf(stderr,"%d comp %d maxOiDepth %d\n", PCU_Comm_Self(), compId, maxVal);
     // mark the edges with max outside-in depth; these are the edges at the
@@ -287,6 +308,8 @@ int main(int argc, char* argv[]) {
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
   agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
 
+  // tag mesh vertices with id
+  apf::MeshTag* idTag = m->createIntTag("id",1);
   // tag mesh vertices with component distance
   apf::MeshTag* compDistTag = m->createIntTag("compDistance",1);
   apf::MeshIterator* vitr = m->begin(0);
@@ -295,11 +318,14 @@ int main(int argc, char* argv[]) {
   while ((ent = m->iterate(vitr))) {
     int d = compDist[i];
     m->setIntTag(ent,compDistTag,&d);
+    m->setIntTag(ent,idTag,&i);
     i++;
   }
   m->end(vitr);
   convert_my_tag(m,compDistTag,"component_distance");
+  convert_my_tag(m,idTag,"id");
   free(compDist);
+  apf::writeVtkFiles(argv[3], m);
 
   destroyGraph(g);
   PCU_Barrier();
