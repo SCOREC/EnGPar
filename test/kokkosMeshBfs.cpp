@@ -258,19 +258,19 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
       });
     }
     // find max outside-in depth for the component
-    int maxVal;
+    int maxOiDepth;
     Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int& e, int& max) {
       int d = (componentIds_d(e) == compId)*oiDepth_d(e);
       max = (d > max) ? d : max;
-    }, Kokkos::Max<int>(maxVal));
-    fprintf(stderr,"%d comp %d maxOiDepth %d\n", PCU_Comm_Self(), compId, maxVal);
+    }, Kokkos::Max<int>(maxOiDepth));
+    fprintf(stderr,"%d comp %d maxOiDepth %d\n", PCU_Comm_Self(), compId, maxOiDepth);
     // mark the edges with max outside-in depth; these are the edges at the
     // components topological center and are used as the start for the
     // inside-out BFS
     LIDs seeds_d("seeds_d", numEnts);
     Kokkos::parallel_for("setSeedsAndDepth", numEnts, KOKKOS_LAMBDA(const int e) {
-      seeds_d(e) = (oiDepth_d(e) == maxVal)*(componentIds_d(e) == compId);
-      ioDepth_d(e) = (oiDepth_d(e) == maxVal)*(componentIds_d(e) == compId)*componentIdStartDepths_d(compId); // the value of 18 comes from here
+      seeds_d(e) = (oiDepth_d(e) == maxOiDepth) && (componentIds_d(e) == compId) ? 1 : 0;
+      ioDepth_d(e) = (oiDepth_d(e) == maxOiDepth) && (componentIds_d(e) == compId) ? componentIdStartDepths_d(compId) : 0;
     });
     // get seeds for io BFS
     int *seeds = new int[numEnts];
