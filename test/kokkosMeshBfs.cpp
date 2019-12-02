@@ -206,7 +206,7 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   // get starting depths
   int *startingDepth = new int[numComponents];  // descending exclusive sum values
   int *componentIdStartDepths = new int[numComponents];  // index i is startingDepth of component i
-  int sizeSum = componentSizes[0];
+  int sizeSum = 0;
   for (int i = 0; i < numComponents; i++) {
     startingDepth[i] = sizeSum;
     sizeSum += componentSizes[i];
