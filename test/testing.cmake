@@ -230,17 +230,11 @@ if (ENABLE_KOKKOS)
     "${MESHES}/square/2/"
     "${MESHES}/square/2bfs.vtk")
 
-  mpi_test(bfsMeshUpright67k 1
+  mpi_test(bfsMeshMpasOcean_p2 2
     ./kokkosMeshBfs
-    "${MESHES}/upright/upright.dmg"
-    "${MESHES}/upright/67k.smb"
-    "${MESHES}/upright/67k")
-
-  mpi_test(bfsMeshUpright190k 1
-    ./kokkosMeshBfs
-    "${MESHES}/upright/upright.dmg"
-    "${MESHES}/upright/190k.smb"
-    "${MESHES}/upright/190k")
+    "${MESHES}/mpas/ocean.dmg"
+    "${MESHES}/mpas/2/"
+    "${MESHES}/mpas/2bfs.vtk")
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
