@@ -15,19 +15,6 @@ using engpar::hostToDevice;
 using engpar::deviceToHost;
 using engpar::LIDs;
 
-apf::Field* convert_my_tag(apf::Mesh* m, apf::MeshTag* t, std::string name) {
-  apf::MeshEntity* vtx;
-  apf::MeshIterator* it = m->begin(0);
-  apf::Field* f = apf::createLagrangeField(m, name.c_str(), apf::SCALAR, 1);
-  int val;
-  while ((vtx = m->iterate(it))) {
-    m->getIntTag(vtx, t, &val);
-    apf::setScalar(f, vtx, 0, (double) val);
-  }
-  m->end(it);
-  return f;
-}
-
 // bfs for getting the depths from starts
 void bfs_depth(LIDs &offsets_d, LIDs &lists_d, LIDs &dist_d, std::vector<int> start_vs,
     agi::lid_t numEnts, agi::lid_t startDepth) {
@@ -244,9 +231,9 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   Kokkos::initialize(argc,argv);
-  if ( argc != 4 ) {
+  if ( argc != 3 ) {
     if ( !PCU_Comm_Self() )
-      printf("Usage: %s <in: model> <in: mesh> <out: vtk prefix>",argv[0]);
+      printf("Usage: %s <in: model> <in: mesh>",argv[0]);
     Kokkos::finalize();
     EnGPar_Finalize();
     MPI_Finalize();
@@ -260,24 +247,24 @@ int main(int argc, char* argv[]) {
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
   agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
 
-  // tag mesh vertices with id
-  apf::MeshTag* idTag = m->createIntTag("id",1);
   // tag mesh vertices with component distance
-  apf::MeshTag* compDistTag = m->createIntTag("compDistance",1);
+  apf::MeshTag* compDistTag = m->findTag("compDistance");
   apf::MeshIterator* vitr = m->begin(0);
   apf::MeshEntity* ent;
   int i=0;
   while ((ent = m->iterate(vitr))) {
-    int d = compDist[i];
-    m->setIntTag(ent,compDistTag,&d);
-    m->setIntTag(ent,idTag,&i);
+    int d;
+    m->getIntTag(ent,compDistTag,&d);
+    if(d != compDist[i]) {
+      fprintf(stderr,
+          "%d component distance does not match reference: %d d d_ref\n",
+          PCU_Comm_Self(), i, compDist[i], d);
+      exit(EXIT_FAILURE);
+    }
     i++;
   }
   m->end(vitr);
-  convert_my_tag(m,compDistTag,"component_distance");
-  convert_my_tag(m,idTag,"id");
   free(compDist);
-  apf::writeVtkFiles(argv[3], m);
 
   destroyGraph(g);
   PCU_Barrier();

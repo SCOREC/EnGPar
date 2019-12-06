@@ -227,14 +227,12 @@ if (ENABLE_KOKKOS)
   mpi_test(bfsMeshSquare_p2 2
     ./kokkosMeshBfs
     "${MESHES}/square/square.dmg"
-    "${MESHES}/square/2/"
-    "${MESHES}/square/2bfs.vtk")
+    "${MESHES}/square/2/")
 
   mpi_test(bfsMeshMpasOcean_p2 2
     ./kokkosMeshBfs
     "${MESHES}/mpas/ocean.dmg"
-    "${MESHES}/mpas/2/"
-    "${MESHES}/mpas/2bfs.vtk")
+    "${MESHES}/mpas/2ref/")
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)
