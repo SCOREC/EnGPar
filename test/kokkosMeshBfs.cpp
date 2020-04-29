@@ -62,7 +62,7 @@ void bfs_depth(const LIDs &offsets_d, const LIDs &lists_d, LIDs &dist_d, const L
     deviceToHost(found_d, &found);
   } while (found && iter < max_iter);
   if (iter == max_iter) {
-    printf("bfs_depth max iter exceeded\n");
+    fprintf(stderr, "bfs_depth max iter exceeded\n");
   }
 }
 
@@ -106,6 +106,10 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
     });
     deviceToHost(found_d, &found);
   } while (found && iter < max_iter);
+  if (iter == max_iter) {
+    fprintf(stderr, "bfs_component max iter exceeded\n");
+  }
+  
   //get size of component
   int size = 0;
   Kokkos::parallel_reduce("SumReduce", numEnts, KOKKOS_LAMBDA(const int i, int& result) {
@@ -264,35 +268,39 @@ int main(int argc, char* argv[]) {
   // Load mesh
   gmi_register_mesh();
   apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
-  const int elmDim = m->getDimension();
-  int edges[1] = {0}; 
-  agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
-  agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
-  // tag mesh vertices with component distance
-  apf::MeshTag* compDistTag = m->findTag("compDistance");
-  apf::MeshTag* engparDistTag = m->createIntTag("engparDistance",1);
-  apf::MeshIterator* vitr = m->begin(0);
-  apf::MeshEntity* ent;
-  int i=0;
-  while ((ent = m->iterate(vitr))) {
-    const int engDist = compDist[i];
-    m->setIntTag(ent,engparDistTag,&engDist);
-    int d;
-    m->getIntTag(ent,compDistTag,&d);
-    if(d != compDist[i]) {
-      fprintf(stderr,
-          "%d component distance does not match reference: %d d%d d_ref%d\n",
-          PCU_Comm_Self(), i, compDist[i], d);
+  if (m->findTag("compDistance")) { 
+    const int elmDim = m->getDimension();
+    int edges[1] = {0}; 
+    agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
+    agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
+    // tag mesh vertices with component distance
+    apf::MeshTag* compDistTag = m->findTag("compDistance");
+    apf::MeshTag* engparDistTag = m->createIntTag("engparDistance",1);
+    apf::MeshIterator* vitr = m->begin(0);
+    apf::MeshEntity* ent;
+    int i=0;
+    while ((ent = m->iterate(vitr))) {
+      const int engDist = compDist[i];
+      m->setIntTag(ent,engparDistTag,&engDist);
+      int d;
+      m->getIntTag(ent,compDistTag,&d);
+      if(d != compDist[i]) {
+        fprintf(stderr,
+            "%d component distance does not match reference: %d d%d d_ref%d\n",
+            PCU_Comm_Self(), i, compDist[i], d);
+      }
+      i++;
     }
-    i++;
+    m->end(vitr);
+    free(compDist);
+  
+    convert_my_tag(m,"engparDist",engparDistTag);
+    apf::writeVtkFiles("ocean",m);
+    destroyGraph(g);
+  } else {
+    fprintf(stderr, "No compDistance tag\n");
   }
-  m->end(vitr);
-  free(compDist);
 
-  convert_my_tag(m,"engparDist",engparDistTag);
-  apf::writeVtkFiles("ocean",m);
-
-  destroyGraph(g);
   PCU_Barrier();
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n"); 
