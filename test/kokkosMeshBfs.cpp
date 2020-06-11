@@ -134,25 +134,30 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   hostToDevice(lists_d, pg->eve_lists[t]);
 
   // determine component for each hyperedge
-  std::vector<int> componentSizes;
   LIDs componentIds_d("componentIds_d", numEnts); // initialize all component ids as -1
   Kokkos::parallel_for(numEnts, KOKKOS_LAMBDA(const int e) {
     componentIds_d(e) = -1;
   });
+
   agi::lid_t* componentIds = new int[numEnts];
+  std::vector<int> componentSizes;
   agi::lid_t startEdge = 0;
   int compId = 0;
-  while (startEdge != -1) { // while any edge is unlabeled
+  bool unlabeledEdgeExists = true;
+  while (unlabeledEdgeExists) { // while any edge is unlabeled
     int component_size = bfs_component(offsets_d, lists_d, componentIds_d, startEdge, numEnts, compId);
     componentSizes.push_back(component_size);
     deviceToHost(componentIds_d, componentIds);
     // find next start edge
-    startEdge = -1;
-    for (int i = 0; i < numEnts; i++) {
+    int i;
+    for (i = startEdge+1; i < numEnts; i++) {
       if (componentIds[i] == -1) {
         startEdge = i;
         break;
       }
+    }
+    if (i >= numEnts) {
+      unlabeledEdgeExists = false;
     }
     compId++;
   }
@@ -267,21 +272,27 @@ int main(int argc, char* argv[]) {
   }
   // Load mesh
   gmi_register_mesh();
-  apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]); 
-  if (m->findTag("compDistance")) { 
-    const int elmDim = m->getDimension();
-    int edges[1] = {0}; 
-    agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
-    agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
-    // tag mesh vertices with component distance
-    apf::MeshTag* compDistTag = m->findTag("compDistance");
-    apf::MeshTag* engparDistTag = m->createIntTag("engparDistance",1);
-    apf::MeshIterator* vitr = m->begin(0);
-    apf::MeshEntity* ent;
-    int i=0;
-    while ((ent = m->iterate(vitr))) {
-      const int engDist = compDist[i];
-      m->setIntTag(ent,engparDistTag,&engDist);
+  apf::Mesh2* m = apf::loadMdsMesh(argv[1],argv[2]);
+  const int elmDim = m->getDimension();
+  int edges[1] = {0};
+  agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
+  agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
+  // tag mesh vertices with component distance
+  apf::MeshTag* compDistTag = m->findTag("compDistance");
+  if (compDistTag) {
+    fprintf(stderr, "compDistance tag found, checking distances\n");
+  } else {
+    fprintf(stderr, "no compDistance tag found, not checking distances\n");
+  }
+
+  apf::MeshTag* engparDistTag = m->createIntTag("engparDistance",1);
+  apf::MeshIterator* vitr = m->begin(0);
+  apf::MeshEntity* ent;
+  int i=0;
+  while ((ent = m->iterate(vitr))) {
+    const int engDist = compDist[i];
+    m->setIntTag(ent,engparDistTag,&engDist);
+    if (compDistTag) {
       int d;
       m->getIntTag(ent,compDistTag,&d);
       if(d != compDist[i]) {
@@ -289,17 +300,14 @@ int main(int argc, char* argv[]) {
             "%d component distance does not match reference: %d d%d d_ref%d\n",
             PCU_Comm_Self(), i, compDist[i], d);
       }
-      i++;
     }
-    m->end(vitr);
-    free(compDist);
-  
-    convert_my_tag(m,"engparDist",engparDistTag);
-    apf::writeVtkFiles("ocean",m);
-    destroyGraph(g);
-  } else {
-    fprintf(stderr, "No compDistance tag\n");
+    i++;
   }
+  m->end(vitr);
+  free(compDist);
+  convert_my_tag(m,"engparDist",engparDistTag);
+  apf::writeVtkFiles("ocean",m);
+  destroyGraph(g);
 
   PCU_Barrier();
   if (!PCU_Comm_Self())
