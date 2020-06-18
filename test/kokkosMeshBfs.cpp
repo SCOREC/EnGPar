@@ -119,6 +119,41 @@ int bfs_component(LIDs &offsets_d, LIDs &lists_d, LIDs &component_ids_d, agi::li
 }
 
 
+// functor for getting max outside-in depths of each component
+// used with Kokkos::parallel_reduce
+class MaxArrayReduceFunctor {
+  public:
+    typedef int value_type[];
+    const unsigned value_count;  // number of components
+
+    const int nwork;  // number of edges
+    
+    const LIDs componentIds_d;
+    const LIDs oiDepths_d;
+   
+    // nwork: number of edges, count: number of components
+    MaxArrayReduceFunctor(const int arg_nwork, const int arg_count, const LIDs &componentIds, const LIDs &oiDepths) : value_count(arg_count), nwork(arg_nwork), componentIds_d(componentIds), oiDepths_d(oiDepths) {}
+
+    KOKKOS_INLINE_FUNCTION
+    void init(int dst[]) const {
+      for (int i = 0; i < value_count; ++i) dst[i] = 0;
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void join(volatile int dst[], const volatile int src[]) const {
+      for (int i = 0; i < value_count; ++i) {
+        dst[i] = src[i] > dst[i] ? src[i] : dst[i];
+      }
+    }
+
+    KOKKOS_INLINE_FUNCTION
+    void operator()(int e, int dst[]) const {
+      const int compId = componentIds_d(e);
+      const int depth = oiDepths_d(e);
+      dst[compId] = depth > dst[compId] ? depth : dst[compId];
+    }
+};
+
 
 agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   const int rank = PCU_Comm_Self();
@@ -205,20 +240,13 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   bfs_depth(offsets_d, lists_d, oiDepth_d, seeds_d, componentIds_d, componentIdStartDepths_d, numEnts);
 
   // find max outside-in depth for each component
-  // can do this in one pass
-  LIDs maxOiDepths_d("maxOiDepths_d", numComponents);
- // std::vector<int> maxOiDepths{};
   int *maxOiDepths = new int[numComponents];
-  //maxOiDepths.reserve(numComponents);
-  for (int componentId = 0; componentId < numComponents; ++componentId) {
-    int maxOiDepth = -1; 
-    Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int &e, int& max) {
-      int d = (componentIds_d(e) == componentId)*oiDepth_d(e);
-      max = (d > max) ? d : max;
-    }, Kokkos::Max<int>(maxOiDepth));
-    maxOiDepths[componentId] = maxOiDepth;
-  }
+  Kokkos::parallel_reduce(numEnts,
+                          MaxArrayReduceFunctor(numEnts, numComponents, componentIds_d, oiDepth_d),
+			  maxOiDepths);
+  LIDs maxOiDepths_d("maxOiDepths_d", numComponents);
   hostToDevice(maxOiDepths_d, maxOiDepths);
+  free(maxOiDepths);
 
   // initialize inside-out depths array and seeds (starts of i-o BFS) array
   // mark edges with max outside-in depth; these are the edges at the
@@ -234,7 +262,6 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
 
   bfs_depth(offsets_d, lists_d, ioDepth_d, seeds_d, componentIds_d, componentIdStartDepths_d, numEnts);
 
-  free(maxOiDepths);
   free(componentIdStartDepths);
   free(componentIds);
 
@@ -243,6 +270,7 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   deviceToHost(ioDepth_d, compDist);
   return compDist;
 }
+
 
 apf::Field* convert_my_tag(apf::Mesh* m, const char* name, apf::MeshTag* t) {
   apf::MeshEntity* vtx;
@@ -257,6 +285,7 @@ apf::Field* convert_my_tag(apf::Mesh* m, const char* name, apf::MeshTag* t) {
   m->end(it);
   return f;
 }
+
 
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
