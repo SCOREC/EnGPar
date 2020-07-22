@@ -198,6 +198,13 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   }
 
   const int numComponents = compId;
+
+  /* print rank and number of components
+  int r;
+  MPI_Comm_rank(MPI_COMM_WORLD, &r);
+  fprintf(stderr, "rank: %d, %d components\n", r, numComponents);
+  */
+
   // compute starting depth for each component on the host
   // sort componentSizes array
   std::vector<int> componentIndices; 
@@ -238,13 +245,27 @@ agi::lid_t* computeComponentDistance(agi::Ngraph* g, agi::lid_t t) {
   });
   LIDs componentIdStartDepths_d("componentIdStartDepths_d", numComponents);
   bfs_depth(offsets_d, lists_d, oiDepth_d, seeds_d, componentIds_d, componentIdStartDepths_d, numEnts);
+/*
+  // find max outside-in depth for each component
+  LIDs maxOiDepths_d("maxOiDepths_d", numComponents);
+  int *maxOiDepths = new int[numComponents];
+  for (int componentId = 0; componentId < numComponents; ++componentId) {
+    int maxOiDepth = -1; 
+    Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int &e, int& max) {
+      int d = (componentIds_d(e) == componentId)*oiDepth_d(e);
+      max = (d > max) ? d : max;
+    }, Kokkos::Max<int>(maxOiDepth));
+    maxOiDepths[componentId] = maxOiDepth;
+  }
+*/
 
   // find max outside-in depth for each component
   int *maxOiDepths = new int[numComponents];
   Kokkos::parallel_reduce(numEnts,
                           MaxArrayReduceFunctor(numEnts, numComponents, componentIds_d, oiDepth_d),
-			  maxOiDepths);
+                          maxOiDepths);
   LIDs maxOiDepths_d("maxOiDepths_d", numComponents);
+
   hostToDevice(maxOiDepths_d, maxOiDepths);
   free(maxOiDepths);
 
@@ -305,6 +326,33 @@ int main(int argc, char* argv[]) {
   const int elmDim = m->getDimension();
   int edges[1] = {0};
   agi::Ngraph* g = agi::createAPFGraph(m,"mesh_graph",elmDim,edges,1);
+
+  int rank;
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  int numRanks;
+  MPI_Comm_size(MPI_COMM_WORLD, &numRanks);
+  
+  double total_time = 0;
+  int repeat = 20;
+  for (int i = 0; i < repeat; ++i) {
+  for (int p = 0; p < numRanks; p++) {
+    if (p == rank) {
+      Kokkos::Timer timer;
+      computeComponentDistance(g, edges[0]);
+      double time = timer.seconds();
+      total_time += time;
+      //fprintf(stderr, "%d %f\n", rank, time);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+  }
+  }
+
+  for (int p = 0; p < numRanks; ++p) {
+    if (p == rank) {
+      fprintf(stderr, "%d %f\n", rank, total_time/static_cast<double>(repeat));
+    }
+  }
+
   agi::lid_t* compDist = computeComponentDistance(g, edges[0]);
   // tag mesh vertices with component distance
   apf::MeshTag* compDistTag = m->findTag("compDistance");
