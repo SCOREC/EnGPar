@@ -34,7 +34,7 @@ void switchToOriginals(int smallSize, bool& isOriginal, MPI_Comm& newComm);
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-
+  Kokkos::initialize(argc,argv);
   if (argc==1) {
     if (!PCU_Comm_Self())
       EnGPar_Warning_Message("Usage: %s <operation> [trial number]\n"
@@ -49,7 +49,7 @@ int main(int argc, char* argv[]) {
                              "    operation %d = ParMETIS split and balance\n"
                              ,argv[0],SPLIT_TEST,SPLIT_TEST+1,SPLIT_TEST+2,
                              SPLIT_TEST+3);
-
+    Kokkos::finalize();
     EnGPar_Finalize();
     MPI_Finalize();
     return 1;
@@ -114,6 +114,7 @@ int main(int argc, char* argv[]) {
   int ierr = suite.runTests(trial);
 
   suite.deleteTestGraphs();
+  Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();
   return ierr;
