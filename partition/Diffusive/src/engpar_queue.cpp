@@ -1,20 +1,7 @@
 #include "engpar_queue.h"
 #include <PCU.h>
-
 #include <engpar_support.h>
-#include <apfGraph.h>
-#include <apfMesh2.h>
-#include <apfMDS.h>
-#include <gmi_mesh.h>
-#include <apf.h>
-#include <engpar.h>
-#include <engpar_input.h>
-#include <binGraph.h>
-#include <cstring>
-#include <set>
-#include <algorithm>
-#include <stdio.h>
-  
+
 using engpar::hostToDevice;
 using engpar::deviceToHost;
 using engpar::LIDs;
@@ -486,19 +473,6 @@ namespace engpar {
     LIDs componentIdStartDepths_d("componentIdStartDepths_d", numComponents);
     bfs_depth(offsets_d, lists_d, oiDepth_d, seeds_d, componentIds_d, componentIdStartDepths_d, numEnts);
 
-
-    // find max outside-in depth for each component
-    LIDs maxOiDepths_d("maxOiDepths_d", numComponents);
-    int *maxOiDepths = new int[numComponents];
-    for (int componentId = 0; componentId < numComponents; ++componentId) {
-      int maxOiDepth = -1; 
-      Kokkos::parallel_reduce("maxDepthOfComponent", numEnts, KOKKOS_LAMBDA(const int &e, int& max) {
-        int d = (componentIds_d(e) == componentId)*oiDepth_d(e);
-        max = (d > max) ? d : max;
-      }, Kokkos::Max<int>(maxOiDepth));
-      maxOiDepths[componentId] = maxOiDepth;
-    }
-
     // find max outside-in depth for each component
     int *maxOiDepths = new int[numComponents];
     Kokkos::parallel_reduce(numEnts,
@@ -534,7 +508,7 @@ namespace engpar {
 
 
 
-  Queue* createDistanceQueue(DiffusiveInput* input) {
+  Queue* createDistanceQueue_old(DiffusiveInput* input) {
     agi::Ngraph* g = input->g;
     if (g->numLocalEdges()==0) {
       return new Queue(0);
@@ -686,9 +660,7 @@ namespace engpar {
     }
     agi::PNgraph* pg = g->publicize();
     agi::etype t = 0;
-    
     agi::lid_t* compDist = computeComponentDistance(g, t);
-    
     agi::lid_t numEnts = pg->num_local_edges[t];
     Queue* q = new Queue(numEnts);
     if (numEnts==0) {
@@ -716,5 +688,11 @@ namespace engpar {
     
     delete compDist;
     return q;
+  }
+
+  Queue* createDistanceQueue(DiffusiveInput* input) {
+    //Queue* q0 = createDistanceQueue_old(input);
+    Queue* q1 = createDistanceQueue_new(input);
+    return q1;
   }
 }
