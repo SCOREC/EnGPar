@@ -263,6 +263,47 @@ if (ENABLE_KOKKOS)
     ./kokkosMeshBfs
     "${MESHES}/upright/upright.dmg"
     "${MESHES}/upright/13M/8p/")
+
+  mpi_test(splitAndBalanceMeshEnGPar_1M_2 2
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/1.6M/2p/"
+    0
+    1
+    )
+
+  mpi_test(splitAndBalanceMeshEnGPar_1M_4 4
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/1.6M/4p/"
+    0
+    1
+    )
+
+  mpi_test(splitAndBalanceMeshEnGPar_13M_2 2
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/13M/2p/"
+    0
+    1
+    )
+
+  mpi_test(splitAndBalanceMeshEnGPar_13M_4 4
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/13M/4p/"
+    0
+    1
+    )
+
+  mpi_test(splitAndBalanceMeshEnGPar_13M_8 8
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/13M/8p/"
+    0
+    1
+    )
+
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)

@@ -23,12 +23,15 @@ void splitMesh(agi::Ngraph*&, apf::Mesh2*&, int argc, char* argv[]);
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
+  Kokkos::initialize(argc, argv);
 
   if (argc != 5) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <model> <mesh> <pumi/engpar parmetis (0/1)> <split_factor>\n", argv[0]);
     }
+    Kokkos::finalize();
     EnGPar_Finalize();
+    MPI_Finalize();
     assert(false);
   }
 
@@ -116,7 +119,8 @@ int main(int argc, char* argv[]) {
     m->destroyNative();
     apf::destroyMesh(m);
   }
-  
+
+  Kokkos::finalize(); 
   EnGPar_Finalize();
   MPI_Finalize();
   return 0;
@@ -182,6 +186,15 @@ apf::Migration* getPlan(apf::Mesh* m)
   apf::Splitter* splitter = apf::makeZoltanGlobalSplitter(
       m, apf::GRAPH, apf::PART_KWAY, false);
   apf::MeshTag* weights = Parma_WeighByMemory(m);
+  if (PCU_Comm_Self() != 0) {
+    apf::MeshIterator* mitr = m->begin(3);
+    apf::MeshEntity* ent;
+    double w = 1.5;
+    while ((ent = m->iterate(mitr))) {
+      m->setDoubleTag(ent, weights, &w); 
+    }
+    m->end(mitr);
+  }
   apf::Migration* plan = splitter->split(weights, 1.1, partitionFactor);
   apf::removeTagFromDimension(m, weights, m->getDimension());
   m->destroyTag(weights);
