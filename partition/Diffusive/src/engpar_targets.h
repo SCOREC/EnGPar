@@ -15,8 +15,8 @@ namespace engpar {
       //For each side
       for (itr = s->begin();itr!=s->end();itr++) {
         int neighbor = itr->first;
-        bool canSend=!isHyper || s->get(neighbor)<=sideTol;
-	//Check if we can send to this neighbor based on previously balanced edges/vtxs
+        bool canSend=!isHyper || s->get(neighbor)<=sideTol || PCU_Comm_Peers() == 2;
+        //Check if we can send to this neighbor based on previously balanced edges/vtxs
         for (unsigned int i=0;i<completedTolerances.size();i++) {
           if (completedWs[i]->get(neighbor)>=completedTolerances[i])
             canSend=false;
@@ -24,7 +24,7 @@ namespace engpar {
         if (!canSend)
           continue;
 
-	//See if we need to send weight for the target type and add if we do
+        //See if we need to send weight for the target type and add if we do
         wgt_t myW = targetW->myWeight();
         wgt_t neighborW = targetW->get(neighbor);
         if (myW>neighborW) {
