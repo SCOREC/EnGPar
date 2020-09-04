@@ -14,13 +14,16 @@
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
+  Kokkos::initialize(argc, argv);
   EnGPar_Open_Log();
   
   if (argc != 5 && argc != 6) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> [multi-edgetypes]\n", argv[0]);
     }
+    Kokkos::finalize();
     EnGPar_Finalize();
+    MPI_Finalize();
     assert(false);
   }
 
@@ -125,7 +128,7 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
-
+  Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();
 }
