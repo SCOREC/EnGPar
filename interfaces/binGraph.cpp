@@ -30,6 +30,10 @@ binGraph::binGraph(char* graph_file,char* part_file) : Ngraph() {
   int64_t* read_edges;
   int64_t m_read;
   FILE *f = fopen(graph_file, "rb");
+  if (!f) {
+    fprintf(stderr, "Cannot open file %s\n", graph_file);
+    throw 1;
+  }
   etype t = load_edges(f,read_edges,m_read);
   int32_t* ranks = new int32_t[num_global_verts];
   if (!part_file)

@@ -19,7 +19,6 @@ namespace engpar {
   void getCavity(agi::Ngraph* g, agi::GraphEdge* edge, Cavity& cav) {
     //Grab all vertices connected to the edge that are on part
     agi::PinIterator* pitr = g->pins(edge);
-    agi::lid_t deg = g->degree(edge);
     agi::GraphVertex* vtx;
     while ((vtx = g->iterate(pitr)))
       if (g->owner(vtx)==PCU_Comm_Self())
@@ -52,7 +51,7 @@ namespace engpar {
     }
   }
   
-  void getCavityPeers(agi::Ngraph* g, agi::GraphEdge* edge, agi::Migration* plan,
+  void getCavityPeers(agi::Ngraph* g, agi::Migration* plan,
 		      Cavity& cav, Peers& peers) {
 
     //Grab all vertices connected to the edge that are on part
@@ -194,10 +193,9 @@ namespace engpar {
     for (itr = q->begin();itr!=q->end();itr++) {
       if (planW > targets->total()) break;
       //Create Cavity and peers
-      std::unordered_map<agi::GraphEdge*, Cavity>::iterator citr = cavities.find(q->get(itr));
       Cavity& cav = cavities[q->get(itr)];
       Peers peers;
-      getCavityPeers(g,q->get(itr),plan,cav,peers);
+      getCavityPeers(g,plan,cav,peers);
       bool sent = false;
       if (cav.size() < cavSize) { //If the cavity is small enough
         Peers::iterator pitr;
@@ -234,7 +232,7 @@ namespace engpar {
       //Create Cavity and peers
       Cavity& cav = cavities[q->get(itr)];
       Peers peers;
-      getCavityPeers(g,q->get(itr),plan,cav,peers);
+      getCavityPeers(g,plan,cav,peers);
       if (isPartiallyConnected(g,in->connectivityType,in->minConnectivity,plan,cav)) {
         addCavity(g,cav,*peers.begin(),plan,target_dimension);
       }

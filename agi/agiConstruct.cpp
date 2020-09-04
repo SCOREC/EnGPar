@@ -1,5 +1,5 @@
 #include "ngraph.h"
-#include <engpar_support.h>
+#include "engpar_support.h"
 #include <cstring>
 #include <stdexcept>
 #ifdef KOKKOS_ENABLED 

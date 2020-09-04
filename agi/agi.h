@@ -4,7 +4,6 @@
 #define _AGI_H__
 
 #include <stdint.h>
-#include <apfVector.h>
 #include <set>
 #include <unordered_map>
 #include "engpar_types.h"
