@@ -68,14 +68,19 @@ if (ENABLE_KOKKOS)
   message(STATUS "Kokkos CMAKE_FORTRAN_FLAGS ${KokkosCore_FORTRAN_FLAGS}")
 endif()
 
-set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
+macro(engpar_export_lib target headers)
+  bob_export_target(${target})
+  install(FILES ${headers} DESTINATION include)
+endmacro(engpar_export_lib)
+
 
 option(ENABLE_PUMI "Build with PUMI interface" OFF)
-
 if (ENABLE_PUMI)
+  set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
   find_package(SCOREC REQUIRED CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
 else()
-  find_package(SCOREC REQUIRED COMPONENTS pcu CONFIG PATHS ${SCOREC_PREFIX} NO_DEFAULT_PATH)
+  add_subdirectory(pcu)
+  include_directories(pcu)
 endif()
 
 
@@ -89,10 +94,6 @@ endif()
 
 include_directories(${SCOREC_PREFIX}/include)
 
-macro(engpar_export_lib target headers)
-  bob_export_target(${target})
-  install(FILES ${headers} DESTINATION include)
-endmacro(engpar_export_lib)
 
 add_subdirectory(support)
 

@@ -10,5 +10,4 @@ cmake .. \
     -DKOKKOS_PREFIX=/path/to/kokkos_install \
     -DIS_TESTING=ON \
     -DMESHES=$PWD/../pumi-meshes \
-    -DGRAPHS=$PWD/../EnGPar-graphs \
-
+    -DGRAPHS=$PWD/../EnGPar-graphs

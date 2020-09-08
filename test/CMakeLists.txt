@@ -20,7 +20,7 @@ set(ALL_LIBS
 if(ENABLE_PUMI)
   set(ALL_LIBS ${ALL_LIBS} SCOREC::core)
 else()
-  set(ALL_LIBS ${ALL_LIBS} SCOREC::pcu)
+  set(ALL_LIBS ${ALL_LIBS} pcu)
 endif()
 
 set(ALL_LIBS ${ALL_LIBS}

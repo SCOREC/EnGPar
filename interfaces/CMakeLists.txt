@@ -30,7 +30,7 @@ target_link_libraries(interfaces ${DEP_LIBS})
 if(ENABLE_PUMI)
   target_link_libraries(interfaces SCOREC::core)
 else()
-  target_link_libraries(interfaces SCOREC::pcu)
+  target_link_libraries(interfaces pcu)
 endif()
 
 engpar_export_lib(interfaces "${INTERFACE_HEADERS}")
