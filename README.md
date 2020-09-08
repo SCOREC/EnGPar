@@ -1,6 +1,6 @@
 # SCOREC EnGPar #
 
-EnGPar is a set of C/C++ libraries for partitioning relational data structures using a parallel graph structure to represent the data.
+EnGPar, N-Graph Partitioning, is a set of C/C++ libraries for partitioning relational data structures using a parallel graph structure to represent the data.
 
 ### Repository Layout ###
 
