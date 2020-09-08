@@ -10,11 +10,25 @@
 namespace engpar {
 
 
-  
+
   WeightBalancer::WeightBalancer(Input* input_, int v) :
     Balancer(input_,v,"weightBalancer") {
   }
-  
+
+  void simplifyPlan(agi::Ngraph* g) {
+    agi::WeightPartitionMap* map = g->getWeightPartition();
+
+    for (agi::WeightPartitionMap::iterator itr= map->begin(); itr != map->end(); ++itr) {
+      std::unordered_map<agi::gid_t, agi::wgt_t>::iterator witr;
+      for (witr = itr->second.begin(); witr != itr->second.end();) {
+        if (witr->second <= 0)
+          witr = itr->second.erase(witr);
+        else
+          ++witr;
+      }
+    }
+  }
+
   int WeightBalancer::runStep(double tolerance) {
     WeightInput* inp = dynamic_cast<WeightInput*>(input);
     double stepTime = PCU_Time();
@@ -43,7 +57,7 @@ namespace engpar {
       delete [] completedWs;
     }
     delete targetWeights;
-        
+
     if (verbosity>=3)
       EnGPar_Status_Message("%d: %s\n",PCU_Comm_Self(), targets->print("Targets").c_str());
     Queue* pq;
@@ -52,7 +66,7 @@ namespace engpar {
       //TODO: Come up with potential iteration queues for weight diffusion
       //pq = createDistanceQueue(inp);
       ;
-    else 
+    else
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
@@ -70,7 +84,7 @@ namespace engpar {
     delete pq;
     delete targets;
     delete selector;
-    
+
     stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
     numMigrate = PCU_Add_Int(numMigrate);
@@ -128,7 +142,7 @@ namespace engpar {
       sprintf(message,"%s selection_edge_type : %d\n",
               message,inp->selection_edge_type);
       sprintf(message,"%s countGhosts : %d\n",message,inp->countGhosts);
-      
+
       EnGPar_Log_Function(message);
       */
     }
@@ -149,10 +163,13 @@ namespace engpar {
     // input->g->setOriginalOwners();
     // unsigned int index=0;
     // target_dimension = inp->priorities[index];
-    
+
+    input->g->getWeightPartition()->clear();
+
+
     //Construct Stagnation detection
     sd = new SDSlope;
-    
+
 
     //Set side tolerance to arbitrarily high number such that it will be ignored in targeting
     sideTol = inp->g->numGlobalEdges()*10;
@@ -168,6 +185,9 @@ namespace engpar {
     while (step++<inp->maxIterations && !runStep(inp->tol));
     delete sd;
     time = PCU_Time()-time;
+
+    //Simplify plan globally
+    simplifyPlan(input->g);
 
     if (verbosity >= 0) {
       time = PCU_Max_Double(time);
@@ -209,5 +229,6 @@ namespace engpar {
     balancer->balance();
     delete balancer;
   }
-}
 
+
+}
