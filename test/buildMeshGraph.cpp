@@ -189,7 +189,7 @@ void testIds(apf::Mesh* m, agi::Ngraph* g, const char* name, int primary, int* s
   id_nums = m->findGlobalNumbering(buffer);
   assert(id_nums);
   while ((vtx = g->iterate(gitr)) && (ent = m->iterate(mitr))) {
-    assert(g->globalID(vtx)==(gid_t)apf::getNumber(id_nums,ent,0,0));
+    assert(g->globalID(vtx)==(agi::gid_t)apf::getNumber(id_nums,ent,0,0));
   }
   m->end(mitr);
   for (int i=0;i<n;i++) {
@@ -200,7 +200,7 @@ void testIds(apf::Mesh* m, agi::Ngraph* g, const char* name, int primary, int* s
     mitr = m->begin(seconds[i]);
     agi::GraphEdge* edge;
     while ((edge = g->iterate(eitr)) && (ent = m->iterate(mitr))) {
-      assert(g->globalID(edge)==(gid_t)apf::getNumber(id_nums,ent,0,0));
+      assert(g->globalID(edge)==(agi::gid_t)apf::getNumber(id_nums,ent,0,0));
     }
     m->end(mitr);
     g->destroy(eitr);

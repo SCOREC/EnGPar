@@ -2,6 +2,7 @@
 #define __ENGPAR_QUEUE_H__
 #include <ngraph.h>
 #include <engpar_metrics.h>
+#include <engpar_support.h>
 #include "../engpar_diffusive_input.h"
 
 namespace engpar {
@@ -44,6 +45,7 @@ namespace engpar {
   typedef ShrinkingArray Queue;
   Queue* createIterationQueue(agi::Ngraph*);
   Queue* createDistanceQueue(DiffusiveInput*);
+  LIDs getCavityOrder(agi::Ngraph*, const agi::lid_t t, Queue*);
 }
 
 #endif

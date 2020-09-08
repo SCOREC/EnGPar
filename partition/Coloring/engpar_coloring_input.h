@@ -8,7 +8,7 @@
 namespace engpar {
   class ColoringInput : public Input {
   public:
-    ColoringInput(agi::Ngraph* g_, agi::lid_t t, bool vtx) : Input(g_) {
+    ColoringInput(agi::Ngraph* g_, agi::lid_t t, bool vtx, bool bdry=false) : Input(g_) {
       assert( (t < g->numEdgeTypes()) &&
               "invalid primary type for coloring input");
       if (vtx)
@@ -16,9 +16,11 @@ namespace engpar {
       else
         primaryType = t;
       edgeType = t;
+      boundaryOnly = bdry;
     }
     agi::lid_t primaryType;
     agi::lid_t edgeType;
+    bool boundaryOnly;
   };
 }
 

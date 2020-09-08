@@ -46,11 +46,35 @@ namespace engpar {
       hv(i) = h[i];
     Kokkos::deep_copy(d,hv);
   }
+  void hostToDevice(WGTs d, ENGPAR_WGT_T* h) {
+    WGTs::HostMirror hv = Kokkos::create_mirror_view(d);
+    for (size_t i=0; i<hv.size(); ++i)
+      hv(i) = h[i];
+    Kokkos::deep_copy(d,hv);
+  }
   void deviceToHost(LIDs d, ENGPAR_LID_T* h) {
     LIDs::HostMirror hv = Kokkos::create_mirror_view(d);
     Kokkos::deep_copy(hv,d);
     for(size_t i=0; i<hv.size(); ++i)
       h[i] = hv(i);
+  }
+  void degreeToOffset(CSR& c) {
+    Kokkos::parallel_scan(c.off.dimension_0(),
+      KOKKOS_LAMBDA (const int& e, int& upd, const bool& final) {
+      const float size = c.off(e);
+      if (final) c.off(e) = upd;
+      upd += size;
+    });
+  }
+  void allocateItems(CSR& c) {
+    int listSize = 0;
+    Kokkos::parallel_reduce(c.off.dimension_0()-1,
+      KOKKOS_LAMBDA(const int e, int& size) {
+        size += c.off(e);
+      },
+    listSize);
+    std::string name = c.name + "_items";
+    c.items = LIDs(name, listSize);
   }
 }
 

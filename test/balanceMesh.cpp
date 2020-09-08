@@ -11,15 +11,35 @@
 #include <parma.h>
 #include <engpar_diffusive_input.h>
 
+void setWeights(agi::Ngraph* g, agi::etype t) {
+  if(!PCU_Comm_Self()) {
+    agi::lid_t n = g->numLocalVtxs();
+    agi::wgt_t* w = new agi::wgt_t[n];
+    for(int i=0; i<n; i++)
+      w[i] = 2;
+    g->setWeights(w);
+    delete [] w;
+
+    agi::PNgraph* pg = g->publicize();
+    agi::lid_t m = g->numLocalEdges(t);
+    for(int i=0; i<m; i++)
+      pg->edge_weights[t][i] = 2;
+  }
+}
+
 int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
-  Kokkos::initialize(argc, argv);
+  Kokkos::initialize(argc,argv);
+  if(!PCU_Comm_Self())
+    Kokkos::print_configuration(std::cout);
   EnGPar_Open_Log();
   
-  if (argc != 5 && argc != 6) {
+  if (argc != 7 && argc != 8) {
     if ( !PCU_Comm_Self() ) {
-      printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> [multi-edgetypes]\n", argv[0]);
+      printf("Usage: %s <model> <mesh> <tolerance> <render=[1:on|0:off]> "
+          "<kkSelect=[1:on|0:off]> <skewWeights=[1:on|0:off]> "
+          "[multi-edgetypes]\n", argv[0]);
     }
     Kokkos::finalize();
     EnGPar_Finalize();
@@ -27,8 +47,10 @@ int main(int argc, char* argv[]) {
     assert(false);
   }
 
+  int kkselect = (atoi(argv[5]) > 0);
+  int skewWeights = (atoi(argv[6]) > 0);
   int isMultiEdge = 0;
-  if( argc == 6 ) isMultiEdge = 1;
+  if( argc == 8 ) isMultiEdge = 1;
 
   apf::Mesh2* m=NULL;
   agi::Ngraph* g=NULL;
@@ -53,23 +75,28 @@ int main(int argc, char* argv[]) {
     name = "edge_02";
     int edges[2] = {0,2};
     //balance vtx>edge>elm
-    g = agi::createAPFGraph(m,name.c_str(),3,edges,2);
+    g = agi::createAPFGraph(m,name.c_str(),m->getDimension(),edges,2);
   }
   else {
     name = "edge_0";
     //balance vtx>elm
-    g = agi::createAPFGraph(m,name.c_str(),3,0);
+    g = agi::createAPFGraph(m,name.c_str(),m->getDimension(),0);
   }
+  if( skewWeights )
+    setWeights(g,0);
   times[0] = PCU_Time()-times[0];
   times[1] = PCU_Time();
   double step_factor = .1;
-  engpar::Input* input = engpar::createDiffusiveInput(g,step_factor);
-  input->addPriority(0,tol);
+  engpar::DiffusiveInput* input = engpar::createDiffusiveInput(g,step_factor);
   if (isMultiEdge) {
     input->addPriority(1,tol);
   }
   input->addPriority(-1,tol);
+  input->maxIterationsPerType=0;
+  input->kkSelect=kkselect;
 
+  engpar::evaluatePartition(g);
+  EnGPar_Debug_Open("e");
   //Create the balancer
   int verbosity = 1;
   engpar::balance(input,verbosity);
@@ -128,6 +155,7 @@ int main(int argc, char* argv[]) {
   PCU_Barrier();
   if (!PCU_Comm_Self())
     printf("\nAll tests passed\n");
+
   Kokkos::finalize();
   EnGPar_Finalize();
   MPI_Finalize();

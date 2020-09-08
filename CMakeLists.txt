@@ -13,6 +13,9 @@ set(CMAKE_MODULE_PATH
    ${CMAKE_MODULE_PATH} 
    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/")
 
+find_package(MPI REQUIRED)
+include_directories(${MPI_C_INCLUDE_DIRS})
+
 #Setup doxygen documentation
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
@@ -44,11 +47,41 @@ set(VALGRIND "" CACHE STRING
 set(VALGRIND_ARGS "" CACHE STRING
   "the command line arguments to VALGRIND")
 
+option(ENGPAR_USE_CUDA "Build for CUDA" OFF)
+option(ENGPAR_USE_OPENMP "Build for OpenMP" OFF)
+
+
 if (ENABLE_KOKKOS)
   find_package(Kokkos REQUIRED)
   find_package(KokkosKernels REQUIRED)
   add_definitions(-DKOKKOS_ENABLED)
   set(KOKKOS_ENABLED true)
+  include_directories(${KokkosCore_INCLUDE_DIRS})
+
+  message(STATUS "Kokkos enabled - Overriding compiler selection for consistency with Kokkos install")
+  set(CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER})
+  set(CMAKE_C_COMPILER ${KokkosCore_C_COMPILER})
+  message(STATUS "Kokkos CMAKE_CXX_COMPILER ${KokkosCore_CXX_COMPILER}")
+  message(STATUS "Kokkos CMAKE_C_COMPILER ${KokkosCore_C_COMPILER}")
+
+  message(STATUS "Kokkos enabled - Overriding compiler flags for consistency with Kokkos install")
+  set(CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS})
+  set(CMAKE_C_FLAGS ${KokkosCore_C_FLAGS})
+  message(STATUS "Kokkos CMAKE_CXX_FLAGS ${KokkosCore_CXX_FLAGS}")
+  message(STATUS "Kokkos CMAKE_C_FLAGS ${KokkosCore_C_FLAGS}")
+
+  include(${CMAKE_CURRENT_LIST_DIR}/cmake/detect_trilinos_opts.cmake)
+  detect_trilinos_opts()
+  if(KokkosCore_HAS_CUDA AND (NOT KokkosCore_HAS_CUDA_LAMBDA))
+    message(FATAL_ERROR
+      "Please reconfigure Kokkos with
+      -DKokkos_ENABLE_Cuda_Lambda:BOOL=ON")
+  endif()
+  if(ENGPAR_USE_CUDA AND (NOT KokkosCore_HAS_CUDA))
+    message(FATAL_ERROR
+      "Kokkos was not build with CUDA, reconfigure EnGPar"
+      "-DENGPAR_USE_CUDA:BOOL=OFF")
+  endif()
 endif()
 
 set(SCOREC_PREFIX "" CACHE STRING "Directory where SCOREC is installed")
@@ -78,6 +111,19 @@ macro(engpar_export_lib target headers)
 endmacro(engpar_export_lib)
 
 set(ENGPAR_DEFINITIONS)
+if(ENGPAR_USE_CUDA)
+  message(STATUS "EnGPar using CUDA")
+  set(ENGPAR_DEFINITIONS ${ENGPAR_DEFINITIONS} -DENGPAR_USE_CUDA)
+endif()
+if(ENGPAR_USE_OPENMP)
+  message(STATUS "EnGPar using OpenMP")
+  set(ENGPAR_DEFINITIONS ${ENGPAR_DEFINITIONS} -DENGPAR_USE_OPENMP)
+endif()
+if(ENGPAR_USE_OPENMP AND ENGPAR_USE_CUDA)
+  message(FATAL_ERROR "EnGPar cannot use"
+    "OpenMP and CUDA at the same time")
+endif()
+
 option(LONG_LOCAL_INDICES "Turn on if a 32 byte int is too small for local indices [ON|OFF]" OFF)
 if (LONG_LOCAL_INDICES)
   message(STATUS "Local indices are 64 bytes")
@@ -85,16 +131,12 @@ if (LONG_LOCAL_INDICES)
     ${ENGPAR_DEFINITIONS}
     -DLOCAL_ID_TYPE=int64_t
     -DLOCAL_ID_FTYPE=C_INT64_T)
-  add_definitions(-DLOCAL_ID_TYPE=int64_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT64_T)
 else()
   message(STATUS "Local indices are 32 bytes")
     set(ENGPAR_DEFINITIONS
       ${ENGPAR_DEFINITIONS}
       -DLOCAL_ID_TYPE=int32_t
       -DLOCAL_ID_FTYPE=C_INT32_T)
-  add_definitions(-DLOCAL_ID_TYPE=int32_t)
-  add_definitions(-DLOCAL_ID_FTYPE=C_INT32_T)
 endif()
 option(BIG_ENDIAN "Turn on if on a big endian machine [ON|OFF]" OFF)
 if (BIG_ENDIAN)
@@ -102,8 +144,11 @@ if (BIG_ENDIAN)
   set(ENGPAR_DEFINITIONS
     ${ENGPAR_DEFINITIONS}
     -DENGPAR_BIG_ENDIAN)
-  add_definitions(-DENGPAR_BIG_ENDIAN)
 endif(BIG_ENDIAN)
+
+foreach(def ${ENGPAR_DEFINITIONS})
+  add_definitions(${def})
+endforeach()
 
 add_subdirectory(support)
 

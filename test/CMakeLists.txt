@@ -11,6 +11,7 @@ set(ALL_LIBS
   ${ALL_LIBS}
   interfaces
   engpar
+  ${MPI_C_LIBRARIES}
 )
 
 if(ENABLE_PUMI)
@@ -65,6 +66,7 @@ if (KOKKOS_ENABLED)
   make_utility(bfsSearch bfsSearch.cpp)
   make_utility(kokkosColoring kokkosColoring.cpp)
   make_utility(kokkosMeshColoring kokkosMeshColoring.cpp)
+  make_utility(kokkosMeshColoringBdry kokkosMeshColoringBdry.cpp)
   make_utility(kokkosMeshBfs kokkosMeshBfs.cpp)
 endif()
 

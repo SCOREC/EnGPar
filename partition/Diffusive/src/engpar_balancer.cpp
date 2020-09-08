@@ -53,9 +53,15 @@ namespace engpar {
     return PCU_Add_Double(w) / PCU_Comm_Peers();
   }
   double averageSides(Sides* s) {
-    double tot = s->total();
-    tot = PCU_Add_Double(tot);
-    return tot / PCU_Comm_Peers();
+    if( PCU_Comm_Peers() > 2 ) {
+      double tot = s->total();
+      tot = PCU_Add_Double(tot);
+      return tot / PCU_Comm_Peers();
+    } else {
+      double max = s->total();
+      max = PCU_Max_Double(max);
+      return max;
+    }
   }
   
   Balancer::Balancer(agi::Ngraph*& g, double f, int v, const char* n) :
@@ -133,12 +139,20 @@ namespace engpar {
       pq = createIterationQueue(input->g);
     distance_time+=PCU_Time()-t;
 
+    LIDs cavOrder = getCavityOrder(input->g, 0, pq);
+
     Selector* selector = makeSelector(inp,pq,&completed_dimensions,
                                       &completed_weights);
+    PCU_Debug_Open();
     agi::Migration* plan = new agi::Migration(input->g);
     wgt_t planW = 0.0;
-    for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
-      planW = selector->select(targets,plan,planW,cavSize,target_dimension);
+    if( ! PCU_Comm_Self() ) {
+      for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
+        if(inp->kkSelect)
+          planW = selector->kkSelect(cavOrder,targets,plan,planW,cavSize,target_dimension);
+        else
+          planW = selector->select(targets,plan,planW,cavSize,target_dimension);
+      }
     }
     selector->selectDisconnected(plan,target_dimension);
     if (completed_dimensions.size()>0) {
@@ -163,7 +177,22 @@ namespace engpar {
 
     stepTime = PCU_Time()-stepTime;
     int numMigrate = plan->size();
+    typedef std::map<agi::part_t,int> mii;
+    mii peerToVerts;
+    agi::Migration::iterator itr;
+    for(itr = plan->begin();itr!=plan->end();itr++) {
+      agi::GraphVertex* v = *itr;
+      agi::part_t peer = plan->get(v);
+      peerToVerts[peer]++;
+    }
+    mii::iterator it = peerToVerts.begin();
+    while(it != peerToVerts.end()) {
+      PCU_Debug_Print("%s migr %d verts to %d\n",
+          __func__, it->second, it->first);
+      it++;
+    }
     numMigrate = PCU_Add_Int(numMigrate);
+    PCU_Debug_Print("%s numMigrate %d\n", __func__, numMigrate);
 
     if (numMigrate>0)
       input->g->migrate(plan, migrTime);
@@ -187,15 +216,18 @@ namespace engpar {
       }
     }
 
-    if (numMigrate == 0)
+    if (numMigrate == 0) {
+      if(!PCU_Comm_Self())
+        fprintf(stderr,"No vertices migrated\n");
       return 3;
+    }
 
     return 0; //not done balancing
   }
   void Balancer::balance() {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     if (EnGPar_Is_Log_Open()) {
-      char message[1000];
+      char message[4096];
       sprintf(message,"balance() : \n");
       //Log the input parameters
       sprintf(message,"%s priorities :",message);

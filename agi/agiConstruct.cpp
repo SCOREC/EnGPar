@@ -742,11 +742,32 @@ namespace agi {
 
 
 #ifdef KOKKOS_ENABLED // {
-  void Ngraph::parallel_create_eve(agi::etype t) {
-    using engpar::LIDs;
-    using engpar::hostToDevice;
-    using engpar::deviceToHost;
+  using engpar::LIDs;
+  using engpar::hostToDevice;
+  using engpar::deviceToHost;
 
+  void Ngraph::buildSharedVtxMask(agi::lid_t numVerts, agi::lid_t numEdges,
+      LIDs degree_view, LIDs edge_view,
+      LIDs pin_degree_view, LIDs pin_edge_view,
+      LIDs isSharedVtx) {
+    LIDs isEdgeCut("isEdgeCut", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      int cut = 0;
+      for (int i=pin_degree_view(e); i<pin_degree_view(e+1); ++i) {
+        cut |= (pin_edge_view(i) >= numVerts);
+      }
+      isEdgeCut(e) = cut;
+    });
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      int shared = 0;
+      for (int i=degree_view(v); i<degree_view(v+1); ++i) {
+        shared |= isEdgeCut( edge_view(i) );
+      }
+      isSharedVtx(v) = shared;
+    });
+  }
+
+  void Ngraph::parallel_create_eve(agi::etype t, bool boundaryOnly) {
     assert(isHyper());
     agi::PNgraph* pg = publicize();
     if (pg->eve_offsets[t]) {
@@ -758,14 +779,29 @@ namespace agi {
     const int M = pg->num_local_verts;
     LIDs degree_view ("degree_view", M+1);
     LIDs edge_view ("edge_view", pg->degree_list[t][M]);
+    LIDs pin_degree_view ("pin_degree_view", N+1);
+    LIDs pin_edge_view ("pin_edge_view", pg->pin_degree_list[t][N]);
     hostToDevice(degree_view, pg->degree_list[t]);
     hostToDevice(edge_view, pg->edge_list[t]);
+    hostToDevice(pin_degree_view, pg->pin_degree_list[t]);
+    hostToDevice(pin_edge_view, pg->pin_list[t]);
+    LIDs isSharedVtx("isVtxShared", M);
+    if(boundaryOnly) {
+      buildSharedVtxMask(M, N,
+          degree_view, edge_view,
+          pin_degree_view, pin_edge_view,
+          isSharedVtx);
+    } else {
+      Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
+        isSharedVtx(v) = 1;
+      });
+    }
     // make hint for map size to avoid resize
     int numAdj = 0;
     Kokkos::parallel_reduce (M, KOKKOS_LAMBDA(const int v, int& upd) {
       for (int i=degree_view(v); i<degree_view(v+1); ++i) {
         for (int j=degree_view(v); j<degree_view(v+1); ++j) {
-          if (edge_view(i)!=edge_view(j))
+          if (isSharedVtx(v) && edge_view(i)!=edge_view(j))
             upd++;
         }
       } 
@@ -775,7 +811,7 @@ namespace agi {
     Kokkos::parallel_for (M, KOKKOS_LAMBDA(const int v) {
       for (int i=degree_view(v); i<degree_view(v+1); ++i) {
         for (int j=degree_view(v); j<degree_view(v+1); ++j) {
-          if (edge_view(i)!=edge_view(j)) {
+          if (isSharedVtx(v) && edge_view(i)!=edge_view(j)) {
             m.insert( Kokkos::pair<int,int>(edge_view(i),edge_view(j)) );
           }
         }
@@ -803,8 +839,8 @@ namespace agi {
     Kokkos::parallel_for (m.hash_capacity(), KOKKOS_LAMBDA(const int i) {
       if ( m.valid_at(i) ) {
         Kokkos::pair<int,int> p = m.key_at(i);
-        int e = deg(p.first);
-        int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
+        const int e = deg(p.first);
+        const int idx = Kokkos::atomic_fetch_add( &adjCount(p.first), 1);
         edgeList(e+idx) = p.second;
       }
     });

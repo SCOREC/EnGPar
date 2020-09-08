@@ -6,6 +6,7 @@ using engpar::hostToDevice;
 using engpar::deviceToHost;
 using engpar::LIDs;
 
+#include <algorithm>
 
 namespace engpar {
   Queue* createIterationQueue(agi::Ngraph* g) {
@@ -694,5 +695,25 @@ namespace engpar {
     //Queue* q0 = createDistanceQueue_old(input);
     Queue* q1 = createDistanceQueue_new(input);
     return q1;
+
+  LIDs getCavityOrder(agi::Ngraph* g, const agi::lid_t t, Queue* qu) {
+    assert( t == 0 ); // the distance queue is hardcoded to use the 0th edge type
+    agi::PNgraph* pg = g->publicize();
+    const int numEdges = pg->num_local_edges[t];
+    agi::lid_t* order_h = new agi::lid_t[numEdges];
+    std::fill(order_h,order_h+numEdges,-1);
+    int pos = 0;
+    qu->startIteration();
+    Queue::iterator itr;
+    for (itr = qu->begin();itr!=qu->end();itr++) {
+      agi::GraphEdge* e = qu->get(itr);
+      const agi::lid_t eid = g->localID(e);
+      assert(eid >=0 && eid < numEdges);
+      order_h[eid] = pos++;
+    }
+    LIDs order("cavOrder", numEdges);
+    hostToDevice(order,order_h);
+    delete [] order_h;
+    return order;
   }
 }

@@ -3,6 +3,9 @@
 
 #include <stdexcept>
 #include "pngraph.h"
+#ifdef KOKKOS_ENABLED
+#include "engpar_support.h" //LIDs
+#endif
 /** \file ngraph.h
     \brief The N-Graph interface 
 */
@@ -173,7 +176,7 @@ public:
    * \param cs an array of 3-D coordinates of size numLocalVtxs()
    */
   void setCoords(coord_t* cs);
-  /** \brief Sets the weights of the vertices
+  /** \brief Sets the weights of the local vertices
    * \param wgts the vertex weights
    */
   void setWeights(wgt_t* wgts);
@@ -249,7 +252,7 @@ public:
    * \return the destination vertex
    */
   GraphVertex* v(GraphEdge* edge) const;
-  /** \brief Sets the weights of the edges of a specific type
+  /** \brief Sets the weights of the local edges of a specific type
    * \param wgts the edge weights
    * \param t the edge type of the weights
    */
@@ -300,7 +303,12 @@ public:
    */
   void create_eve_adjacency(etype t, bool compress = true);
 #ifdef KOKKOS_ENABLED
-  void parallel_create_eve(agi::etype t);
+  //TODO this should use the class to store device pointers
+  void buildSharedVtxMask(agi::lid_t numVerts, agi::lid_t numEdges,
+      engpar::LIDs degree_view, engpar::LIDs edge_view,
+      engpar::LIDs pin_degree_view, engpar::LIDs pin_edge_view,
+      engpar::LIDs isSharedVtx);
+  void parallel_create_eve(agi::etype t, bool boundaryOnly = false);
 #endif
   /** \brief Creates an iterator over the vertex-edge-vertex adjacencies.
    * \param vtx the graph vertex

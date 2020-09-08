@@ -148,6 +148,66 @@ if (ENABLE_PARMETIS)
     ./PartitionTestSuite 13)
 
   IF(ENABLE_PUMI)
+    mpi_test(balanceSquareS 2
+      ./balanceMesh
+      "${MESHES}/square/square.dmg"
+      "${MESHES}/square/2/"
+      1.05
+      1 #render
+      0 #kokkos selection off
+      1 #skew weights
+      )
+
+    mpi_test(balanceSquareKK 2
+      ./balanceMesh --kokkos-threads=1
+      "${MESHES}/square/square.dmg"
+      "${MESHES}/square/2/"
+      1.05
+      1 #render
+      1 #kokkos selection on
+      1 #skew weights
+      )
+
+    mpi_test(balanceCubeS 4
+      ./balanceMesh
+      "${MESHES}/cube/cube.dmg"
+      "${MESHES}/cube/pumi670/4/cube.smb"
+      1.05
+      1 #render
+      0 #kokkos selection off
+      1 #skew weights
+      )
+
+    mpi_test(balanceCubeKK 4
+      ./balanceMesh
+      "${MESHES}/cube/cube.dmg"
+      "${MESHES}/cube/pumi670/4/cube.smb"
+      1.05
+      1 #render
+      1 #kokkos selection off
+      1 #skew weights
+      )
+
+    mpi_test(balanceTorusS 4
+      ./balanceMesh
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      1.05
+      1 #render
+      0 #kokkos selection off
+      0 #don't skew weights
+      )
+
+    mpi_test(balanceTorusKK 4
+      ./balanceMesh --kokkos-threads=1
+      "${MESHES}/torus/torus.dmg"
+      "${MESHES}/torus/4imb/torus.smb"
+      1.05
+      1 #render
+      1 #kokkos selection on
+      0 #don't skew weights
+      )
+
     mpi_test(splitAndBalanceMeshPUMI 8
       ./splitAndBalanceMesh
       "${MESHES}/torus/torus.dmg"
@@ -217,6 +277,12 @@ if (ENABLE_KOKKOS)
     "${MESHES}/torus/torus.dmg"
     "${MESHES}/torus/4imb/torus.smb"
     1)
+
+  mpi_test(colorBdryMeshTorus 4
+    ./kokkosMeshColoringBdry
+    "${MESHES}/torus/torus.dmg"
+    "${MESHES}/torus/4imb/torus.smb"
+    )
   
   mpi_test(colorMeshUpright 1
     ./kokkosMeshColoring

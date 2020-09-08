@@ -1,8 +1,23 @@
 #include "engpar_selector.h"
 #include <engpar_metrics.h>
+#include <engpar_kokkosColoring.h>
+#include <engpar_support.h>
 #include <set>
 #include <PCU.h>
 #include <agiMigration.h>
+#include <agi_typeconvert.h>
+#include <engpar_reduce.h>
+
+#define DEBUG_RANK 0
+#define DEBUG_EDGE 50
+#define DEBUG_KK 0
+
+/** \brief define an upper limit on the number of remote 
+ *          processes a hyperedge can exist on
+ */
+#define MAX_PEERS 40
+
+namespace engpar {
 
 //Adapted from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
 namespace std {
@@ -186,12 +201,566 @@ namespace engpar {
     return uncut_pins * 1.0 / cut_pins;
   }
 
+  /**
+   * \brief a cavity is defined as the vertices adjacent to a given hyperedge
+   *        that are owned and not in the plan
+   * \param plan (In) size=numVerts, plan(i) = -1   : not in plan
+   *                                         >= 0   : otherwise
+   */
+  void getCavities(int numEdges, int numVerts, int numGhostVerts,
+      LIDs pin_degree, LIDs pins, LIDs plan, LIDs isVtxOwned,
+      CSR& cavs) {
+    //create the plan mask: 1 if in plan, 0 otherwise
+    LIDs isVtxInPlan("isVtxInPlan", numVerts+numGhostVerts); //make this random access
+    Kokkos::parallel_for(numVerts, KOKKOS_LAMBDA(const int v) {
+      isVtxInPlan(v) = ( plan(v) != -1 );
+    });
+
+    //count the size of each cavity
+    //loop over the edges - the last entry is to support the next operation where
+    // we reuse this array to store the CSR offsets
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int degree = pin_degree(e+1)-pin_degree(e);
+      const int firstPin = pin_degree(e);
+      int size = 0;
+      for(int pinIdx = 0; pinIdx < degree; pinIdx++) { //TODO nested parallel reduce?
+        const int v = pins(firstPin+pinIdx);
+        size += ( isVtxOwned(v) && !isVtxInPlan(v) ); //random access
+      }
+      cavs.off(e) = size;
+#if DEBUG_KK==1
+      if( e == DEBUG_EDGE )
+        printf("e cav.degree %4d %3d\n", e, size);
+#endif
+    });
+    //construct the cavity csr
+    // -create the offsets with an exclusive scan
+    degreeToOffset(cavs);
+    allocateItems(cavs);
+    // -fill the csr list view
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int degree = pin_degree(e+1)-pin_degree(e);
+      const int firstPin = pin_degree(e);
+      const int cavIdx = cavs.off(e);
+      for(int pinIdx = 0; pinIdx < degree; pinIdx++) {
+        const int v = pins(firstPin+pinIdx);
+        if ( isVtxOwned(v) && !isVtxInPlan(v) ) { //random access
+          cavs.items(cavIdx+pinIdx) = v;
+        }
+      }
+    });
+  }
+
+  //need to do something to inline these and make them device callable
+  typedef struct PeerList {
+    int n;
+    int e[MAX_PEERS];
+  } peerList;
+
+  KOKKOS_INLINE_FUNCTION
+  peerList makePeerList() {
+    peerList p;
+    p.n = 0;
+    for(int i=0; i<MAX_PEERS; i++) {
+      p.e[i] = -1;
+    }
+    return p;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  int find(peerList& a, int v) {
+    assert(v != -1);
+    int has = 0;
+    for(int i=0; i<MAX_PEERS; i++) {
+      has += (v == a.e[i]);
+    }
+    return has;
+  }
+
+  KOKKOS_INLINE_FUNCTION
+  void unionPeers(peerList& a, peerList& b) {
+    for(int i=0; i<b.n; i++) {
+      const int v = b.e[i];
+      const int has = find(a,v); 
+      if( has == 0 ) {
+        a.e[a.n] = v;
+        a.n++;
+        assert(a.n < MAX_PEERS);
+      }
+    }
+  }
+
+  /**
+   * \brief for each cavity get the list of processes that share
+   *        edges adjacent to the cavity vertices
+   * \remark the list of processes will contain duplicates
+   */
+  void getPeers(int numEdges, int numVerts, int numGhostVerts,
+      LIDs edge_degree, LIDs edges,
+      LIDs pin_degree, LIDs pins,
+      LIDs isVtxOwned, LIDs vtxOwner,
+      CSR& cavs, CSR& peers, CSR& eoc) {
+    const int self = PCU_Comm_Self();
+    //count the number of edges adjacent to cavity vertices
+    // there will be duplicate edges; that should not change
+    // the list of peers
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) { //parallel reduce on the count?
+        const int v = cavs.items(firstVtx+vtxIdx);
+        eoc.off(e) += edge_degree(v+1)-edge_degree(v);
+      }
+    });
+    degreeToOffset(eoc);
+    allocateItems(eoc);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      int itemIdx = eoc.off(e);
+      for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) {
+        const int v = cavs.items(firstVtx+vtxIdx);
+        const int numAdjEdges = edge_degree(v+1)-edge_degree(v);
+        const int firstEdge = edge_degree(v);
+        for(int edgeIdx = 0; edgeIdx < numAdjEdges; edgeIdx++) {
+          eoc.items(itemIdx) = edges(firstEdge+edgeIdx);
+          itemIdx++;
+        }
+      }
+    });
+    //count the number of non-owned (ghost) vertices adj to each cavity edge
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      peerList cavPeers = makePeerList();
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) { //parallel reduce?
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
+        const int firstPin = pin_degree(adjEdge);
+        peerList vtxPeers = makePeerList();
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins(firstPin+pinIdx);
+          assert(pin>=0 && pin<numVerts+numGhostVerts);
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
+            vtxPeers.e[vtxPeers.n] = owner;
+            vtxPeers.n++;
+            assert(vtxPeers.n<MAX_PEERS);
+          }
+        }
+        unionPeers(cavPeers,vtxPeers); 
+      }
+      peers.off(e) = cavPeers.n;
+    });
+    degreeToOffset(peers);
+#if DEBUG_KK==1
+    if(self == DEBUG_RANK) {
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        if( e == DEBUG_EDGE) {
+          printf("e cavDegree eocDegree peerDegree %5d %5d %5d %5d\n",
+            e,
+            cavs.off(e+1)-cavs.off(e),
+            eoc.off(e+1)-eoc.off(e),
+            peers.off(e+1)-peers.off(e));
+        }
+      });
+    }
+#endif
+    allocateItems(peers);
+    //insert the owners of the ghost vertices
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      peerList cavPeers = makePeerList();
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
+        const int firstPin = pin_degree(adjEdge);
+        peerList vtxPeers = makePeerList();
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins(firstPin+pinIdx);
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          if(!isVtxOwned(pin)) { //TODO make isVtxOwned random access
+            vtxPeers.e[vtxPeers.n] = owner;
+            vtxPeers.n++;
+            assert(vtxPeers.n<MAX_PEERS);
+          }
+        }
+        unionPeers(cavPeers,vtxPeers); 
+      }
+      const int itemIdx = peers.off(e);
+      assert( cavPeers.n == peers.off(e+1)-peers.off(e) );
+      for(int i=0; i<cavPeers.n; i++) {
+        peers.items(itemIdx+i) = cavPeers.e[i];
+      }
+    });
+  }
+
+  void Selector::getCavitiesAndPeers(agi::etype t,
+      LIDs plan, LIDs vtxOwner,
+      CSR& cavs, CSR& peers, CSR& eoc) {
+    agi::PNgraph* pg = g->publicize();
+    const int N = pg->num_local_edges[t];
+    const int M = pg->num_local_verts;
+    const int G = pg->num_ghost_verts;
+    LIDs edge_degree("edge_degree", M+1); //convert to CSR
+    LIDs edges("edges", pg->degree_list[t][M]); //convert to CSR
+    LIDs pin_degree("pin_degree", N+1); //convert to CSR
+    LIDs pins("pins", pg->pin_degree_list[t][N]); //convert to CSR
+    hostToDevice(edge_degree, pg->degree_list[t]);
+    hostToDevice(edges, pg->edge_list[t]);
+    hostToDevice(pin_degree, pg->pin_degree_list[t]);
+    hostToDevice(pins, pg->pin_list[t]);
+    //create the ownership mask - this can be moved outside the select function
+    LIDs isVtxOwned("isVtxOwned", M+G); //make this random access
+    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
+      isVtxOwned(v) = 1;
+    });
+    getCavities(N,M,G,pin_degree,pins,plan,isVtxOwned,cavs);
+    getPeers(N,M,G,edge_degree,edges,pin_degree,pins,
+        isVtxOwned,vtxOwner,cavs,peers,eoc);
+  }
+
+  /**
+   * \brief the entry for a cavity is set to 1 if its
+   *        color is 'color', 0 otherwise
+   */
+  LIDs buildColorMask(LIDs colors, int color) {
+    const int numEdges = colors.dimension_0();
+    LIDs colorMask("colorMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      colorMask(e) = ( colors(e) == color );
+    });
+    return colorMask;
+  }
+
+  /**
+   * \brief the entry for a cavity is set to 1 if it is smaller
+   *        than maxSize, 0 otherwise
+   */
+  LIDs buildSizeMask(CSR cavs, const int maxSize) {
+    const int numEdges = cavs.n;
+    LIDs sizeMask("sizeMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int size = cavs.off(e+1)-cavs.off(e);
+      sizeMask(e) = ( size < maxSize );
+    });
+    return sizeMask;
+  }
+
+  /**
+   * \brief the entry for a cavity is > 0 if it is shared with
+   *        tgtPeer, 0 otherwise
+   */
+  LIDs buildTargetMask(CSR peers, int tgtPeer) {
+    const int numEdges = peers.n;
+    LIDs targetMask("targetMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      const int size = peers.off(e+1)-peers.off(e);
+      const int firstPeer = peers.off(e);
+      for( int i=0; i<size; i++ ) {
+        targetMask(e) |= ( peers.items(firstPeer+i) == tgtPeer );
+      }
+    });
+    return targetMask;
+  }
+
+  /**
+   * \brief the entry for a cavity is = 1 if the edge cut growth
+   *        is less than maxGrowth, 0 otherwise
+   */
+  LIDs buildEdgeCutMask(CSR peers, int tgtPeer, float maxGrowth) {
+    const int numEdges = peers.n;
+    LIDs cutPins("edgeCutMask", numEdges);
+    LIDs edgeCutMask("edgeCutMask", numEdges);
+    if( maxGrowth <= 0 ) {
+      // edgeCutGrowth disabled, set all cavities to 'true'
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        edgeCutMask(e) = 1;
+      });
+      return edgeCutMask;
+    } else {
+      Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+        const int size = peers.off(e+1)-peers.off(e);
+        const int firstPeer = peers.off(e);
+        for( int i=0; i<size; i++ ) {
+          cutPins(e) += ( peers.items(firstPeer+i) == tgtPeer );
+        }
+        const int uncutPins = size - cutPins(e);
+        const float edgeCutGrowth = static_cast<float>(uncutPins)/cutPins(e);
+        edgeCutMask(e) = ( edgeCutGrowth < maxGrowth );
+      });
+      return edgeCutMask;
+    }
+  }
+
+  /**
+   * \brief the entry for a cavity is set to 1 if it will 
+   *        be migrated, 0 otherwise
+   */
+  LIDs buildMigrationMask(CSR cavs, LIDs colorMask, LIDs sizeMask,
+      LIDs targetMask, LIDs edgeCutMask) {
+    const int self = PCU_Comm_Self();
+    const int numEdges = cavs.n;
+    LIDs migrMask("migrationMask", numEdges);
+    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+      migrMask(e) = ( colorMask(e) && sizeMask(e) && targetMask(e) && edgeCutMask(e) );
+    });
+    return migrMask;
+  }
+
+  LIDs makePlan(std::string name, int size) {
+    LIDs plan(name, size);
+    Kokkos::parallel_for(size, KOKKOS_LAMBDA(const int v) {
+      plan(v) = -1;
+    });
+    return plan;
+  }
+
+  /**
+   * \brief the entry for a vertex is set to the destination process id
+   */
+  LIDs setVtxDestination(CSR cavs, LIDs migrMask, int numVerts, int tgtPeer) {
+    assert(tgtPeer >= 0 && tgtPeer < PCU_Comm_Peers());
+    const int self = PCU_Comm_Self();
+    LIDs dest = makePlan("planNext", numVerts);
+    Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
+      const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
+      const int firstVtx = cavs.off(e);
+      for( int i=0; i<numAdjVerts; i++ ) {
+        const int v = cavs.items(firstVtx+i);
+        //using a conditional to keep the destination set
+        //  to -1 if it is not being migrated
+        if( migrMask(e) )
+          dest(v) = tgtPeer;
+      }
+    });
+    return dest;
+  }
+
+  /**
+   * \brief return the weight of the vertices being migrated
+   */
+  wgt_t getVtxWeight(LIDs plan, WGTs vtxWeights,
+      const wgt_t peerTgtW, const wgt_t tgtW) {
+    const int nverts = plan.dimension_0();
+    wgt_t totWeight = 0;
+    WGTs accW("accumulatedWeights", nverts);
+    //inclusive scan over weights to find the saturation point for this peer or
+    //the total
+    Kokkos::parallel_scan(nverts,
+      KOKKOS_LAMBDA (const int v, wgt_t& upd, const bool& final) {
+      const wgt_t val = ( plan(v) >= 0 ) * vtxWeights(v);
+      if (final) {
+        accW(v) = upd;
+      upd += val;
+      }
+    });
+    //remove vertices from the plan if including them exceeds a weight limit
+    //...this may cause poor cuts
+    Kokkos::parallel_for(nverts, KOKKOS_LAMBDA(const int v) {
+      const wgt_t w = accW(v);
+      if( w > peerTgtW || w > tgtW )
+        plan(v) = -1;
+    });
+    //sum the plan weight
+    Kokkos::parallel_reduce(nverts,
+      KOKKOS_LAMBDA(const int v, wgt_t& w) {
+        w += ( plan(v) >= 0 ) * vtxWeights(v); }, totWeight);
+    return totWeight;
+  }
+
+  /**
+   * \brief return the weight of the edges that will be added to the part
+   * boundary after migrating the cavity
+   */
+  wgt_t getEdgeWeight(CSR eoc, CSR pins,
+      LIDs migrationMask, LIDs vtxOwner, 
+      WGTs edgeWeights, int tgtPeer) {
+    wgt_t totWeight = 0;
+    Kokkos::parallel_reduce(eoc.n, KOKKOS_LAMBDA(const int e, wgt_t& w) {
+      const int isMigrated = migrationMask(e);
+      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
+      const int firstEdge = eoc.off(e);
+      for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
+        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int pinDegree = pins.off(adjEdge+1)-pins.off(adjEdge);
+        const int firstPin = pins.off(adjEdge);
+        int residentOnPeer = 0;
+        //The same vertex will be visited multiple times - consider forming list
+        //of unique second adjacent vertices bounded by the cavity edge.
+        //We have the following adjacencies,
+        //edge1-verts1-edges2-verts2
+        //where edge1 is the cavity edge that is cut by the part boundary, the set
+        //of verts1 that will be migrated to peer, and the edges2 that will be on
+        //the part boundary.  An edge in edges2 will already exist on peer if
+        //one of its adjacent vertices is owned by peer.
+        for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
+          const int pin = pins.items(firstPin+pinIdx);
+          const int owner = vtxOwner(pin); //TODO make vtxOwner random access
+          residentOnPeer += (owner == tgtPeer);
+        }
+        //If the edge is not already resident on the peer (one of its adjacent
+        //vertices is owned by the peer) then after migration the edge will
+        //exist on the peer and its weight needs to be included.
+        w += (!residentOnPeer && isMigrated) * edgeWeights(adjEdge);
+      }
+    }, totWeight);
+    return totWeight;
+  }
+
+  LIDs buildVtxOwners(agi::PNgraph* pg) {
+    const int M = pg->num_local_verts;
+    const int G = pg->num_ghost_verts;
+    LIDs vtxOwner("vtxOwner", M+G); //make this random access
+    LIDs ghostOwners("ghostOwners", G);
+    hostToDevice(ghostOwners,pg->owners);
+    const int self = PCU_Comm_Self();
+    Kokkos::parallel_for(M, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v) = self;
+    });
+    Kokkos::parallel_for(G, KOKKOS_LAMBDA(const int v) {
+      vtxOwner(v+M) = ghostOwners(v);
+    });
+    return vtxOwner;
+  }
+
+  void updatePlan(LIDs plan, LIDs planNext) {
+    assert( plan.dimension_0() == planNext.dimension_0() );
+    const int numPeers = PCU_Comm_Peers();
+    const int n = plan.dimension_0();
+    Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int v) {
+      if( planNext(v) != -1 )
+        plan(v) = planNext(v);
+    });
+  }
+
+  void buildMigrationPlan(agi::PNgraph* pg, LIDs plan, agi::Migration* migrPlan) {
+    const int n = plan.dimension_0();
+    agi::lid_t* plan_h = new agi::lid_t[n];
+    deviceToHost(plan,plan_h);
+    for(int i=0; i<n; i++) {
+      const int dest = plan_h[i];
+      if( dest != -1 ) {
+        if(dest <0 || dest >= PCU_Comm_Peers()) {
+          printf("ERROR dest is not valid v dest %4d %4d\n", i, dest);
+        }
+        assert(dest >= 0 && dest <PCU_Comm_Peers());
+        agi::GraphVertex* v = pg->getVertex(i);
+        migrPlan->insert(std::make_pair(v,dest));
+      }
+    }
+    delete [] plan_h;
+  }
+
+  wgt_t Selector::kkSelect(LIDs order, Targets* targets, agi::Migration* migrPlan,
+                         wgt_t planW, unsigned int cavSize,int target_dimension) {
+#ifdef KOKKOS_ENABLED
+#if DEBUG_KK==1
+    if( PCU_Comm_Self() == DEBUG_RANK ) {
+      fprintf(stderr, "cavSize %3d\n", cavSize);
+    }
+#endif
+    agi::etype t = target_dimension;
+    agi::etype edgeType = t;
+    if( edgeType == -1 )
+      edgeType = 0;
+    agi::PNgraph* pg = g->publicize();
+    const int N = pg->num_local_edges[edgeType];
+    const int M = pg->num_local_verts;
+    WGTs vtxWeights("vtxWeights", M);
+    hostToDevice(vtxWeights,pg->local_weights);
+    WGTs edgeWeights("edgeWeights", N);
+    hostToDevice(edgeWeights,pg->edge_weights[edgeType]);
+    CSR pins("pins", N, pg->pin_degree_list[edgeType], pg->pin_list[edgeType]);
+    LIDs vtxOwners = buildVtxOwners(pg);
+    //create the owners mask - this can be moved outside the select function
+    engpar::ColoringInput* inC = engpar::createBdryColoringInput(g, edgeType);
+    agi::lid_t numColors;
+    LIDs colors = engpar::EnGPar_KokkosColoring(inC, numColors);
+    LIDs plan = makePlan("plan",M);
+
+    const agi::lid_t maxPos = getMax(order);
+    printf("maxPos %d\n", maxPos);
+
+    //for(agi::lid_t pos=0; pos
+    //loop over colors
+    for(agi::lid_t c=1; c<=numColors; c++) {
+      if (planW > targets->total()) {
+        printf("sending enough total weight\n");
+        break;
+      }
+      Targets::iterator tgt;
+      for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
+        const int tgtPeer = tgt->first;
+        if (planW > targets->total()) {
+          printf("sending enough total weight\n");
+          break;
+        }
+#if DEBUG_KK==1
+        if( PCU_Comm_Self() == DEBUG_RANK ) {
+          fprintf(stderr, "color tgtPeer %3d %2d\n", c, tgtPeer);
+        }
+#endif
+        const wgt_t tgtWeight = tgt->second;
+        if( sending[tgtPeer] >= tgtWeight ) {
+          printf("sending enough weight to peer %d\n", tgtPeer);
+          continue; //sent enough weight to this peer
+        }
+        //build all the cavities and peers
+        CSR cavs("cavities",N);
+        CSR peers("cavityPeers",N);
+        CSR eoc("edgesOfCavity",N);
+        getCavitiesAndPeers(edgeType,plan,vtxOwners,cavs,peers,eoc);
+        //parallel for each cavity: compute cavity color mask
+        LIDs colorMask = buildColorMask(colors,c);
+        //parallel for each cavity: compute cavity size mask
+        LIDs sizeMask = buildSizeMask(cavs,cavSize);
+        //parallel for each cavity: compute target mask
+        LIDs targetMask = buildTargetMask(peers,tgtPeer);
+        //parallel for each cavity: compute edge cut growth mask
+        LIDs edgeCutMask = buildEdgeCutMask(peers,tgtPeer,in->limitEdgeCutGrowth);
+        //parallel for each cavity: logical and masks to determine if cavity is in plan
+        LIDs migrationMask = buildMigrationMask(cavs,colorMask,sizeMask,targetMask,edgeCutMask);
+        //parallel for each cavity: logical and masks to determine if cavity is in plan
+        LIDs planNext = setVtxDestination(cavs,migrationMask,M,tgtPeer);
+        //compute plan weight
+        wgt_t w = 0;
+        if( target_dimension == -1 ) { //vertices
+          const wgt_t peerCap = tgtWeight-sending[tgtPeer];
+          const wgt_t totCap = targets->total()-planW;
+          w = getVtxWeight(planNext,vtxWeights,peerCap,totCap);
+          if( w != 0 ) {
+            printf("peer %d peerTgtW %f tgtW %f totWeight %f\n",
+                tgtPeer, peerCap, totCap, w);
+          }
+        } else {
+          w = getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
+              edgeWeights,tgtPeer);
+        }
+        sending[tgtPeer] += w;
+        planW += w;
+        updatePlan(plan,planNext);
+      }
+    }
+    //build Migration object from plan array
+    buildMigrationPlan(pg,plan,migrPlan);
+    return planW;
+#else
+    fprintf(stderr,"ERROR: kokkos cavity selection disabled, recompile with ENABLE_KOKKOS\n");
+    exit(1);
+#endif
+  }
+
   wgt_t Selector::select(Targets* targets, agi::Migration* plan,
                          wgt_t planW, unsigned int cavSize,int target_dimension) {
     q->startIteration();
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
-      if (planW > targets->total()) break;
+      if (planW > targets->total()) {
+        printf("sending enough total weight\n");
+        break;
+      }
       //Create Cavity and peers
       Cavity& cav = cavities[q->get(itr)];
       Peers peers;
@@ -201,12 +770,19 @@ namespace engpar {
         Peers::iterator pitr;
         for (pitr = peers.begin(); pitr != peers.end(); ++pitr) {
           part_t peer = *pitr;
+          if( targets->has(peer) && sending[peer] >= targets->get(peer) )
+            printf("sending enough weight to peer %d\n", peer);
           if (targets->has(peer) && // Targeting this neighbor
-              sending[*pitr]<targets->get(peer) && //Havent sent too much weight to this peer
+              sending[peer]<targets->get(peer) && //Havent sent too much weight to this peer
               (in->limitEdgeCutGrowth <= 0 ||
                edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
                 //add cavity to plan
                 wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+#if DEBUG_KK==1
+                if( PCU_Comm_Self() == DEBUG_RANK ) {
+                  printf("sending edge cav.size() peer %4d %3zu %3d\n", g->localID(q->get(itr)), cav.size(), peer);
+                }
+#endif
                 planW+=w;
                 sending[peer]+=w;
                 sent=true;

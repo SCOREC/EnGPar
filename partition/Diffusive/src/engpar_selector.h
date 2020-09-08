@@ -5,6 +5,7 @@
 #include "engpar_sides.h"
 #include "engpar_targets.h"
 #include "engpar_queue.h"
+#include "engpar_support.h"
 #include <unordered_set>
 namespace engpar {
 
@@ -28,6 +29,11 @@ namespace engpar {
              std::vector<int>* cd, std::vector<double>* cw);
     wgt_t select(Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
+    wgt_t kkSelect(LIDs order, Targets* targets,agi::Migration* plan,
+                 wgt_t planW, unsigned int cavSize,int);
+    void getCavitiesAndPeers(agi::etype t,
+        LIDs plan, LIDs vtxOwner,
+        CSR& cavities, CSR& peers, CSR& eoc);
     void selectDisconnected(agi::Migration* plan, int target_dimension);
     Midd* trim(Targets* targets, agi::Migration* plan);
     void cancel(agi::Migration*& plan,Midd* capacity);
