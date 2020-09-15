@@ -17,14 +17,13 @@
  */
 #define MAX_PEERS 40
 
-namespace engpar {
 
 //Adapted from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
 namespace std {
   template <>
   struct hash<engpar::Connection> {
-    std::size_t operator()(const engpar::Connection& k) const {
-      return ((std::hash<agi::GraphVertex*>()(k.first)
+    size_t operator()(const engpar::Connection& k) const {
+      return ((hash<agi::GraphVertex*>()(k.first)
 	       ^ (hash<agi::GraphVertex*>()(k.second) << 1)) >> 1);
     }
   };
@@ -219,7 +218,8 @@ namespace engpar {
     //count the size of each cavity
     //loop over the edges - the last entry is to support the next operation where
     // we reuse this array to store the CSR offsets
-    Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
+    auto cavs_off = cavs.off;
+    Kokkos::parallel_for("asdf", numEdges, KOKKOS_LAMBDA(const int e) {
       const int degree = pin_degree(e+1)-pin_degree(e);
       const int firstPin = pin_degree(e);
       int size = 0;
@@ -227,7 +227,7 @@ namespace engpar {
         const int v = pins(firstPin+pinIdx);
         size += ( isVtxOwned(v) && !isVtxInPlan(v) ); //random access
       }
-      cavs.off(e) = size;
+      cavs_off(e) = size;
 #if DEBUG_KK==1
       if( e == DEBUG_EDGE )
         printf("e cav.degree %4d %3d\n", e, size);
@@ -238,14 +238,15 @@ namespace engpar {
     degreeToOffset(cavs);
     allocateItems(cavs);
     // -fill the csr list view
+    auto cavs_items = cavs.items;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       const int degree = pin_degree(e+1)-pin_degree(e);
       const int firstPin = pin_degree(e);
-      const int cavIdx = cavs.off(e);
+      const int cavIdx = cavs_off(e);
       for(int pinIdx = 0; pinIdx < degree; pinIdx++) {
         const int v = pins(firstPin+pinIdx);
         if ( isVtxOwned(v) && !isVtxInPlan(v) ) { //random access
-          cavs.items(cavIdx+pinIdx) = v;
+          cavs_items(cavIdx+pinIdx) = v;
         }
       }
     });
@@ -304,37 +305,42 @@ namespace engpar {
     //count the number of edges adjacent to cavity vertices
     // there will be duplicate edges; that should not change
     // the list of peers
+    auto cavs_off = cavs.off;
+    auto cavs_items = cavs.items;
+    auto eoc_off = eoc.off;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
-      const int firstVtx = cavs.off(e);
+      const int numAdjVtx = cavs_off(e+1)-cavs_off(e);
+      const int firstVtx = cavs_off(e);
       for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) { //parallel reduce on the count?
-        const int v = cavs.items(firstVtx+vtxIdx);
-        eoc.off(e) += edge_degree(v+1)-edge_degree(v);
+        const int v = cavs_items(firstVtx+vtxIdx);
+        eoc_off(e) += edge_degree(v+1)-edge_degree(v);
       }
     });
     degreeToOffset(eoc);
     allocateItems(eoc);
+    auto eoc_items = eoc.items;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      const int numAdjVtx = cavs.off(e+1)-cavs.off(e);
-      const int firstVtx = cavs.off(e);
-      int itemIdx = eoc.off(e);
+      const int numAdjVtx = cavs_off(e+1)-cavs_off(e);
+      const int firstVtx = cavs_off(e);
+      int itemIdx = eoc_off(e);
       for(int vtxIdx = 0; vtxIdx < numAdjVtx; vtxIdx++) {
-        const int v = cavs.items(firstVtx+vtxIdx);
+        const int v = cavs_items(firstVtx+vtxIdx);
         const int numAdjEdges = edge_degree(v+1)-edge_degree(v);
         const int firstEdge = edge_degree(v);
         for(int edgeIdx = 0; edgeIdx < numAdjEdges; edgeIdx++) {
-          eoc.items(itemIdx) = edges(firstEdge+edgeIdx);
+          eoc_items(itemIdx) = edges(firstEdge+edgeIdx);
           itemIdx++;
         }
       }
     });
     //count the number of non-owned (ghost) vertices adj to each cavity edge
+    auto peers_off = peers.off;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       peerList cavPeers = makePeerList();
-      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
-      const int firstEdge = eoc.off(e);
+      const int numCavEdges = eoc_off(e+1)-eoc_off(e);
+      const int firstEdge = eoc_off(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) { //parallel reduce?
-        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int adjEdge = eoc_items(firstEdge+edgeIdx);
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pin_degree(adjEdge);
         peerList vtxPeers = makePeerList();
@@ -350,7 +356,7 @@ namespace engpar {
         }
         unionPeers(cavPeers,vtxPeers); 
       }
-      peers.off(e) = cavPeers.n;
+      peers_off(e) = cavPeers.n;
     });
     degreeToOffset(peers);
 #if DEBUG_KK==1
@@ -359,21 +365,22 @@ namespace engpar {
         if( e == DEBUG_EDGE) {
           printf("e cavDegree eocDegree peerDegree %5d %5d %5d %5d\n",
             e,
-            cavs.off(e+1)-cavs.off(e),
-            eoc.off(e+1)-eoc.off(e),
-            peers.off(e+1)-peers.off(e));
+            cavs_off(e+1)-cavs_off(e),
+            eoc_off(e+1)-eoc_off(e),
+            peers_off(e+1)-peers_off(e));
         }
       });
     }
 #endif
     allocateItems(peers);
     //insert the owners of the ghost vertices
+    auto peers_items = peers.items;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       peerList cavPeers = makePeerList();
-      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
-      const int firstEdge = eoc.off(e);
+      const int numCavEdges = eoc_off(e+1)-eoc_off(e);
+      const int firstEdge = eoc_off(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
-        const int adjEdge = eoc.items(firstEdge+edgeIdx);
+        const int adjEdge = eoc_items(firstEdge+edgeIdx);
         const int pinDegree = pin_degree(adjEdge+1)-pin_degree(adjEdge);
         const int firstPin = pin_degree(adjEdge);
         peerList vtxPeers = makePeerList();
@@ -388,10 +395,10 @@ namespace engpar {
         }
         unionPeers(cavPeers,vtxPeers); 
       }
-      const int itemIdx = peers.off(e);
-      assert( cavPeers.n == peers.off(e+1)-peers.off(e) );
+      const int itemIdx = peers_off(e);
+      assert( cavPeers.n == peers_off(e+1)-peers_off(e) );
       for(int i=0; i<cavPeers.n; i++) {
-        peers.items(itemIdx+i) = cavPeers.e[i];
+        peers_items(itemIdx+i) = cavPeers.e[i];
       }
     });
   }
@@ -426,7 +433,7 @@ namespace engpar {
    *        color is 'color', 0 otherwise
    */
   LIDs buildColorMask(LIDs colors, int color) {
-    const int numEdges = colors.dimension_0();
+    const int numEdges = colors.extent(0);
     LIDs colorMask("colorMask", numEdges);
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
       colorMask(e) = ( colors(e) == color );
@@ -441,8 +448,9 @@ namespace engpar {
   LIDs buildSizeMask(CSR cavs, const int maxSize) {
     const int numEdges = cavs.n;
     LIDs sizeMask("sizeMask", numEdges);
+    auto cavs_off = cavs.off;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      const int size = cavs.off(e+1)-cavs.off(e);
+      const int size = cavs_off(e+1)-cavs_off(e);
       sizeMask(e) = ( size < maxSize );
     });
     return sizeMask;
@@ -455,11 +463,13 @@ namespace engpar {
   LIDs buildTargetMask(CSR peers, int tgtPeer) {
     const int numEdges = peers.n;
     LIDs targetMask("targetMask", numEdges);
+    auto peers_off = peers.off;
+    auto peers_items = peers.items;
     Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-      const int size = peers.off(e+1)-peers.off(e);
-      const int firstPeer = peers.off(e);
+      const int size = peers_off(e+1)-peers_off(e);
+      const int firstPeer = peers_off(e);
       for( int i=0; i<size; i++ ) {
-        targetMask(e) |= ( peers.items(firstPeer+i) == tgtPeer );
+        targetMask(e) |= ( peers_items(firstPeer+i) == tgtPeer );
       }
     });
     return targetMask;
@@ -480,11 +490,13 @@ namespace engpar {
       });
       return edgeCutMask;
     } else {
+      auto peers_off = peers.off;
+      auto peers_items = peers.items;
       Kokkos::parallel_for(numEdges, KOKKOS_LAMBDA(const int e) {
-        const int size = peers.off(e+1)-peers.off(e);
-        const int firstPeer = peers.off(e);
+        const int size = peers_off(e+1)-peers_off(e);
+        const int firstPeer = peers_off(e);
         for( int i=0; i<size; i++ ) {
-          cutPins(e) += ( peers.items(firstPeer+i) == tgtPeer );
+          cutPins(e) += ( peers_items(firstPeer+i) == tgtPeer );
         }
         const int uncutPins = size - cutPins(e);
         const float edgeCutGrowth = static_cast<float>(uncutPins)/cutPins(e);
@@ -524,11 +536,13 @@ namespace engpar {
     assert(tgtPeer >= 0 && tgtPeer < PCU_Comm_Peers());
     const int self = PCU_Comm_Self();
     LIDs dest = makePlan("planNext", numVerts);
+    auto cavs_off = cavs.off;
+    auto cavs_items = cavs.items;
     Kokkos::parallel_for(cavs.n, KOKKOS_LAMBDA(const int e) {
-      const int numAdjVerts = cavs.off(e+1)-cavs.off(e);
-      const int firstVtx = cavs.off(e);
+      const int numAdjVerts = cavs_off(e+1)-cavs_off(e);
+      const int firstVtx = cavs_off(e);
       for( int i=0; i<numAdjVerts; i++ ) {
-        const int v = cavs.items(firstVtx+i);
+        const int v = cavs_items(firstVtx+i);
         //using a conditional to keep the destination set
         //  to -1 if it is not being migrated
         if( migrMask(e) )
@@ -543,7 +557,7 @@ namespace engpar {
    */
   wgt_t getVtxWeight(LIDs plan, WGTs vtxWeights,
       const wgt_t peerTgtW, const wgt_t tgtW) {
-    const int nverts = plan.dimension_0();
+    const int nverts = plan.extent(0);
     wgt_t totWeight = 0;
     WGTs accW("accumulatedWeights", nverts);
     //inclusive scan over weights to find the saturation point for this peer or
@@ -578,14 +592,18 @@ namespace engpar {
       LIDs migrationMask, LIDs vtxOwner, 
       WGTs edgeWeights, int tgtPeer) {
     wgt_t totWeight = 0;
+    auto eoc_off = eoc.off;
+    auto eoc_items = eoc.items;
+    auto pins_off = pins.off;
+    auto pins_items = pins.items;
     Kokkos::parallel_reduce(eoc.n, KOKKOS_LAMBDA(const int e, wgt_t& w) {
       const int isMigrated = migrationMask(e);
-      const int numCavEdges = eoc.off(e+1)-eoc.off(e);
-      const int firstEdge = eoc.off(e);
+      const int numCavEdges = eoc_off(e+1)-eoc_off(e);
+      const int firstEdge = eoc_off(e);
       for(int edgeIdx = 0; edgeIdx < numCavEdges; edgeIdx++) {
-        const int adjEdge = eoc.items(firstEdge+edgeIdx);
-        const int pinDegree = pins.off(adjEdge+1)-pins.off(adjEdge);
-        const int firstPin = pins.off(adjEdge);
+        const int adjEdge = eoc_items(firstEdge+edgeIdx);
+        const int pinDegree = pins_off(adjEdge+1)-pins_off(adjEdge);
+        const int firstPin = pins_off(adjEdge);
         int residentOnPeer = 0;
         //The same vertex will be visited multiple times - consider forming list
         //of unique second adjacent vertices bounded by the cavity edge.
@@ -596,7 +614,7 @@ namespace engpar {
         //the part boundary.  An edge in edges2 will already exist on peer if
         //one of its adjacent vertices is owned by peer.
         for(int pinIdx = 0; pinIdx < pinDegree; pinIdx++) {
-          const int pin = pins.items(firstPin+pinIdx);
+          const int pin = pins_items(firstPin+pinIdx);
           const int owner = vtxOwner(pin); //TODO make vtxOwner random access
           residentOnPeer += (owner == tgtPeer);
         }
@@ -626,9 +644,9 @@ namespace engpar {
   }
 
   void updatePlan(LIDs plan, LIDs planNext) {
-    assert( plan.dimension_0() == planNext.dimension_0() );
+    assert( plan.extent(0) == planNext.extent(0) );
     const int numPeers = PCU_Comm_Peers();
-    const int n = plan.dimension_0();
+    const int n = plan.extent(0);
     Kokkos::parallel_for(n, KOKKOS_LAMBDA(const int v) {
       if( planNext(v) != -1 )
         plan(v) = planNext(v);
@@ -636,7 +654,7 @@ namespace engpar {
   }
 
   void buildMigrationPlan(agi::PNgraph* pg, LIDs plan, agi::Migration* migrPlan) {
-    const int n = plan.dimension_0();
+    const int n = plan.extent(0);
     agi::lid_t* plan_h = new agi::lid_t[n];
     deviceToHost(plan,plan_h);
     for(int i=0; i<n; i++) {

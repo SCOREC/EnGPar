@@ -28,12 +28,7 @@ target_include_directories(diffusive PUBLIC
 target_link_libraries(diffusive PUBLIC engpar_metrics)
 
 if (ENABLE_KOKKOS)
-  target_include_directories(diffusive PUBLIC
-    ${KokkosCore_INCLUDE_DIRS})
-  target_include_directories(diffusive PRIVATE
-    ${KokkosKernels_INCLUDE_DIRS})
-  target_link_libraries(diffusive PUBLIC
-    ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES})
+  target_link_libraries(diffusive PUBLIC Kokkos::kokkoskernels)
 endif()
 
 engpar_export_lib(diffusive "${ENGPAR_HEADERS}")

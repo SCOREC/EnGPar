@@ -63,7 +63,7 @@ namespace engpar {
     agi::lid_t numColors;
     LIDs colors_d = EnGPar_KokkosColoring(in, numColors);
     // Move coloring into array on host 
-    *colors = new agi::lid_t[colors_d.dimension_0()];
+    *colors = new agi::lid_t[colors_d.extent(0)];
     deviceToHost(colors_d, *colors);
     return numColors;
   }

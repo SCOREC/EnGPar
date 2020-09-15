@@ -695,6 +695,7 @@ namespace engpar {
     //Queue* q0 = createDistanceQueue_old(input);
     Queue* q1 = createDistanceQueue_new(input);
     return q1;
+  }
 
   LIDs getCavityOrder(agi::Ngraph* g, const agi::lid_t t, Queue* qu) {
     assert( t == 0 ); // the distance queue is hardcoded to use the 0th edge type
