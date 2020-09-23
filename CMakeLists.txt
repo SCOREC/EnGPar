@@ -47,8 +47,8 @@ set(VALGRIND_ARGS "" CACHE STRING
 if (ENABLE_KOKKOS)
   find_package(KokkosCore REQUIRED)
   find_package(KokkosKernels REQUIRED)
-  add_definitions(-DKOKKOS_ENABLED)
-  set(KOKKOS_ENABLED true)
+  add_definitions(-DENGPAR_KOKKOS_ENABLED)
+  set(ENGPAR_KOKKOS_ENABLED true)
   include_directories(${KokkosCore_INCLUDE_DIRS})
 
   message(STATUS "Kokkos enabled - Overriding compiler selection for consistency with Kokkos install")

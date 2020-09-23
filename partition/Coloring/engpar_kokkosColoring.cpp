@@ -3,7 +3,7 @@
 #include "engpar_kokkosColoring.h"
 #include "engpar_coloring_input.h"
 namespace engpar {
-#ifdef KOKKOS_ENABLED
+#ifdef ENGPAR_KOKKOS_ENABLED
 
   /** \brief helper function to transfer a host array to a device view
    */

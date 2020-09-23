@@ -12,7 +12,7 @@ namespace engpar {
   agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, agi::lid_t** colors);
 }
 
-#ifdef KOKKOS_ENABLED
+#ifdef ENGPAR_KOKKOS_ENABLED
 
 #include <Kokkos_Core.hpp>
 #include <KokkosSparse_CrsMatrix.hpp>
@@ -31,5 +31,5 @@ namespace engpar {
   agi::lid_t EnGPar_KokkosColoring(ColoringInput* in, kkLidView colors);
 }
 
-#endif //KOKKOS_ENABLED
+#endif //ENGPAR_KOKKOS_ENABLED
 #endif // __ENGPAR_KOKKOS_COLORING__

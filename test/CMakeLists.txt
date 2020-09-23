@@ -3,7 +3,7 @@ include_directories(
   ${ZOLTAN_INCLUDE_DIRS}
   )
 
-if (KOKKOS_ENABLED)
+if (ENGPAR_KOKKOS_ENABLED)
   include_directories(${KokkosCore_INCLUDE_DIRS} ${KokkosKernels_INCLUDE_DIRS})
 endif()
 
@@ -27,7 +27,7 @@ set(ALL_LIBS ${ALL_LIBS}
   ${KOKKOS_LIBRARIES}
   )
 
-if (KOKKOS_ENABLED)
+if (ENGPAR_KOKKOS_ENABLED)
   set(ALL_LIBS ${ALL_LIBS} ${KokkosCore_LIBRARIES} ${KokkosKernels_LIBRARIES})
 endif()
 
@@ -68,7 +68,7 @@ if (FALSE)
   endif()
 endif()
 
-if (KOKKOS_ENABLED)
+if (ENGPAR_KOKKOS_ENABLED)
   make_utility(kokkosHelloWorld kokkosHelloWorld.cpp)
   make_utility(bfsSearch bfsSearch.cpp)
   make_utility(kokkosColoring kokkosColoring.cpp)
