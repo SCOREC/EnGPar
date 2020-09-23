@@ -30,6 +30,9 @@ int main(int argc, char* argv[]) {
   if (argc>1)
     trial = atoi(argv[1]);
   MPI_Init(&argc,&argv);
+#ifdef KOKKOS_ENABLED
+  Kokkos::initialize(argc,argv);
+#endif
   EnGPar_Initialize();
   EnGPar_Set_Verbosity(3);
   //Create the testing suite
