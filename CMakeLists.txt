@@ -34,6 +34,9 @@ include(CTest)
 option(IS_TESTING "Build for CTest" OFF)
 message(STATUS "IS_TESTING: ${IS_TESTING}")
 
+execute_process(COMMAND ${CMAKE_CXX_COMPILER} -show OUTPUT_VARIABLE
+  VERBOSE_CXX_COMPILE_CMD)
+message(STATUS "CXX compilation command: ${VERBOSE_CXX_COMPILE_CMD}")
 get_filename_component(COMPILER_DIR "${CMAKE_CXX_COMPILER}" PATH)
 find_program(MPIRUN NAMES mpirun PATHS "${COMPILER_DIR}")
 set(MPIRUN_PROCFLAG "-np" CACHE STRING
