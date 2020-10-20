@@ -68,15 +68,12 @@ namespace engpar {
     });
   }
   void allocateItems(CSR& c) {
-    int listSize = 0;
     auto c_off = c.off;
-    Kokkos::parallel_reduce(c.off.extent(0)-1,
-      KOKKOS_LAMBDA(const int e, int& size) {
-        size += c_off(e);
-      },
-    listSize);
+    int lastVal;
+    int size = c_off.size();
+    Kokkos::deep_copy(lastVal,Kokkos::subview(c_off,size-1));
     std::string name = c.name + "_items";
-    c.items = LIDs(name, listSize);
+    c.items = LIDs(name, lastVal);
   }
 }
 

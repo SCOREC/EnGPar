@@ -15,7 +15,7 @@
 /** \brief define an upper limit on the number of remote 
  *          processes a hyperedge can exist on
  */
-#define MAX_PEERS 40
+#define MAX_PEERS 80
 
 
 //Adapted from https://stackoverflow.com/questions/17016175/c-unordered-map-using-a-custom-class-type-as-the-key
@@ -699,20 +699,20 @@ namespace engpar {
     LIDs plan = makePlan("plan",M);
 
     const agi::lid_t maxPos = getMax(order);
-    printf("maxPos %d\n", maxPos);
+    //printf("maxPos %d\n", maxPos);
 
     //for(agi::lid_t pos=0; pos
     //loop over colors
     for(agi::lid_t c=1; c<=numColors; c++) {
       if (planW > targets->total()) {
-        printf("sending enough total weight\n");
+        //printf("sending enough total weight\n");
         break;
       }
       Targets::iterator tgt;
       for( tgt = targets->begin(); tgt != targets->end(); tgt++ ) {
         const int tgtPeer = tgt->first;
         if (planW > targets->total()) {
-          printf("sending enough total weight\n");
+          //printf("sending enough total weight\n");
           break;
         }
 #if DEBUG_KK==1
@@ -722,7 +722,7 @@ namespace engpar {
 #endif
         const wgt_t tgtWeight = tgt->second;
         if( sending[tgtPeer] >= tgtWeight ) {
-          printf("sending enough weight to peer %d\n", tgtPeer);
+          //printf("sending enough weight to peer %d\n", tgtPeer);
           continue; //sent enough weight to this peer
         }
         //build all the cavities and peers
@@ -776,7 +776,7 @@ namespace engpar {
     Queue::iterator itr;
     for (itr = q->begin();itr!=q->end();itr++) {
       if (planW > targets->total()) {
-        printf("sending enough total weight\n");
+        //printf("sending enough total weight\n");
         break;
       }
       //Create Cavity and peers

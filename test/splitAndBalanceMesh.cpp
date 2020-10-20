@@ -50,14 +50,14 @@ int main(int argc, char* argv[]) {
     printf("Split from %d to %d parts in %.4f seconds\n",PCU_Comm_Peers()/split_factor,PCU_Comm_Peers(),split_time);
   //Create the input for diffusive load balancing (vtx>element)
   double step_factor = 0.1;
-  engpar::Input* input_d = engpar::createDiffusiveInput(g,step_factor);
+  engpar::DiffusiveInput* input_d = engpar::createDiffusiveInput(g,step_factor);
   input_d->addPriority(0,1.05);
   input_d->addPriority(-1,1.05);
   if (!PCU_Comm_Self())
     printf("\n");
-
+  input_d->kkSelect = 1;
   //Create and run the balancer
-  engpar::balance(input_d,0);
+  engpar::balance(input_d,1);
 
   if (!PCU_Comm_Self())
     printf("\nAfter Balancing\n");
