@@ -711,6 +711,7 @@ namespace engpar {
       const agi::lid_t eid = g->localID(e);
       assert(eid >=0 && eid < numEdges);
       order_h[eid] = pos++;
+      qu->addElement(e);
     }
     LIDs order("cavOrder", numEdges);
     hostToDevice(order,order_h);

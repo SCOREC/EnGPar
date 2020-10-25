@@ -24,6 +24,7 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   Kokkos::initialize(argc, argv);
+  PCU_Debug_Open();
 
   if (argc != 5) {
     if ( !PCU_Comm_Self() ) {
@@ -56,8 +57,10 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\n");
   input_d->kkSelect = 1;
+  input_d->useDistanceQueue = 1;
+  input_d->maxIterationsPerType = 5;
   //Create and run the balancer
-  engpar::balance(input_d,1);
+  engpar::balance(input_d,2);
 
   if (!PCU_Comm_Self())
     printf("\nAfter Balancing\n");
@@ -189,7 +192,7 @@ apf::Migration* getPlan(apf::Mesh* m)
   if (PCU_Comm_Self() != 0) {
     apf::MeshIterator* mitr = m->begin(3);
     apf::MeshEntity* ent;
-    double w = 1.5;
+    double w = 2.0;
     while ((ent = m->iterate(mitr))) {
       m->setDoubleTag(ent, weights, &w); 
     }

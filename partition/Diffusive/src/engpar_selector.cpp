@@ -755,6 +755,7 @@ namespace engpar {
         } else {
           w = getEdgeWeight(eoc,pins,migrationMask,vtxOwners,
               edgeWeights,tgtPeer);
+          PCU_Debug_Print("peer %d totWeight %f\n", tgtPeer, w);
         }
         sending[tgtPeer] += w;
         planW += w;
@@ -788,8 +789,8 @@ namespace engpar {
         Peers::iterator pitr;
         for (pitr = peers.begin(); pitr != peers.end(); ++pitr) {
           part_t peer = *pitr;
-          if( targets->has(peer) && sending[peer] >= targets->get(peer) )
-            printf("sending enough weight to peer %d\n", peer);
+          //if( targets->has(peer) && sending[peer] >= targets->get(peer) )
+          //  printf("sending enough weight to peer %d\n", peer);
           if (targets->has(peer) && // Targeting this neighbor
               sending[peer]<targets->get(peer) && //Havent sent too much weight to this peer
               (in->limitEdgeCutGrowth <= 0 ||
