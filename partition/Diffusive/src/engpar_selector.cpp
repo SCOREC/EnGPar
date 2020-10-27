@@ -782,10 +782,10 @@ namespace engpar {
       }
       //Create Cavity and peers
       Cavity& cav = cavities[q->get(itr)];
-      Peers peers;
-      getCavityPeers(g,plan,cav,peers);
       bool sent = false;
       if (cav.size() < cavSize) { //If the cavity is small enough
+        Peers peers;
+        getCavityPeers(g,plan,cav,peers);
         Peers::iterator pitr;
         for (pitr = peers.begin(); pitr != peers.end(); ++pitr) {
           part_t peer = *pitr;
