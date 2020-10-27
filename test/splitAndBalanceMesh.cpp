@@ -58,7 +58,7 @@ int main(int argc, char* argv[]) {
     printf("\n");
   input_d->kkSelect = 1;
   input_d->useDistanceQueue = 1;
-  input_d->maxIterationsPerType = 5;
+  //input_d->maxIterationsPerType = 5;
   //Create and run the balancer
   engpar::balance(input_d,2);
 
