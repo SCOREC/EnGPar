@@ -17,6 +17,7 @@ namespace engpar {
     connectivityType=0;
     runPartWeightBalancer = false;
     limitEdgeCutGrowth = 0;
+    kkSelect = 0;
   }
 
   void DiffusiveInput::addPriority(int type, double tolerance) {

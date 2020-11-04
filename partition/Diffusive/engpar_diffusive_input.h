@@ -94,6 +94,10 @@ namespace engpar {
      */
     double limitEdgeCutGrowth;
 
+    /** \brief If the Kokkos selection algorithm should be used.
+     *
+     * defaults to 0
+     */
     int kkSelect;
   };
 }

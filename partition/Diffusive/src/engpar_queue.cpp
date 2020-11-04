@@ -654,7 +654,7 @@ namespace engpar {
   }
   
   
-  Queue* createDistanceQueue_new(DiffusiveInput* input) {
+  Queue* createDistanceQueueKokkos(DiffusiveInput* input) {
     agi::Ngraph* g = input->g;
     if (g->numLocalEdges()==0) {
       return new Queue(0);
@@ -692,9 +692,11 @@ namespace engpar {
   }
 
   Queue* createDistanceQueue(DiffusiveInput* input) {
-    //Queue* q0 = createDistanceQueue_old(input);
-    Queue* q1 = createDistanceQueue_new(input);
-    return q1;
+    if (input->g->isHyper()) {
+      return createDistanceQueueKokkos(input);
+    } else {
+      return createDistanceQueue_old(input);
+    }
   }
 
   LIDs getCavityOrder(agi::Ngraph* g, const agi::lid_t t, Queue* qu) {
