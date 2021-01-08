@@ -370,6 +370,15 @@ if (ENABLE_KOKKOS)
     1
     )
 
+  mpi_test(splitAndBalanceMeshEnGPar_Torch_1M_4 4
+    ./splitAndBalanceMesh
+    "${MESHES}/upright/upright.dmg"
+    "${MESHES}/upright/1.6M/4p/"
+    0
+    1
+    "${MESHES}/../model.pt"
+    )
+
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)

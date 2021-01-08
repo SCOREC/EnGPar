@@ -8,6 +8,7 @@
 #include "engpar_sd.h"
 #include "agiMigrationTimers.h"
 #include "../engpar_diffusive_input.h"
+#include <torch/script.h>
 
 namespace engpar {
   wgt_t getMaxWeight(agi::Ngraph*, int);
@@ -19,6 +20,7 @@ namespace engpar {
     Balancer(Input* input_,int verbosity_,const char* name_);
     virtual ~Balancer();
     virtual int runStep(double tolerance);
+    int runStepTorch(double tolerance, bool useTorch, torch::jit::script::Module& module);
     void balance();
     void partWeightBalancer(Sides* sides, double tolerance);
     

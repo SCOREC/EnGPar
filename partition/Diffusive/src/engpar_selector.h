@@ -7,6 +7,8 @@
 #include "engpar_queue.h"
 #include "engpar_support.h"
 #include <unordered_set>
+#include <torch/script.h>
+
 namespace engpar {
 
   typedef std::unordered_set<agi::GraphVertex*> Cavity;
@@ -29,6 +31,8 @@ namespace engpar {
              std::vector<int>* cd, std::vector<double>* cw);
     wgt_t select(Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
+    wgt_t torchSelect(Targets* targets,agi::Migration* plan,
+                 wgt_t planW, unsigned int cavSize,int, torch::jit::script::Module& module);
     wgt_t kkSelect(LIDs order, Targets* targets,agi::Migration* plan,
                  wgt_t planW, unsigned int cavSize,int);
     void getCavitiesAndPeers(agi::etype t,

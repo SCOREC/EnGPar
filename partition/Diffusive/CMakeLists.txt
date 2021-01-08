@@ -27,6 +27,8 @@ target_include_directories(diffusive PUBLIC
 
 target_link_libraries(diffusive PUBLIC engpar_metrics)
 
+target_link_libraries(diffusive PUBLIC "${TORCH_LIBRARIES}")
+
 if (ENABLE_KOKKOS)
   target_link_libraries(diffusive PUBLIC Kokkos::kokkoskernels)
 endif()

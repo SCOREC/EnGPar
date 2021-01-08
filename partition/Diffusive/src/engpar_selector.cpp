@@ -8,6 +8,9 @@
 #include <agi_typeconvert.h>
 #include <engpar_reduce.h>
 
+#include <torch/script.h>
+#include <ATen/ATen.h>
+
 #define DEBUG_RANK 0
 #define DEBUG_EDGE 50
 #define DEBUG_KK 0
@@ -817,6 +820,132 @@ namespace engpar {
     updateCavities(plan);
     return planW;
   }
+
+  std::vector<torch::jit::IValue> getModelInput(agi::Ngraph* g, Cavity& cav, std::unordered_map<int,part_t>& idxToPeer) {
+    // get cav edges and map to idx
+    std::unordered_map<agi::GraphEdge*,int> cavEdgeToIdx(cav.size());
+    for (const auto& graphVtx : cav) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->edges(graphVtx);
+      while ((e=g->iterate(eitr))) {
+        if (cavEdgeToIdx.find(e) == cavEdgeToIdx.end()) {
+          cavEdgeToIdx[e] = cavEdgeToIdx.size();
+        }
+      }
+      g->destroy(eitr);
+    }
+    if (cavEdgeToIdx.empty()) {
+      return std::vector<torch::jit::IValue>();
+    }
+
+    // make adjacency matrix
+    const int numNodes = cavEdgeToIdx.size();
+    std::vector<int> adj(numNodes*numNodes, 0);
+    int edgeCount = 0;
+    for (const auto& graphVtx : cav) {
+      agi::GraphEdge* e;
+      agi::EdgeIterator* eitr = g->edges(graphVtx);
+      while ((e=g->iterate(eitr))) {
+        agi::GraphEdge* eB;
+        agi::EdgeIterator* eitrB = g->edges(graphVtx);
+        while ((eB=g->iterate(eitrB))) {
+          if (eB != e) {
+            adj[cavEdgeToIdx[e]*numNodes+cavEdgeToIdx[eB]]=1;
+            edgeCount++;
+          }
+        }
+        g->destroy(eitrB);
+      }
+      g->destroy(eitr);
+    }
+
+    // make edge list tensor from adjacency matrix
+    at::Tensor edgeListTensor = at::empty({2, edgeCount}, at::kLong);
+    int edgeListIdx = 0;
+    for (int i = 0; i < numNodes; i++) {
+      for (int j = 0; j < numNodes; j++) {
+        const int idx = i*numNodes + j;
+        if (adj[idx]) {
+          edgeListTensor[0][edgeListIdx] = i;
+          edgeListTensor[1][edgeListIdx] = j;
+          edgeListIdx++;
+        }
+      }
+    }
+
+    // get processes of each vertex
+    std::unordered_map<part_t, int> peerToIdx;
+    std::vector<std::pair<int, int>> nodePeerPairs;
+    for (const auto& kv : cavEdgeToIdx) {
+      agi::Peers peers;
+      g->getResidence(kv.first, peers);
+      const int nodeIdx = kv.second;
+      for (const part_t& peer : peers) {
+        int peerIdx;
+        const auto peerIdxItr = peerToIdx.find(peer);
+        if (peerIdxItr == peerToIdx.end()) {
+          peerIdx = peerToIdx.size();
+          peerToIdx[peer] = peerIdx;
+          idxToPeer[peerIdx] = peer;
+        } else {
+          peerIdx = peerIdxItr->second;
+        }
+        nodePeerPairs.push_back({nodeIdx, peerIdx});
+      }
+    }
+
+    const int numProcs = peerToIdx.size();
+    at::Tensor x = at::zeros({numNodes, numProcs}, at::kFloat);
+    for (const auto& pair : nodePeerPairs) {
+      x[pair.first][pair.second] = 1;
+    }
+
+    at::Tensor nodeSums = at::sum(x, 0, true).div(numNodes).expand({numNodes, -1});
+    at::Tensor procSums = at::sum(x, 1, true).div(numProcs).expand({-1, numProcs});
+    x = at::stack({x, nodeSums, procSums}, 2);
+
+    std::vector<torch::jit::IValue> input = {x, edgeListTensor};
+    return input;
+  }
+
+  wgt_t Selector::torchSelect(Targets* targets, agi::Migration* plan,
+                              wgt_t planW, unsigned int cavSize,int target_dimension,
+                              torch::jit::script::Module& model) {
+    q->startIteration();
+    std::unordered_map<int, part_t> idxToPeer;
+    for (Queue::iterator itr = q->begin();itr!=q->end();itr++) {
+      if (planW > targets->total()) {
+        break;
+      }
+      Cavity& cav = cavities[q->get(itr)];
+      bool sent = false;
+      if (cav.size() < cavSize) {
+        std::vector<torch::jit::IValue> input = getModelInput(g, cav, idxToPeer);
+        if (!input.empty()) {
+          at::Tensor output = model.forward(input).toTensor();
+          int bestIdx = at::argmax(output).item<int>();
+          part_t peer = idxToPeer[bestIdx];
+          if (targets->has(peer) && // Targeting this neighbor
+              sending[peer]<targets->get(peer) && //Havent sent too much weight to this peer
+              (in->limitEdgeCutGrowth <= 0 ||
+               edgeCutGrowth(g, cav, peer) < in->limitEdgeCutGrowth)) {
+            //add cavity to plan
+            wgt_t w = addCavity(g,cav,peer,plan,target_dimension);
+            planW+=w;
+            sending[peer]+=w;
+            sent=true;
+          }
+        }
+      }
+      if (!sent)
+        q->addElement(q->get(itr));
+      else
+	cavities.erase(q->get(itr));
+    }
+    updateCavities(plan);
+    return planW;
+  }
+
 
   void Selector::selectDisconnected(agi::Migration* plan, int target_dimension) {
     if (in->minConnectivity <= 1)

@@ -99,6 +99,13 @@ namespace engpar {
      * defaults to 0
      */
     int kkSelect;
+
+
+    /** \brief Path to torch model
+     *
+     * defaults to empty string
+     */
+    std::string torchModelPath;
   };
 }
 

@@ -26,7 +26,7 @@ int main(int argc, char* argv[]) {
   Kokkos::initialize(argc, argv);
   PCU_Debug_Open();
 
-  if (argc != 5) {
+  if (argc != 5 && argc != 6) {
     if ( !PCU_Comm_Self() ) {
       printf("Usage: %s <model> <mesh> <pumi/engpar parmetis (0/1)> <split_factor>\n", argv[0]);
     }
@@ -56,9 +56,12 @@ int main(int argc, char* argv[]) {
   input_d->addPriority(-1,1.05);
   if (!PCU_Comm_Self())
     printf("\n");
-  input_d->kkSelect = 1;
+  input_d->kkSelect = 0;
   input_d->useDistanceQueue = 1;
-  //input_d->maxIterationsPerType = 5;
+  input_d->maxIterationsPerType = 5;
+  if (argc == 6) {
+    input_d->torchModelPath = std::string(argv[5]);
+  }
   //Create and run the balancer
   engpar::balance(input_d,2);
 

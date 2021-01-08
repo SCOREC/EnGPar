@@ -4,7 +4,7 @@ project(EnGPar VERSION 1.1.0 LANGUAGES CXX C)
 
 include(cmake/bob.cmake)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 bob_begin_package()
@@ -15,6 +15,8 @@ set(CMAKE_MODULE_PATH
 
 find_package(MPI REQUIRED)
 include_directories(${MPI_C_INCLUDE_DIRS})
+
+find_package(Torch REQUIRED)
 
 #Setup doxygen documentation
 find_package(Doxygen)

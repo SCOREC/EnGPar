@@ -4,6 +4,8 @@
 #include <engpar_metrics.h>
 #include <engpar_support.h>
 #include <agiMigration.h>
+#include <torch/script.h>
+
 namespace {
   void printMigrationStats(agi::MigrationTimers* migrTime) {
     double maxSetup = migrTime->processMax("setup");
@@ -87,6 +89,11 @@ namespace engpar {
   }
 
   int Balancer::runStep(double tolerance) {
+    torch::jit::script::Module model;
+    return Balancer::runStepTorch(tolerance, false, model);
+  }
+
+  int Balancer::runStepTorch(double tolerance, bool useTorch, torch::jit::script::Module& model) {
     DiffusiveInput* inp = dynamic_cast<DiffusiveInput*>(input);
     double stepTime = PCU_Time();
     double imb = EnGPar_Get_Imbalance(getWeight(input->g,target_dimension,inp->countGhosts));
@@ -149,6 +156,8 @@ namespace engpar {
     for (unsigned int cavSize=2;cavSize<=12;cavSize+=2) {
       if (inp->kkSelect) {
         planW = selector->kkSelect(cavOrder,targets,plan,planW,cavSize,target_dimension);
+      } else if (useTorch) {
+        planW = selector->torchSelect(targets,plan,planW,cavSize,target_dimension,model);
       } else {
         planW = selector->select(targets,plan,planW,cavSize,target_dimension);
       }
@@ -255,6 +264,19 @@ namespace engpar {
       return;
     }
 
+    const bool useTorch = !inp->torchModelPath.empty();
+    torch::jit::script::Module model;
+    if (useTorch) {
+      try {
+        model = torch::jit::load(inp->torchModelPath);
+      } catch (const c10::Error& e) {
+        std::cerr << "Error loading model\n";
+        return;
+      }
+      torch::NoGradGuard no_grad;
+      model.eval();
+    }
+
     //Setup the migration timers
     migrTime->addTimer("setup");
     migrTime->addTimer("comm");
@@ -308,8 +330,13 @@ namespace engpar {
 
       //Run diffusion
       int rc;
-      while ((rc = runStep(tol)) == 0 && inner_steps++ < inp->maxIterationsPerType &&
-             step++ < inp->maxIterations);
+      if (useTorch) {
+        while ((rc = runStepTorch(tol, true, model)) == 0 && inner_steps++ < inp->maxIterationsPerType &&
+               step++ < inp->maxIterations);
+      } else {
+        while ((rc = runStep(tol)) == 0 && inner_steps++ < inp->maxIterationsPerType &&
+               step++ < inp->maxIterations);
+      }
 
       //Keep track of completed dimension for trim/cancel
       completed_dimensions.push_back(target_dimension);
