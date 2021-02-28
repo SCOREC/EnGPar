@@ -17,6 +17,8 @@ find_package(MPI REQUIRED)
 include_directories(${MPI_C_INCLUDE_DIRS})
 
 find_package(Torch REQUIRED)
+find_package(TorchSparse REQUIRED)
+find_package(TorchScatter REQUIRED)
 
 #Setup doxygen documentation
 find_package(Doxygen)

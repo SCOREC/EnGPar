@@ -379,6 +379,15 @@ if (ENABLE_KOKKOS)
     "${MESHES}/../model.pt"
     )
 
+  mpi_test(splitAndBalanceMeshEnGPar_Torch_cube_2 2
+    ./splitAndBalanceMesh
+    "${MESHES}/cube/cube.dmg"
+    "${MESHES}/cube/pumi670/2/cube.smb"
+    0
+    1
+    "${MESHES}/../model.pt"
+    )
+
 endif()
 
 if (ENGPAR_FORTRAN_INTERFACE AND ENABLE_PARMETIS)

@@ -841,7 +841,6 @@ namespace engpar {
     // make adjacency matrix
     const int numNodes = cavEdgeToIdx.size();
     std::vector<int> adj(numNodes*numNodes, 0);
-    int edgeCount = 0;
     for (const auto& graphVtx : cav) {
       agi::GraphEdge* e;
       agi::EdgeIterator* eitr = g->edges(graphVtx);
@@ -851,13 +850,15 @@ namespace engpar {
         while ((eB=g->iterate(eitrB))) {
           if (eB != e) {
             adj[cavEdgeToIdx[e]*numNodes+cavEdgeToIdx[eB]]=1;
-            edgeCount++;
+            adj[cavEdgeToIdx[eB]*numNodes+cavEdgeToIdx[e]]=1;
           }
         }
         g->destroy(eitrB);
       }
       g->destroy(eitr);
     }
+
+    const int edgeCount = std::accumulate(adj.begin(), adj.end(), 0);
 
     // make edge list tensor from adjacency matrix
     at::Tensor edgeListTensor = at::empty({2, edgeCount}, at::kLong);

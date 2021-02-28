@@ -10,6 +10,7 @@
 #include <apfGraph.h>
 #include <gmi_mesh.h>
 #include <parma.h>
+#include <lionPrint.h>
 #include <apfZoltan.h>
 #include <apfPartition.h>
 #include <pcu_util.h>
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]) {
   MPI_Init(&argc,&argv);
   EnGPar_Initialize();
   Kokkos::initialize(argc, argv);
+  lion_set_verbosity(1);
   PCU_Debug_Open();
 
   if (argc != 5 && argc != 6) {
@@ -62,6 +64,7 @@ int main(int argc, char* argv[]) {
   if (argc == 6) {
     input_d->torchModelPath = std::string(argv[5]);
   }
+  apf::writeVtkFiles("upright_before",m);
   //Create and run the balancer
   engpar::balance(input_d,2);
 
@@ -118,7 +121,7 @@ int main(int argc, char* argv[]) {
   if (!PCU_Comm_Self())
     printf("\n");
   Parma_PrintPtnStats(m, "");
-  
+  apf::writeVtkFiles("upright_after",m);
   
   agi::destroyGraph(g);
   if (m) {
@@ -192,11 +195,13 @@ apf::Migration* getPlan(apf::Mesh* m)
   apf::Splitter* splitter = apf::makeZoltanGlobalSplitter(
       m, apf::GRAPH, apf::PART_KWAY, false);
   apf::MeshTag* weights = Parma_WeighByMemory(m);
-  if (PCU_Comm_Self() != 0) {
+  if (PCU_Comm_Self() == 0) {
     apf::MeshIterator* mitr = m->begin(3);
     apf::MeshEntity* ent;
-    double w = 2.0;
     while ((ent = m->iterate(mitr))) {
+      double w;
+      m->getDoubleTag(ent, weights, &w);
+      w *= 1.5;
       m->setDoubleTag(ent, weights, &w); 
     }
     m->end(mitr);
@@ -242,6 +247,7 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
   switchToOriginals();
   if (isOriginal) {
     m = apf::loadMdsMesh(model, meshFile);
+    Parma_PrintPtnStats(m, "initial mesh");
     plan = getPlan(m);
   }
   switchToAll();
@@ -249,12 +255,12 @@ void splitMesh(agi::Ngraph*& g, apf::Mesh2*& m, int argc, char* argv[]) {
 
   if (!PCU_Comm_Self())
     printf("\n");
-  Parma_PrintPtnStats(m, "");
+  Parma_PrintPtnStats(m, "after split");
   if (!PCU_Comm_Self())
     printf("\n");  
   //Switch to graph
   g = agi::createAPFGraph(m,"mesh",3,0);
   if (!PCU_Comm_Self())
-    printf("\nAfter Split\n");
+    printf("\nAfter Split Mesh\n");
   engpar::evaluatePartition(g);
 }
