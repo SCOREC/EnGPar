@@ -254,6 +254,11 @@ public:
    * \param t the edge type of the weights
    */
   void setEdgeWeights(std::vector<wgt_t>& wgts, etype t);
+   /** \brief Sets the weights of the edges of a specific type to a single value
+    * \param wgt the weight for all edges
+    * \param t the edge type for applying the weight
+    */
+   void setEdgeWeights(wgt_t wgt, etype t);
   ///@}
   
   /** \name Adjacency Operations */

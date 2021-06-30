@@ -135,6 +135,11 @@ namespace agi {
                            pin_list[type]+pin_degree_list[type][id+1]);
   }
 
+  void Ngraph::setEdgeWeights(wgt_t wgt, etype t) {
+    for (int i =0; i < num_local_edges[t]; ++i) {
+      edge_weights[t][i] = wgt;
+    }
+  }
   void Ngraph::setEdgeWeights(std::vector<wgt_t>& wgts, etype t) {
     assert(!edge_weights[t]);
     if (wgts.size()==0) {

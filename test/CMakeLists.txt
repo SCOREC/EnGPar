@@ -58,6 +58,7 @@ if (ENABLE_PUMI)
   make_utility(buildMeshGraph buildMeshGraph.cpp)
   make_utility(buildFUN3DGraph buildFUN3DGraph.cpp)
   make_utility(balanceMesh balanceMesh.cpp)
+  make_utility(balanceDOFMesh balanceDOFMesh.cpp)
   make_utility(splitAndBalanceMesh splitAndBalanceMesh.cpp)
 endif()
 

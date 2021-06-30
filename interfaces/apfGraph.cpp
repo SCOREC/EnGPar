@@ -35,7 +35,15 @@ Ngraph* createAPFGraph(apf::Mesh* m, const char* name, int primary_dimension,
 
   return new apfGraph(m, name, primary_dimension, secondary_dimensions, num_dimensions);
 }
-  
+
+  apfGraph::apfGraph() : Ngraph() {
+    m = NULL;
+    name = "";
+    global_nums = NULL;
+    for (int i = 0; i < MAX_TYPES; ++i)
+      edge_nums[i] = NULL;
+    isHyperGraph = true;
+  }
 apfGraph::apfGraph(apf::Mesh* mesh, const char* n, int primary_dimension,
                    int secondary_dimension) : Ngraph() {
   global_nums=NULL;
@@ -51,7 +59,7 @@ apfGraph::apfGraph(apf::Mesh* mesh, const char* n, int primary_dimension,
   etype t = setupSecondary(secondary_dimension);
   connectToEdges(primary_dimension,secondary_dimension,t);
   connectToPins(primary_dimension,secondary_dimension,t);
-  
+
   constructGhostVerts();
 }
 
@@ -66,7 +74,7 @@ apfGraph::apfGraph(apf::Mesh* mesh, const char* name_, int primary_dimension,
   }
   name = name_;
   m=mesh;
-  
+
   setupPrimary(primary_dimension);
 
   for (int i=0;i<n;i++) {
@@ -77,16 +85,16 @@ apfGraph::apfGraph(apf::Mesh* mesh, const char* name_, int primary_dimension,
   constructGhostVerts();
 }
 
-  
+
 apfGraph::~apfGraph() {
   if (global_nums)
     apf::destroyGlobalNumbering(global_nums);
   for (int i=0;i<MAX_TYPES;++i)
     if (edge_nums[i])
       apf::destroyGlobalNumbering(edge_nums[i]);
-  
+
 }
-  
+
 void apfGraph::checkDims(int dim, int primary, int second) {
   //Error checking on primary and secondary dims
   if (primary>dim ||
@@ -113,7 +121,7 @@ void apfGraph::checkDims(int dim, int primary, int second) {
 }
 
 void apfGraph::setupPrimary(int primary_dimension) {
-  
+
   num_local_verts = countOwned(m,primary_dimension);
   num_global_verts = PCU_Add_Long(num_local_verts);
   if (num_global_verts==0) {
@@ -166,7 +174,7 @@ etype apfGraph::setupSecondary(int secondary_dimension) {
   //Create edge array
   makeEdgeArray(type,num_local_edges[type]);
 
-  //Create a global numbering on the mesh over primary_dimension
+  //Create a global numbering on the mesh over secondary_dimension
   char buffer[200];
   sprintf(buffer, "%s_secondary_ids%d", name, type);
   apf::Numbering* numbers = apf::numberOwnedDimension(m,buffer,
@@ -186,7 +194,7 @@ etype apfGraph::setupSecondary(int secondary_dimension) {
   return type;
 }
 
-  
+
 void apfGraph::connectToEdges(int primary_dimension,
                               int secondary_dimension,
                               etype type) {
@@ -382,6 +390,6 @@ void apfGraph::constructGhostVerts() {
     ghost_weights = createDoubleGhostTag(weightTagAPF);
 
 }
-  
+
 
 }

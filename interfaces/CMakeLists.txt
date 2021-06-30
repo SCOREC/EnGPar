@@ -15,7 +15,7 @@ set(INTERFACE_HEADERS
 
 if(ENABLE_PUMI)
   set(INTERFACE_HEADERS apfGraph.h ${INTERFACE_HEADERS})
-  set(INTERFACE_SOURCES apfGraph.cpp ${INTERFACE_SOURCES})
+  set(INTERFACE_SOURCES apfGraph.cpp dofGraph.cpp ${INTERFACE_SOURCES})
 endif()
 
 add_library(interfaces ${INTERFACE_SOURCES})
