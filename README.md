@@ -50,6 +50,3 @@ ctest
 ### Website ### 
 
 http://scorec.github.io/EnGPar/
-
-### Contact Developers ###
-* Gerrett Diamond <diamog@rpi.edu>
