@@ -1,0 +1,51 @@
+name: Doxygen GitHub Pages Deploy Action
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install dependencies
+        run: |
+          sudo apt update
+          sudo apt install gcc-10 g++-10 mpich doxygen
+
+      - name: Configure CMake
+        env:
+          MPICH_CXX: g++-10
+          MPICH_CC: gcc-10
+        run: |
+          cmake -S ${{github.workspace}} \
+                -B ${{github.workspace}}/build \
+                -DCMAKE_CXX_COMPILER=mpicxx \
+                -DCMAKE_C_COMPILER=mpicc \
+                -DENABLE_PARMETIS=OFF \
+                -DENABLE_PUMI=OFF \
+                -DENABLE_ZOLTAN=OFF \
+                -DIS_TESTING=OFF \
+                -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
+
+      - name: Generate Doc
+        run: doxygen ${{github.workspace}}/build/Doxyfile
+
+      - name: Commit and push if documentation changed
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "<>"
+          git add docs/html
+          if ! git diff --cached --quiet; then
+            git commit -m "Update Doxygen documentation"
+            git push origin master
+          else
+            echo "No documentation changes to commit."
+          fi
