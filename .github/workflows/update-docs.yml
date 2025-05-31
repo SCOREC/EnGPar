@@ -5,11 +5,14 @@ on:
     branches:
       - master
 
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -34,18 +37,30 @@ jobs:
                 -DENABLE_ZOLTAN=OFF \
                 -DIS_TESTING=OFF \
                 -DCMAKE_INSTALL_PREFIX=${{github.workspace}}/build/install
+      
+      - name: Build jekyll site
+        uses: actions/jekyll-build-pages@v1
+        with:
+          source: ./docs
+          destination: ./docs/_site
 
       - name: Generate Doc
         run: doxygen ${{github.workspace}}/build/Doxyfile
 
-      - name: Commit and push if documentation changed
-        run: |
-          git config user.name "GitHub Actions Bot"
-          git config user.email "<>"
-          git add docs/html
-          if ! git diff --cached --quiet; then
-            git commit -m "Update Doxygen documentation"
-            git push origin master
-          else
-            echo "No documentation changes to commit."
-          fi
+      - name: Copy files to _site
+        run: sudo cp -r docs/html ./docs/_site
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: ./docs/_site
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+    environment:
+      name: github-pages
