@@ -14,7 +14,11 @@ double EnGpar_Peak_Memory()
 #include <malloc.h>
 double EnGPar_Peak_Memory()
 {
+#if defined(__GNUC__) && defined(ENGPAR_HAS_MALLINFO2)
+  return mallinfo2().arena;
+#elif defined(__GNUC__)
   return mallinfo().arena;
+#endif
 }
 
 #else
