@@ -114,5 +114,13 @@ endif()
 
 add_subdirectory(test)
 
+#check for mallinfo2
+if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU" OR ${CMAKE_CXX_COMPILER_ID} STREQUAL "Clang")
+  include(CheckCXXSymbolExists)
+  check_cxx_symbol_exists(mallinfo2 "malloc.h" ENGPAR_HAS_MALLINFO2)
+  if(ENGPAR_HAS_MALLINFO2)
+	  target_compile_definitions(engpar_support PUBLIC -DENGPAR_HAS_MALLINFO2)
+  endif()
+endif()
 
 bob_end_package()
